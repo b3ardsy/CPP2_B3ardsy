@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 58c23bee644a41b449b3b71b458d0909
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 290680
+  packageName: KayKit - Skeletons Character Pack (for Unity)
+  packageVersion: 1.1.1
+  assetPath: Assets/KayKit/Characters/KayKit - Skeletons (for Unity)/Materials/skeleton.mat
+  uploadId: 832000

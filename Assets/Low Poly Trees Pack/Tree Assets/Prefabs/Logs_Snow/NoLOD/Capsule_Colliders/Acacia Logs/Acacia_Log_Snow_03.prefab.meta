@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c628fc86be51acf498ff58a438024b9e
+timeCreated: 1515046699
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 73954
+  packageName: Low Poly Trees - Pack
+  packageVersion: 1.4.7
+  assetPath: Assets/Low Poly Trees Pack/Tree Assets/Prefabs/Logs_Snow/NoLOD/Capsule_Colliders/Acacia
+    Logs/Acacia_Log_Snow_03.prefab
+  uploadId: 809008

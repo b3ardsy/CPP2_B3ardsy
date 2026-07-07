@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1fdbdcd8e4edd7b43b15f3843422e9be
+timeCreated: 1515046557
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 73954
+  packageName: Low Poly Trees - Pack
+  packageVersion: 1.4.7
+  assetPath: Assets/Low Poly Trees Pack/Tree Assets/Prefabs/Logs_Snow/NoLOD/Mesh_Colliders/Pine
+    Logs/Pine_Log_Snow_01.prefab
+  uploadId: 809008

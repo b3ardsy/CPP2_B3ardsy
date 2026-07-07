@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: b93d35f8f37e4ca4397279bf827df5fb
+timeCreated: 1476112548
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 73954
+  packageName: Low Poly Trees - Pack
+  packageVersion: 1.4.7
+  assetPath: Assets/Low Poly Trees Pack/Bonus Assets/Scripts/LowPolyTrees_CameraControl.cs
+  uploadId: 809008

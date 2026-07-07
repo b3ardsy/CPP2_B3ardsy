@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 579da27c245e53142a6ec99947928927
+timeCreated: 1555128607
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: -1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 70164
+  packageName: Low Poly Rocks Pack
+  packageVersion: 1.3.8
+  assetPath: Assets/Low Poly Rocks Pack/Demo/Demo_Scenes/Post-Processing/Demo_02.asset
+  uploadId: 808788

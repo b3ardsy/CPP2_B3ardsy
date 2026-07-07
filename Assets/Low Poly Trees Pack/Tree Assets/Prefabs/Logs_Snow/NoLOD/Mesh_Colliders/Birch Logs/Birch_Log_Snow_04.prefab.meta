@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 34e276795b07c0646aca87e7efc2aff4
+timeCreated: 1515046411
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 73954
+  packageName: Low Poly Trees - Pack
+  packageVersion: 1.4.7
+  assetPath: Assets/Low Poly Trees Pack/Tree Assets/Prefabs/Logs_Snow/NoLOD/Mesh_Colliders/Birch
+    Logs/Birch_Log_Snow_04.prefab
+  uploadId: 809008
