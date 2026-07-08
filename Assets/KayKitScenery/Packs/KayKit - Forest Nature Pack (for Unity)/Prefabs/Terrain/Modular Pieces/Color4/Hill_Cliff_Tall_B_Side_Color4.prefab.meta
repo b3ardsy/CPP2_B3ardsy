@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 603bc24d7124f8141b9be032d05b7d9b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 318400
+  packageName: KayKit - Forest Nature Pack (for Unity)
+  packageVersion: 1.0.1
+  assetPath: Assets/KayKit/Packs/KayKit - Forest Nature Pack (for Unity)/Prefabs/Terrain/Modular
+    Pieces/Color4/Hill_Cliff_Tall_B_Side_Color4.prefab
+  uploadId: 814456

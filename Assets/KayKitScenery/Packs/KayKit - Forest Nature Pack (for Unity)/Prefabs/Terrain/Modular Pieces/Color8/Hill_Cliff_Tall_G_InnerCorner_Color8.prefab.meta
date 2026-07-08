@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: da2506fca70a36346a7c224bce672e2a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 318400
+  packageName: KayKit - Forest Nature Pack (for Unity)
+  packageVersion: 1.0.1
+  assetPath: Assets/KayKit/Packs/KayKit - Forest Nature Pack (for Unity)/Prefabs/Terrain/Modular
+    Pieces/Color8/Hill_Cliff_Tall_G_InnerCorner_Color8.prefab
+  uploadId: 814456
