@@ -2,21 +2,29 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Animator))]
 public class PlayerMovement3D : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float runSpeed = 8f;
     [SerializeField] private float turnSpeed = 12f;
     [SerializeField] private float jumpForce = 6f;
     [SerializeField] private Transform cameraTransform;
 
     private Rigidbody rb;
+    private Animator animator;
+
     private Vector3 moveDirection;
     private bool jumpPressed;
-    private bool isGrounded;
+    private bool isGrounded = true;
+    private bool wasGrounded = true;
+    private bool isRunning;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
+
         rb.freezeRotation = true;
 
         if (cameraTransform == null && Camera.main != null)
@@ -43,10 +51,15 @@ public class PlayerMovement3D : MonoBehaviour
 
         moveDirection = (camForward * input.y + camRight * input.x).normalized;
 
+        isRunning = Keyboard.current.leftShiftKey.isPressed && moveDirection.sqrMagnitude > 0.01f;
+
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
         {
             jumpPressed = true;
+            animator.SetTrigger("Jump");
         }
+
+        UpdateAnimator();
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
@@ -57,7 +70,9 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector3 velocity = moveDirection * moveSpeed;
+        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+
+        Vector3 velocity = moveDirection * currentSpeed;
         rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
 
         if (moveDirection.sqrMagnitude > 0.01f)
@@ -70,9 +85,26 @@ public class PlayerMovement3D : MonoBehaviour
         {
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+
             jumpPressed = false;
             isGrounded = false;
         }
+    }
+
+    private void UpdateAnimator()
+    {
+        float speedValue = moveDirection.magnitude;
+
+        animator.SetFloat("Speed", speedValue);
+        animator.SetBool("IsRunning", isRunning);
+        animator.SetBool("IsGrounded", isGrounded);
+
+        if (!wasGrounded && isGrounded)
+        {
+            animator.SetTrigger("Land");
+        }
+
+        wasGrounded = isGrounded;
     }
 
     private void OnCollisionStay(Collision collision)
