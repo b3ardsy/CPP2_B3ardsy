@@ -5,19 +5,30 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PlayerMovement3D : MonoBehaviour
 {
+    [Header("Movement")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float runSpeed = 8f;
     [SerializeField] private float turnSpeed = 12f;
+
+    [Header("Jump")]
     [SerializeField] private float jumpForce = 6f;
+
+    [Header("References")]
     [SerializeField] private Transform cameraTransform;
+
+    [Header("Ground Check")]
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundCheckRadius = 0.25f;
+    [SerializeField] private LayerMask groundLayer;
 
     private Rigidbody rb;
     private Animator animator;
 
     private Vector3 moveDirection;
+
     private bool jumpPressed;
-    private bool isGrounded = true;
-    private bool wasGrounded = true;
+    private bool isGrounded;
+    private bool wasGrounded;
     private bool isRunning;
 
     private void Awake()
@@ -28,17 +39,33 @@ public class PlayerMovement3D : MonoBehaviour
         rb.freezeRotation = true;
 
         if (cameraTransform == null && Camera.main != null)
+        {
             cameraTransform = Camera.main.transform;
+        }
+
+        if (groundCheck == null)
+        {
+            Debug.LogWarning("PlayerMovement3D: GroundCheck reference is missing.");
+        }
     }
 
     private void Update()
     {
+        CheckGrounded();
+
         Vector2 input = Vector2.zero;
 
-        if (Keyboard.current.aKey.isPressed) input.x -= 1;
-        if (Keyboard.current.dKey.isPressed) input.x += 1;
-        if (Keyboard.current.sKey.isPressed) input.y -= 1;
-        if (Keyboard.current.wKey.isPressed) input.y += 1;
+        if (Keyboard.current.aKey.isPressed)
+            input.x -= 1f;
+
+        if (Keyboard.current.dKey.isPressed)
+            input.x += 1f;
+
+        if (Keyboard.current.sKey.isPressed)
+            input.y -= 1f;
+
+        if (Keyboard.current.wKey.isPressed)
+            input.y += 1f;
 
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
@@ -49,9 +76,12 @@ public class PlayerMovement3D : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
-        moveDirection = (camForward * input.y + camRight * input.x).normalized;
+        moveDirection =
+            (camForward * input.y + camRight * input.x).normalized;
 
-        isRunning = Keyboard.current.leftShiftKey.isPressed && moveDirection.sqrMagnitude > 0.01f;
+        isRunning =
+            Keyboard.current.leftShiftKey.isPressed &&
+            moveDirection.sqrMagnitude > 0.01f;
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
         {
@@ -73,30 +103,68 @@ public class PlayerMovement3D : MonoBehaviour
         float currentSpeed = isRunning ? runSpeed : walkSpeed;
 
         Vector3 velocity = moveDirection * currentSpeed;
-        rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+
+        rb.linearVelocity = new Vector3(
+            velocity.x,
+            rb.linearVelocity.y,
+            velocity.z
+        );
 
         if (moveDirection.sqrMagnitude > 0.01f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, turnSpeed * Time.fixedDeltaTime));
+            Quaternion targetRotation =
+                Quaternion.LookRotation(moveDirection);
+
+            rb.MoveRotation(
+                Quaternion.Slerp(
+                    rb.rotation,
+                    targetRotation,
+                    turnSpeed * Time.fixedDeltaTime
+                )
+            );
         }
 
         if (jumpPressed)
         {
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            rb.linearVelocity = new Vector3(
+                rb.linearVelocity.x,
+                0f,
+                rb.linearVelocity.z
+            );
+
+            rb.AddForce(
+                Vector3.up * jumpForce,
+                ForceMode.Impulse
+            );
 
             jumpPressed = false;
             isGrounded = false;
         }
     }
 
+    private void CheckGrounded()
+    {
+        if (groundCheck == null)
+        {
+            isGrounded = false;
+            return;
+        }
+
+        isGrounded = Physics.CheckSphere(
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
+    }
+
     private void UpdateAnimator()
     {
-        float speedValue = moveDirection.magnitude;
+        float speedValue =
+            isGrounded ? moveDirection.magnitude : 0f;
 
         animator.SetFloat("Speed", speedValue);
-        animator.SetBool("IsRunning", isRunning);
+        animator.SetBool("IsRunning", isRunning && isGrounded);
         animator.SetBool("IsGrounded", isGrounded);
 
         if (!wasGrounded && isGrounded)
@@ -107,13 +175,14 @@ public class PlayerMovement3D : MonoBehaviour
         wasGrounded = isGrounded;
     }
 
-    private void OnCollisionStay(Collision collision)
+    private void OnDrawGizmosSelected()
     {
-        isGrounded = true;
-    }
+        if (groundCheck == null)
+            return;
 
-    private void OnCollisionExit(Collision collision)
-    {
-        isGrounded = false;
+        Gizmos.DrawWireSphere(
+            groundCheck.position,
+            groundCheckRadius
+        );
     }
 }
