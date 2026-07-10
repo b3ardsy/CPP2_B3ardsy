@@ -31,6 +31,10 @@ public class PlayerMovement3D : MonoBehaviour
     private bool wasGrounded;
     private bool isRunning;
 
+    // Stores the movement speed used when the player leaves the ground.
+    // Pressing or releasing Shift in the air will not change this value.
+    private float airborneSpeed;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -43,10 +47,26 @@ public class PlayerMovement3D : MonoBehaviour
             cameraTransform = Camera.main.transform;
         }
 
+        if (cameraTransform == null)
+        {
+            Debug.LogError(
+                "PlayerMovement3D: Camera Transform reference is missing."
+            );
+
+            enabled = false;
+            return;
+        }
+
         if (groundCheck == null)
         {
-            Debug.LogWarning("PlayerMovement3D: GroundCheck reference is missing.");
+            Debug.LogWarning(
+                "PlayerMovement3D: GroundCheck reference is missing."
+            );
         }
+
+        // Prevents airborneSpeed from starting at zero if the player
+        // begins the scene slightly above the ground.
+        airborneSpeed = walkSpeed;
     }
 
     private void Update()
@@ -56,16 +76,24 @@ public class PlayerMovement3D : MonoBehaviour
         Vector2 input = Vector2.zero;
 
         if (Keyboard.current.aKey.isPressed)
+        {
             input.x -= 1f;
+        }
 
         if (Keyboard.current.dKey.isPressed)
+        {
             input.x += 1f;
+        }
 
         if (Keyboard.current.sKey.isPressed)
+        {
             input.y -= 1f;
+        }
 
         if (Keyboard.current.wKey.isPressed)
+        {
             input.y += 1f;
+        }
 
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
@@ -79,12 +107,25 @@ public class PlayerMovement3D : MonoBehaviour
         moveDirection =
             (camForward * input.y + camRight * input.x).normalized;
 
-        isRunning =
-            Keyboard.current.leftShiftKey.isPressed &&
-            moveDirection.sqrMagnitude > 0.01f;
-
-        if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
+        // Shift only changes the player's movement state while grounded.
+        // This prevents midair walk/run speed switching.
+        if (isGrounded)
         {
+            isRunning =
+                Keyboard.current.leftShiftKey.isPressed &&
+                moveDirection.sqrMagnitude > 0.01f;
+        }
+
+        if (
+            Keyboard.current.spaceKey.wasPressedThisFrame &&
+            isGrounded
+        )
+        {
+            // Lock in the current movement speed for the duration
+            // of the jump.
+            airborneSpeed =
+                isRunning ? runSpeed : walkSpeed;
+
             jumpPressed = true;
             animator.SetTrigger("Jump");
         }
@@ -100,9 +141,20 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void FixedUpdate()
     {
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        float currentSpeed;
 
-        Vector3 velocity = moveDirection * currentSpeed;
+        if (isGrounded)
+        {
+            currentSpeed =
+                isRunning ? runSpeed : walkSpeed;
+        }
+        else
+        {
+            currentSpeed = airborneSpeed;
+        }
+
+        Vector3 velocity =
+            moveDirection * currentSpeed;
 
         rb.linearVelocity = new Vector3(
             velocity.x,
@@ -164,8 +216,14 @@ public class PlayerMovement3D : MonoBehaviour
             isGrounded ? moveDirection.magnitude : 0f;
 
         animator.SetFloat("Speed", speedValue);
-        animator.SetBool("IsRunning", isRunning && isGrounded);
-        animator.SetBool("IsGrounded", isGrounded);
+        animator.SetBool(
+            "IsRunning",
+            isRunning && isGrounded
+        );
+        animator.SetBool(
+            "IsGrounded",
+            isGrounded
+        );
 
         if (!wasGrounded && isGrounded)
         {
@@ -178,7 +236,9 @@ public class PlayerMovement3D : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         if (groundCheck == null)
+        {
             return;
+        }
 
         Gizmos.DrawWireSphere(
             groundCheck.position,

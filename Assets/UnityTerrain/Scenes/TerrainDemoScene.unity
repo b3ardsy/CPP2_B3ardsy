@@ -1854,6 +1854,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Druid
       objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: cameraTransform
+      value: 
+      objectReference: {fileID: 991719597}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: collisionLayers.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2989,6 +2997,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 1766490383188478063, guid: a93f80d252523a14d9206681c7713ce8, type: 3}
   m_PrefabInstance: {fileID: 943253373}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &991719597 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7468378734651127450, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+  m_PrefabInstance: {fileID: 439213304}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &992462423
 PrefabInstance:
