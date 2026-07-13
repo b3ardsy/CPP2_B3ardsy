@@ -15,6 +15,7 @@ public class PlayerMovement3D : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
+    [SerializeField] private PlayerCombat playerCombat;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
@@ -40,6 +41,11 @@ public class PlayerMovement3D : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
 
+        if (playerCombat == null)
+        {
+            playerCombat = GetComponent<PlayerCombat>();
+        }
+
         rb.freezeRotation = true;
 
         if (cameraTransform == null && Camera.main != null)
@@ -64,14 +70,38 @@ public class PlayerMovement3D : MonoBehaviour
             );
         }
 
-        // Prevents airborneSpeed from starting at zero if the player
-        // begins the scene slightly above the ground.
         airborneSpeed = walkSpeed;
     }
 
     private void Update()
     {
         CheckGrounded();
+
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        bool isAttacking =
+            playerCombat != null &&
+            playerCombat.IsAttacking;
+
+        if (isAttacking)
+        {
+            moveDirection = Vector3.zero;
+            isRunning = false;
+            jumpPressed = false;
+
+            UpdateAnimator();
+
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+
+            return;
+        }
 
         Vector2 input = Vector2.zero;
 
@@ -107,8 +137,6 @@ public class PlayerMovement3D : MonoBehaviour
         moveDirection =
             (camForward * input.y + camRight * input.x).normalized;
 
-        // Shift only changes the player's movement state while grounded.
-        // This prevents midair walk/run speed switching.
         if (isGrounded)
         {
             isRunning =
@@ -121,8 +149,6 @@ public class PlayerMovement3D : MonoBehaviour
             isGrounded
         )
         {
-            // Lock in the current movement speed for the duration
-            // of the jump.
             airborneSpeed =
                 isRunning ? runSpeed : walkSpeed;
 
@@ -141,6 +167,16 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        bool isAttacking =
+            playerCombat != null &&
+            playerCombat.IsAttacking;
+
+        if (isAttacking)
+        {
+            StopHorizontalMovement();
+            return;
+        }
+
         float currentSpeed;
 
         if (isGrounded)
@@ -194,6 +230,15 @@ public class PlayerMovement3D : MonoBehaviour
         }
     }
 
+    private void StopHorizontalMovement()
+    {
+        rb.linearVelocity = new Vector3(
+            0f,
+            rb.linearVelocity.y,
+            0f
+        );
+    }
+
     private void CheckGrounded()
     {
         if (groundCheck == null)
@@ -215,11 +260,16 @@ public class PlayerMovement3D : MonoBehaviour
         float speedValue =
             isGrounded ? moveDirection.magnitude : 0f;
 
-        animator.SetFloat("Speed", speedValue);
+        animator.SetFloat(
+            "Speed",
+            speedValue
+        );
+
         animator.SetBool(
             "IsRunning",
             isRunning && isGrounded
         );
+
         animator.SetBool(
             "IsGrounded",
             isGrounded
