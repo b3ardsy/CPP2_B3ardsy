@@ -469,9 +469,21 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: zoomSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 434685674}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: maxZoomDistance
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: minZoomDistance
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: minimumCameraDistance
       value: 0.5

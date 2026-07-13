@@ -20,6 +20,12 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float startingYawOffset = 0f;
     [SerializeField] private float heightOffset = 1.5f;
 
+    [Header("Zoom")]
+    [SerializeField] private float zoomSpeed = 0.02f;
+    [SerializeField] private float zoomSmoothSpeed = 10f;
+    [SerializeField] private float minZoomDistance = 2f;
+    [SerializeField] private float maxZoomDistance = 8f;
+
     [Header("Camera Collision")]
     [SerializeField] private LayerMask collisionLayers;
     [SerializeField] private float collisionRadius = 0.25f;
@@ -30,6 +36,9 @@ public class ThirdPersonCamera : MonoBehaviour
     private float pitch;
 
     private Vector3 defaultCameraLocalPosition;
+
+    private float currentZoomDistance;
+    private float targetZoomDistance;
 
     // Ignore the first few frames to prevent an initial mouse jump.
     private int framesToIgnore = 5;
@@ -58,6 +67,11 @@ public class ThirdPersonCamera : MonoBehaviour
 
         defaultCameraLocalPosition =
             cameraTransform.localPosition;
+
+        currentZoomDistance =
+            Mathf.Abs(defaultCameraLocalPosition.z);
+
+        targetZoomDistance = currentZoomDistance;
 
         pitch = startingPitch;
         yaw = player.eulerAngles.y + startingYawOffset;
@@ -105,6 +119,34 @@ public class ThirdPersonCamera : MonoBehaviour
             minPitch,
             maxPitch
         );
+
+        // Mouse wheel zoom.
+        float scroll =
+            Mouse.current.scroll.ReadValue().y;
+
+        if (Mathf.Abs(scroll) > 0.01f)
+        {
+            targetZoomDistance -=
+                scroll * zoomSpeed;
+
+            targetZoomDistance =
+                Mathf.Clamp(
+                    targetZoomDistance,
+                    minZoomDistance,
+                    maxZoomDistance
+                );
+        }
+
+        // Smoothly move toward the target zoom.
+        currentZoomDistance =
+            Mathf.Lerp(
+                currentZoomDistance,
+                targetZoomDistance,
+                Time.deltaTime * zoomSmoothSpeed
+            );
+
+        defaultCameraLocalPosition.z =
+            -currentZoomDistance;
 
         ApplyCameraPosition();
     }
