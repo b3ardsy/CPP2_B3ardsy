@@ -14,6 +14,9 @@ public abstract class Enemy : MonoBehaviour
     protected int currentHealth;
     protected bool isDead;
 
+    public bool IsDead => isDead;
+    public Transform LockOnTarget => transform;
+
     protected static readonly int HitTrigger =
         Animator.StringToHash("Hit");
 
