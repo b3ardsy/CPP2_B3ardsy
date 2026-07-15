@@ -22,7 +22,13 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float heightOffset = 1.5f;
 
     [Header("Lock-On Camera")]
+    [SerializeField] private float lockOnHeightOffset = 2.5f;
     [SerializeField] private float lockOnRotationSmoothTime = 0.12f;
+
+    [Header("Shoulder Camera")]
+    [SerializeField] private float shoulderOffset = 0.65f;
+    [SerializeField] private float shoulderSwitchSpeed = 8f;
+    [SerializeField] private bool startOnRightShoulder = true;
 
     [Header("Zoom")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -46,6 +52,11 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private float currentZoomDistance;
     private float targetZoomDistance;
+
+    private float currentShoulderOffset;
+    private float targetShoulderOffset;
+
+    private bool isRightShoulder;
 
     // Ignore the first few frames to prevent an initial mouse jump.
     private int framesToIgnore = 5;
@@ -95,6 +106,20 @@ public class ThirdPersonCamera : MonoBehaviour
         targetZoomDistance =
             currentZoomDistance;
 
+        isRightShoulder =
+            startOnRightShoulder;
+
+        targetShoulderOffset =
+            isRightShoulder
+                ? shoulderOffset
+                : -shoulderOffset;
+
+        currentShoulderOffset =
+            targetShoulderOffset;
+
+        defaultCameraLocalPosition.x =
+            currentShoulderOffset;
+
         pitch = startingPitch;
 
         yaw =
@@ -117,11 +142,13 @@ public class ThirdPersonCamera : MonoBehaviour
         }
 
         HandleCursor();
+        HandleShoulderSwitch();
 
         if (framesToIgnore > 0)
         {
             framesToIgnore--;
 
+            UpdateShoulderPosition();
             ApplyCameraPosition();
             return;
         }
@@ -140,6 +167,7 @@ public class ThirdPersonCamera : MonoBehaviour
         }
 
         UpdateZoom();
+        UpdateShoulderPosition();
         ApplyCameraPosition();
     }
 
@@ -179,7 +207,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
         Vector3 pivotPosition =
             player.position +
-            Vector3.up * heightOffset;
+            Vector3.up * lockOnHeightOffset;
 
         Vector3 targetPosition =
             playerLockOn.CurrentTargetPosition;
@@ -235,6 +263,41 @@ public class ThirdPersonCamera : MonoBehaviour
         );
     }
 
+    private void HandleShoulderSwitch()
+    {
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (!Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        isRightShoulder =
+            !isRightShoulder;
+
+        targetShoulderOffset =
+            isRightShoulder
+                ? shoulderOffset
+                : -shoulderOffset;
+    }
+
+    private void UpdateShoulderPosition()
+    {
+        currentShoulderOffset =
+            Mathf.Lerp(
+                currentShoulderOffset,
+                targetShoulderOffset,
+                Time.deltaTime *
+                shoulderSwitchSpeed
+            );
+
+        defaultCameraLocalPosition.x =
+            currentShoulderOffset;
+    }
+
     private void UpdateZoom()
     {
         float scroll =
@@ -266,9 +329,19 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private void ApplyCameraPosition()
     {
+        bool isLockedOn =
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn;
+
+        float activeHeightOffset =
+            isLockedOn
+                ? lockOnHeightOffset
+                : heightOffset;
+
         transform.position =
             player.position +
-            Vector3.up * heightOffset;
+            Vector3.up *
+            activeHeightOffset;
 
         transform.rotation =
             Quaternion.Euler(

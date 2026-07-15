@@ -533,6 +533,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 416025678}
     - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: shoulderOffset
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 434685674}
