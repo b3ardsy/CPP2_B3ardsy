@@ -6,6 +6,7 @@ public class ThirdPersonCamera : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform player;
     [SerializeField] private Transform cameraTransform;
+    [SerializeField] private PlayerLockOn playerLockOn;
 
     [Header("Mouse")]
     [SerializeField] private float mouseSensitivityX = 0.35f;
@@ -19,6 +20,10 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float startingPitch = 10f;
     [SerializeField] private float startingYawOffset = 0f;
     [SerializeField] private float heightOffset = 1.5f;
+
+    [Header("Lock-On Camera")]
+    [SerializeField] private float lockOnTargetHeight = 1f;
+    [SerializeField] private float lockOnRotationSmoothTime = 0.12f;
 
     [Header("Zoom")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -34,6 +39,9 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private float yaw;
     private float pitch;
+
+    private float yawSmoothVelocity;
+    private float pitchSmoothVelocity;
 
     private Vector3 defaultCameraLocalPosition;
 
@@ -65,16 +73,33 @@ public class ThirdPersonCamera : MonoBehaviour
             return;
         }
 
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                player.GetComponent<PlayerLockOn>();
+        }
+
+        if (playerLockOn == null)
+        {
+            Debug.LogWarning(
+                "ThirdPersonCamera: PlayerLockOn was not found. " +
+                "The camera will continue to use free-look only."
+            );
+        }
+
         defaultCameraLocalPosition =
             cameraTransform.localPosition;
 
         currentZoomDistance =
             Mathf.Abs(defaultCameraLocalPosition.z);
 
-        targetZoomDistance = currentZoomDistance;
+        targetZoomDistance =
+            currentZoomDistance;
 
         pitch = startingPitch;
-        yaw = player.eulerAngles.y + startingYawOffset;
+        yaw =
+            player.eulerAngles.y +
+            startingYawOffset;
 
         ApplyCameraPosition();
     }
@@ -87,32 +112,49 @@ public class ThirdPersonCamera : MonoBehaviour
     private void LateUpdate()
     {
         if (Mouse.current == null)
+        {
             return;
-
-        // Press Escape to unlock the cursor while testing.
-        if (Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            UnlockCursor();
         }
 
-        // Left-click to lock it again.
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            LockCursor();
-        }
+        HandleCursor();
 
         if (framesToIgnore > 0)
         {
             framesToIgnore--;
+
             ApplyCameraPosition();
             return;
         }
 
+        bool isLockedOn =
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn;
+
+        if (isLockedOn)
+        {
+            UpdateLockOnRotation();
+        }
+        else
+        {
+            UpdateFreeLookRotation();
+        }
+
+        UpdateZoom();
+        ApplyCameraPosition();
+    }
+
+    private void UpdateFreeLookRotation()
+    {
         Vector2 mouseDelta =
             Mouse.current.delta.ReadValue();
 
-        yaw += mouseDelta.x * mouseSensitivityX;
-        pitch -= mouseDelta.y * mouseSensitivityY;
+        yaw +=
+            mouseDelta.x *
+            mouseSensitivityX;
+
+        pitch -=
+            mouseDelta.y *
+            mouseSensitivityY;
 
         pitch = Mathf.Clamp(
             pitch,
@@ -120,7 +162,79 @@ public class ThirdPersonCamera : MonoBehaviour
             maxPitch
         );
 
-        // Mouse wheel zoom.
+        // Clear the lock-on smoothing velocity so the camera
+        // responds immediately when free-look resumes.
+        yawSmoothVelocity = 0f;
+        pitchSmoothVelocity = 0f;
+    }
+
+    private void UpdateLockOnRotation()
+    {
+        Transform target =
+            playerLockOn.CurrentTargetTransform;
+
+        if (target == null)
+        {
+            return;
+        }
+
+        Vector3 pivotPosition =
+            player.position +
+            Vector3.up * heightOffset;
+
+        Vector3 targetPosition =
+            target.position +
+            Vector3.up * lockOnTargetHeight;
+
+        Vector3 directionToTarget =
+            targetPosition - pivotPosition;
+
+        if (directionToTarget.sqrMagnitude <= 0.001f)
+        {
+            return;
+        }
+
+        float targetYaw =
+            Mathf.Atan2(
+                directionToTarget.x,
+                directionToTarget.z
+            ) * Mathf.Rad2Deg;
+
+        float horizontalDistance =
+            new Vector2(
+                directionToTarget.x,
+                directionToTarget.z
+            ).magnitude;
+
+        float targetPitch =
+            -Mathf.Atan2(
+                directionToTarget.y,
+                horizontalDistance
+            ) * Mathf.Rad2Deg;
+
+        targetPitch = Mathf.Clamp(
+            targetPitch,
+            minPitch,
+            maxPitch
+        );
+
+        yaw = Mathf.SmoothDampAngle(
+            yaw,
+            targetYaw,
+            ref yawSmoothVelocity,
+            lockOnRotationSmoothTime
+        );
+
+        pitch = Mathf.SmoothDampAngle(
+            pitch,
+            targetPitch,
+            ref pitchSmoothVelocity,
+            lockOnRotationSmoothTime
+        );
+    }
+
+    private void UpdateZoom()
+    {
         float scroll =
             Mouse.current.scroll.ReadValue().y;
 
@@ -129,35 +243,37 @@ public class ThirdPersonCamera : MonoBehaviour
             targetZoomDistance -=
                 scroll * zoomSpeed;
 
-            targetZoomDistance =
-                Mathf.Clamp(
-                    targetZoomDistance,
-                    minZoomDistance,
-                    maxZoomDistance
-                );
+            targetZoomDistance = Mathf.Clamp(
+                targetZoomDistance,
+                minZoomDistance,
+                maxZoomDistance
+            );
         }
 
-        // Smoothly move toward the target zoom.
         currentZoomDistance =
             Mathf.Lerp(
                 currentZoomDistance,
                 targetZoomDistance,
-                Time.deltaTime * zoomSmoothSpeed
+                Time.deltaTime *
+                zoomSmoothSpeed
             );
 
         defaultCameraLocalPosition.z =
             -currentZoomDistance;
-
-        ApplyCameraPosition();
     }
 
     private void ApplyCameraPosition()
     {
         transform.position =
-            player.position + Vector3.up * heightOffset;
+            player.position +
+            Vector3.up * heightOffset;
 
         transform.rotation =
-            Quaternion.Euler(pitch, yaw, 0f);
+            Quaternion.Euler(
+                pitch,
+                yaw,
+                0f
+            );
 
         HandleCameraCollision();
     }
@@ -173,13 +289,16 @@ public class ThirdPersonCamera : MonoBehaviour
             );
 
         Vector3 direction =
-            desiredCameraPosition - pivotPosition;
+            desiredCameraPosition -
+            pivotPosition;
 
         float desiredDistance =
             direction.magnitude;
 
         if (desiredDistance <= 0.01f)
+        {
             return;
+        }
 
         direction.Normalize();
 
@@ -200,7 +319,8 @@ public class ThirdPersonCamera : MonoBehaviour
         if (obstructionFound)
         {
             correctedDistance =
-                hit.distance - collisionBuffer;
+                hit.distance -
+                collisionBuffer;
 
             correctedDistance = Mathf.Clamp(
                 correctedDistance,
@@ -211,10 +331,29 @@ public class ThirdPersonCamera : MonoBehaviour
 
         cameraTransform.position =
             pivotPosition +
-            direction * correctedDistance;
+            direction *
+            correctedDistance;
 
         cameraTransform.rotation =
             transform.rotation;
+    }
+
+    private void HandleCursor()
+    {
+        if (
+            Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame
+        )
+        {
+            UnlockCursor();
+        }
+
+        if (
+            Mouse.current.leftButton.wasPressedThisFrame
+        )
+        {
+            LockCursor();
+        }
     }
 
     private void LockCursor()
