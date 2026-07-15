@@ -21,6 +21,7 @@ public class PlayerMovement3D : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerLockOn playerLockOn;
+    [SerializeField] private PlayerDodge playerDodge;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
@@ -82,6 +83,12 @@ public class PlayerMovement3D : MonoBehaviour
                 GetComponent<PlayerLockOn>();
         }
 
+        if (playerDodge == null)
+        {
+            playerDodge =
+                GetComponent<PlayerDodge>();
+        }
+
         rb.freezeRotation = true;
 
         if (
@@ -110,6 +117,14 @@ public class PlayerMovement3D : MonoBehaviour
             );
         }
 
+        if (playerDodge == null)
+        {
+            Debug.LogWarning(
+                "PlayerMovement3D: PlayerDodge was not found. " +
+                "Locked-on dodging will be unavailable."
+            );
+        }
+
         airborneSpeed = walkSpeed;
     }
 
@@ -126,14 +141,20 @@ public class PlayerMovement3D : MonoBehaviour
             playerCombat != null &&
             playerCombat.IsAttacking;
 
-        if (isAttacking)
+        bool isDodging =
+            playerDodge != null &&
+            playerDodge.IsDodging;
+
+        /*
+         * Keep the current directional input available before
+         * starting a dodge. This determines which dodge animation
+         * and movement direction PlayerDodge will select.
+         */
+        ReadMovementInput();
+
+        if (isDodging)
         {
-            movementInput =
-                Vector2.zero;
-
-            moveDirection =
-                Vector3.zero;
-
+            moveDirection = Vector3.zero;
             isRunning = false;
             jumpPressed = false;
 
@@ -143,10 +164,22 @@ public class PlayerMovement3D : MonoBehaviour
             return;
         }
 
-        ReadMovementInput();
+        if (isAttacking)
+        {
+            movementInput = Vector2.zero;
+            moveDirection = Vector3.zero;
+            isRunning = false;
+            jumpPressed = false;
+
+            UpdateAnimator();
+            HandleCursorUnlock();
+
+            return;
+        }
+
         CalculateMoveDirection();
         UpdateRunningState();
-        HandleJump();
+        HandleJumpOrDodge();
 
         UpdateAnimator();
         HandleCursorUnlock();
@@ -275,8 +308,7 @@ public class PlayerMovement3D : MonoBehaviour
 
         if (isLockedOn)
         {
-            // Normal running is disabled while using
-            // lock-on locomotion.
+            // Normal running is disabled during lock-on.
             isRunning = false;
             return;
         }
@@ -293,39 +325,48 @@ public class PlayerMovement3D : MonoBehaviour
         }
     }
 
-    private void HandleJump()
+    private void HandleJumpOrDodge()
     {
         if (
-            Keyboard.current
+            !Keyboard.current
                 .spaceKey
-                .wasPressedThisFrame &&
-
-            isGrounded
+                .wasPressedThisFrame
         )
         {
-            bool isLockedOn =
-                playerLockOn != null &&
-                playerLockOn.IsLockedOn;
-
-            if (isLockedOn)
-            {
-                airborneSpeed =
-                    lockOnMoveSpeed;
-            }
-            else
-            {
-                airborneSpeed =
-                    isRunning
-                        ? runSpeed
-                        : walkSpeed;
-            }
-
-            jumpPressed = true;
-
-            animator.SetTrigger(
-                JumpTrigger
-            );
+            return;
         }
+
+        if (!isGrounded)
+        {
+            return;
+        }
+
+        bool isLockedOn =
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn;
+
+        if (isLockedOn)
+        {
+            if (playerDodge != null)
+            {
+                playerDodge.TryDodge(
+                    movementInput
+                );
+            }
+
+            return;
+        }
+
+        airborneSpeed =
+            isRunning
+                ? runSpeed
+                : walkSpeed;
+
+        jumpPressed = true;
+
+        animator.SetTrigger(
+            JumpTrigger
+        );
     }
 
     private void FixedUpdate()
@@ -337,6 +378,22 @@ public class PlayerMovement3D : MonoBehaviour
         bool isAttacking =
             playerCombat != null &&
             playerCombat.IsAttacking;
+
+        bool isDodging =
+            playerDodge != null &&
+            playerDodge.IsDodging;
+
+        if (isDodging)
+        {
+            playerDodge.ApplyDodgeMovement();
+
+            if (isLockedOn)
+            {
+                RotateTowardLockOnTarget();
+            }
+
+            return;
+        }
 
         if (isAttacking)
         {
@@ -510,8 +567,13 @@ public class PlayerMovement3D : MonoBehaviour
             playerLockOn != null &&
             playerLockOn.IsLockedOn;
 
+        bool isDodging =
+            playerDodge != null &&
+            playerDodge.IsDodging;
+
         float speedValue =
-            isGrounded
+            isGrounded &&
+            !isDodging
                 ? moveDirection.magnitude
                 : 0f;
 
@@ -523,7 +585,8 @@ public class PlayerMovement3D : MonoBehaviour
         animator.SetBool(
             IsRunningBool,
             isRunning &&
-            isGrounded
+            isGrounded &&
+            !isDodging
         );
 
         animator.SetBool(
@@ -538,13 +601,15 @@ public class PlayerMovement3D : MonoBehaviour
 
         float lockOnHorizontal =
             isLockedOn &&
-            isGrounded
+            isGrounded &&
+            !isDodging
                 ? movementInput.x
                 : 0f;
 
         float lockOnVertical =
             isLockedOn &&
-            isGrounded
+            isGrounded &&
+            !isDodging
                 ? movementInput.y
                 : 0f;
 

@@ -129,7 +129,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0.0000016541869, y: 0.0000048558372, z: -90.00001}
 --- !u!1 &-7016320567714146930
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_Children:
   - {fileID: 4620971032708974589}
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0.0000006003103, y: -0.000002841468, z: 90.00001}
 --- !u!1 &-129758803659467788
 GameObject:
   m_ObjectHideFlags: 0
@@ -872,9 +872,11 @@ GameObject:
   - component: {fileID: 1157173817122883046}
   - component: {fileID: 1703729817657369139}
   - component: {fileID: 7388450041393902632}
+  - component: {fileID: 193604228469644403}
+  - component: {fileID: 8985355908063834351}
   m_Layer: 0
   m_Name: Druid
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -991,14 +993,51 @@ MonoBehaviour:
   walkSpeed: 7
   runSpeed: 14
   turnSpeed: 7
+  lockOnMoveSpeed: 4
+  lockOnTurnSpeed: 15
   jumpForce: 6
   cameraTransform: {fileID: 7468378734651127450}
-  playerCombat: {fileID: 0}
+  playerCombat: {fileID: 193604228469644403}
+  playerLockOn: {fileID: 8985355908063834351}
   groundCheck: {fileID: 7120974878261079561}
   groundCheckRadius: 0.2
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+--- !u!114 &193604228469644403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b678a4ad5237d8046928644b1e89c0bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  animator: {fileID: 7937088398246958496}
+  attackDuration: 0.7
+  attackCooldown: 0.7
+--- !u!114 &8985355908063834351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9152fb5304ad2084e9cf31bf1f998e3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLockOn
+  cameraTransform: {fileID: 7468378734651127450}
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  detectionRadius: 15
+  maximumLockAngle: 60
+  breakLockDistance: 20
 --- !u!1 &1115911922453957853
 GameObject:
   m_ObjectHideFlags: 0
@@ -1025,7 +1064,7 @@ Transform:
   m_GameObject: {fileID: 1115911922453957853}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -1.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1045,7 +1084,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonCamera
   player: {fileID: -8679921383154817045}
-  cameraTransform: {fileID: 0}
+  cameraTransform: {fileID: 7468378734651127450}
+  playerLockOn: {fileID: 8985355908063834351}
   mouseSensitivityX: 0.35
   mouseSensitivityY: 0.35
   minPitch: -25
@@ -1053,13 +1093,18 @@ MonoBehaviour:
   startingPitch: 10
   startingYawOffset: 0
   heightOffset: 1.5
-  zoomSpeed: 0.02
+  lockOnHeightOffset: 2.5
+  lockOnRotationSmoothTime: 0.12
+  shoulderOffset: 1
+  shoulderSwitchSpeed: 8
+  startOnRightShoulder: 1
+  zoomSpeed: 2
   zoomSmoothSpeed: 10
-  minZoomDistance: 2
-  maxZoomDistance: 8
+  minZoomDistance: 3
+  maxZoomDistance: 10
   collisionLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   collisionRadius: 0.25
   collisionBuffer: 0.1
   minimumCameraDistance: 0.5
@@ -1447,7 +1492,7 @@ Transform:
   m_GameObject: {fileID: 5584438390565999856}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -5}
+  m_LocalPosition: {x: 0, y: 0, z: -6.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1529,7 +1574,7 @@ MonoBehaviour:
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: -1
+  m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
     m_Bits: 1
