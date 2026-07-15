@@ -22,7 +22,6 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float heightOffset = 1.5f;
 
     [Header("Lock-On Camera")]
-    [SerializeField] private float lockOnTargetHeight = 1f;
     [SerializeField] private float lockOnRotationSmoothTime = 0.12f;
 
     [Header("Zoom")]
@@ -97,6 +96,7 @@ public class ThirdPersonCamera : MonoBehaviour
             currentZoomDistance;
 
         pitch = startingPitch;
+
         yaw =
             player.eulerAngles.y +
             startingYawOffset;
@@ -162,18 +162,17 @@ public class ThirdPersonCamera : MonoBehaviour
             maxPitch
         );
 
-        // Clear the lock-on smoothing velocity so the camera
-        // responds immediately when free-look resumes.
+        // Clear lock-on smoothing so free-look resumes immediately.
         yawSmoothVelocity = 0f;
         pitchSmoothVelocity = 0f;
     }
 
     private void UpdateLockOnRotation()
     {
-        Transform target =
-            playerLockOn.CurrentTargetTransform;
-
-        if (target == null)
+        if (
+            playerLockOn == null ||
+            !playerLockOn.IsLockedOn
+        )
         {
             return;
         }
@@ -183,13 +182,16 @@ public class ThirdPersonCamera : MonoBehaviour
             Vector3.up * heightOffset;
 
         Vector3 targetPosition =
-            target.position +
-            Vector3.up * lockOnTargetHeight;
+            playerLockOn.CurrentTargetPosition;
 
         Vector3 directionToTarget =
-            targetPosition - pivotPosition;
+            targetPosition -
+            pivotPosition;
 
-        if (directionToTarget.sqrMagnitude <= 0.001f)
+        if (
+            directionToTarget.sqrMagnitude <=
+            0.001f
+        )
         {
             return;
         }

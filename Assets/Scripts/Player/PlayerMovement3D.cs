@@ -72,19 +72,25 @@ public class PlayerMovement3D : MonoBehaviour
 
         if (playerCombat == null)
         {
-            playerCombat = GetComponent<PlayerCombat>();
+            playerCombat =
+                GetComponent<PlayerCombat>();
         }
 
         if (playerLockOn == null)
         {
-            playerLockOn = GetComponent<PlayerLockOn>();
+            playerLockOn =
+                GetComponent<PlayerLockOn>();
         }
 
         rb.freezeRotation = true;
 
-        if (cameraTransform == null && Camera.main != null)
+        if (
+            cameraTransform == null &&
+            Camera.main != null
+        )
         {
-            cameraTransform = Camera.main.transform;
+            cameraTransform =
+                Camera.main.transform;
         }
 
         if (cameraTransform == null)
@@ -122,8 +128,12 @@ public class PlayerMovement3D : MonoBehaviour
 
         if (isAttacking)
         {
-            movementInput = Vector2.zero;
-            moveDirection = Vector3.zero;
+            movementInput =
+                Vector2.zero;
+
+            moveDirection =
+                Vector3.zero;
+
             isRunning = false;
             jumpPressed = false;
 
@@ -144,7 +154,8 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void ReadMovementInput()
     {
-        movementInput = Vector2.zero;
+        movementInput =
+            Vector2.zero;
 
         if (Keyboard.current.aKey.isPressed)
         {
@@ -210,23 +221,31 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void CalculateLockOnMovement()
     {
-        Transform target =
-            playerLockOn.CurrentTargetTransform;
-
-        if (target == null)
+        if (
+            playerLockOn == null ||
+            !playerLockOn.IsLockedOn
+        )
         {
-            moveDirection = Vector3.zero;
+            moveDirection =
+                Vector3.zero;
+
             return;
         }
 
         Vector3 directionToTarget =
-            target.position - transform.position;
+            playerLockOn.CurrentTargetPosition -
+            transform.position;
 
         directionToTarget.y = 0f;
 
-        if (directionToTarget.sqrMagnitude <= 0.001f)
+        if (
+            directionToTarget.sqrMagnitude <=
+            0.001f
+        )
         {
-            moveDirection = Vector3.zero;
+            moveDirection =
+                Vector3.zero;
+
             return;
         }
 
@@ -240,8 +259,11 @@ public class PlayerMovement3D : MonoBehaviour
 
         moveDirection =
             (
-                directionToTarget * movementInput.y +
-                targetRight * movementInput.x
+                directionToTarget *
+                movementInput.y +
+
+                targetRight *
+                movementInput.x
             ).normalized;
     }
 
@@ -253,8 +275,8 @@ public class PlayerMovement3D : MonoBehaviour
 
         if (isLockedOn)
         {
-            // Do not enter the normal running animation
-            // while using lock-on locomotion.
+            // Normal running is disabled while using
+            // lock-on locomotion.
             isRunning = false;
             return;
         }
@@ -262,15 +284,22 @@ public class PlayerMovement3D : MonoBehaviour
         if (isGrounded)
         {
             isRunning =
-                Keyboard.current.leftShiftKey.isPressed &&
-                moveDirection.sqrMagnitude > 0.01f;
+                Keyboard.current
+                    .leftShiftKey
+                    .isPressed &&
+
+                moveDirection.sqrMagnitude >
+                0.01f;
         }
     }
 
     private void HandleJump()
     {
         if (
-            Keyboard.current.spaceKey.wasPressedThisFrame &&
+            Keyboard.current
+                .spaceKey
+                .wasPressedThisFrame &&
+
             isGrounded
         )
         {
@@ -280,16 +309,22 @@ public class PlayerMovement3D : MonoBehaviour
 
             if (isLockedOn)
             {
-                airborneSpeed = lockOnMoveSpeed;
+                airborneSpeed =
+                    lockOnMoveSpeed;
             }
             else
             {
                 airborneSpeed =
-                    isRunning ? runSpeed : walkSpeed;
+                    isRunning
+                        ? runSpeed
+                        : walkSpeed;
             }
 
             jumpPressed = true;
-            animator.SetTrigger(JumpTrigger);
+
+            animator.SetTrigger(
+                JumpTrigger
+            );
         }
     }
 
@@ -321,27 +356,33 @@ public class PlayerMovement3D : MonoBehaviour
         {
             if (isLockedOn)
             {
-                currentSpeed = lockOnMoveSpeed;
+                currentSpeed =
+                    lockOnMoveSpeed;
             }
             else
             {
                 currentSpeed =
-                    isRunning ? runSpeed : walkSpeed;
+                    isRunning
+                        ? runSpeed
+                        : walkSpeed;
             }
         }
         else
         {
-            currentSpeed = airborneSpeed;
+            currentSpeed =
+                airborneSpeed;
         }
 
         Vector3 velocity =
-            moveDirection * currentSpeed;
+            moveDirection *
+            currentSpeed;
 
-        rb.linearVelocity = new Vector3(
-            velocity.x,
-            rb.linearVelocity.y,
-            velocity.z
-        );
+        rb.linearVelocity =
+            new Vector3(
+                velocity.x,
+                rb.linearVelocity.y,
+                velocity.z
+            );
 
         if (isLockedOn)
         {
@@ -354,14 +395,16 @@ public class PlayerMovement3D : MonoBehaviour
 
         if (jumpPressed)
         {
-            rb.linearVelocity = new Vector3(
-                rb.linearVelocity.x,
-                0f,
-                rb.linearVelocity.z
-            );
+            rb.linearVelocity =
+                new Vector3(
+                    rb.linearVelocity.x,
+                    0f,
+                    rb.linearVelocity.z
+                );
 
             rb.AddForce(
-                Vector3.up * jumpForce,
+                Vector3.up *
+                jumpForce,
                 ForceMode.Impulse
             );
 
@@ -372,7 +415,10 @@ public class PlayerMovement3D : MonoBehaviour
 
     private void RotateTowardMovementDirection()
     {
-        if (moveDirection.sqrMagnitude <= 0.01f)
+        if (
+            moveDirection.sqrMagnitude <=
+            0.01f
+        )
         {
             return;
         }
@@ -386,27 +432,32 @@ public class PlayerMovement3D : MonoBehaviour
             Quaternion.Slerp(
                 rb.rotation,
                 targetRotation,
-                turnSpeed * Time.fixedDeltaTime
+                turnSpeed *
+                Time.fixedDeltaTime
             )
         );
     }
 
     private void RotateTowardLockOnTarget()
     {
-        Transform target =
-            playerLockOn.CurrentTargetTransform;
-
-        if (target == null)
+        if (
+            playerLockOn == null ||
+            !playerLockOn.IsLockedOn
+        )
         {
             return;
         }
 
         Vector3 directionToTarget =
-            target.position - transform.position;
+            playerLockOn.CurrentTargetPosition -
+            transform.position;
 
         directionToTarget.y = 0f;
 
-        if (directionToTarget.sqrMagnitude <= 0.001f)
+        if (
+            directionToTarget.sqrMagnitude <=
+            0.001f
+        )
         {
             return;
         }
@@ -420,18 +471,20 @@ public class PlayerMovement3D : MonoBehaviour
             Quaternion.Slerp(
                 rb.rotation,
                 targetRotation,
-                lockOnTurnSpeed * Time.fixedDeltaTime
+                lockOnTurnSpeed *
+                Time.fixedDeltaTime
             )
         );
     }
 
     private void StopHorizontalMovement()
     {
-        rb.linearVelocity = new Vector3(
-            0f,
-            rb.linearVelocity.y,
-            0f
-        );
+        rb.linearVelocity =
+            new Vector3(
+                0f,
+                rb.linearVelocity.y,
+                0f
+            );
     }
 
     private void CheckGrounded()
@@ -442,12 +495,13 @@ public class PlayerMovement3D : MonoBehaviour
             return;
         }
 
-        isGrounded = Physics.CheckSphere(
-            groundCheck.position,
-            groundCheckRadius,
-            groundLayer,
-            QueryTriggerInteraction.Ignore
-        );
+        isGrounded =
+            Physics.CheckSphere(
+                groundCheck.position,
+                groundCheckRadius,
+                groundLayer,
+                QueryTriggerInteraction.Ignore
+            );
     }
 
     private void UpdateAnimator()
@@ -468,7 +522,8 @@ public class PlayerMovement3D : MonoBehaviour
 
         animator.SetBool(
             IsRunningBool,
-            isRunning && isGrounded
+            isRunning &&
+            isGrounded
         );
 
         animator.SetBool(
@@ -482,12 +537,14 @@ public class PlayerMovement3D : MonoBehaviour
         );
 
         float lockOnHorizontal =
-            isLockedOn && isGrounded
+            isLockedOn &&
+            isGrounded
                 ? movementInput.x
                 : 0f;
 
         float lockOnVertical =
-            isLockedOn && isGrounded
+            isLockedOn &&
+            isGrounded
                 ? movementInput.y
                 : 0f;
 
@@ -505,17 +562,27 @@ public class PlayerMovement3D : MonoBehaviour
             Time.deltaTime
         );
 
-        if (!wasGrounded && isGrounded)
+        if (
+            !wasGrounded &&
+            isGrounded
+        )
         {
-            animator.SetTrigger(LandTrigger);
+            animator.SetTrigger(
+                LandTrigger
+            );
         }
 
-        wasGrounded = isGrounded;
+        wasGrounded =
+            isGrounded;
     }
 
     private void HandleCursorUnlock()
     {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (
+            Keyboard.current
+                .escapeKey
+                .wasPressedThisFrame
+        )
         {
             Cursor.lockState =
                 CursorLockMode.None;

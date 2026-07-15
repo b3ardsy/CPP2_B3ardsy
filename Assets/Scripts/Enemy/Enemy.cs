@@ -10,12 +10,28 @@ public abstract class Enemy : MonoBehaviour
     [SerializeField] protected float destroyDelay = 2f;
 
     protected Animator animator;
+    protected CapsuleCollider capsuleCollider;
     protected Transform player;
+
     protected int currentHealth;
     protected bool isDead;
 
     public bool IsDead => isDead;
-    public Transform LockOnTarget => transform;
+
+    public Vector3 LockOnPoint
+    {
+        get
+        {
+            if (capsuleCollider == null)
+            {
+                return transform.position;
+            }
+
+            return capsuleCollider.transform.TransformPoint(
+                capsuleCollider.center
+            );
+        }
+    }
 
     protected static readonly int HitTrigger =
         Animator.StringToHash("Hit");
@@ -33,6 +49,18 @@ public abstract class Enemy : MonoBehaviour
         {
             Debug.LogError(
                 $"{name}: No Animator component was found."
+            );
+        }
+
+        capsuleCollider =
+            GetComponentInChildren<CapsuleCollider>();
+
+        if (capsuleCollider == null)
+        {
+            Debug.LogWarning(
+                $"{name}: No CapsuleCollider was found. " +
+                "The enemy's transform position will be used " +
+                "as the lock-on point."
             );
         }
 
@@ -102,7 +130,9 @@ public abstract class Enemy : MonoBehaviour
 
     private IEnumerator DestroyAfterDelay()
     {
-        yield return new WaitForSeconds(destroyDelay);
+        yield return new WaitForSeconds(
+            destroyDelay
+        );
 
         Destroy(gameObject);
     }
