@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class BooEnemy : Enemy
 {
     [Header("Boo Movement")]
@@ -15,9 +16,6 @@ public class BooEnemy : Enemy
     [Range(-1f, 1f)]
     [SerializeField] private float facingThreshold = 0.5f;
 
-    [Header("Ground Movement")]
-    [SerializeField] private bool keepStartingHeight = true;
-
     [Header("Fireball Attack")]
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private Transform firePoint;
@@ -28,21 +26,36 @@ public class BooEnemy : Enemy
     [Tooltip("Maximum delay between fireball attacks.")]
     [SerializeField] private float maximumAttackCooldown = 2.75f;
 
-    [Tooltip("Minimum delay before attacking when the player first looks at this enemy.")]
+    [Tooltip(
+        "Minimum delay before attacking when the player first looks " +
+        "at this enemy."
+    )]
     [SerializeField] private float minimumReactionDelay = 0.1f;
 
-    [Tooltip("Maximum delay before attacking when the player first looks at this enemy.")]
+    [Tooltip(
+        "Maximum delay before attacking when the player first looks " +
+        "at this enemy."
+    )]
     [SerializeField] private float maximumReactionDelay = 0.35f;
 
     [SerializeField] private float attackRange = 10f;
     [SerializeField] private float aimHeightOffset = 1f;
     [SerializeField] private bool rotateWhileAttacking = true;
 
-    private float startingHeight;
+    private Rigidbody rb;
+
     private float nextAttackTime;
 
     private bool isSneaking;
     private bool wasPlayerFacingEnemy;
+
+    private bool shouldMove;
+    private bool shouldRotate;
+
+    private Vector3 desiredMoveDirection;
+    private Vector3 desiredFacingDirection;
+
+    private Quaternion lastRotation;
 
     private static readonly int IsSneakingBool =
         Animator.StringToHash("IsSneaking");
@@ -54,10 +67,24 @@ public class BooEnemy : Enemy
     {
         base.Awake();
 
-        startingHeight = transform.position.y;
+        rb = GetComponent<Rigidbody>();
+
+        if (rb == null)
+        {
+            Debug.LogError(
+                $"{name} requires a Rigidbody component.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        lastRotation = rb.rotation;
 
         // Gives every Boo a slightly different starting attack time.
-        nextAttackTime = Time.time + GetRandomReactionDelay();
+        nextAttackTime =
+            Time.time + GetRandomReactionDelay();
     }
 
     private void Update()
@@ -65,6 +92,8 @@ public class BooEnemy : Enemy
         if (isDead || player == null)
         {
             StopSneaking();
+            StopRotation();
+
             wasPlayerFacingEnemy = false;
             return;
         }
@@ -80,23 +109,34 @@ public class BooEnemy : Enemy
         if (!playerIsInDetectionRange)
         {
             StopSneaking();
+            StopRotation();
+
             wasPlayerFacingEnemy = false;
             return;
         }
 
-        bool playerIsFacingEnemy = IsPlayerFacingEnemy();
+        bool playerIsFacingEnemy =
+            IsPlayerFacingEnemy();
 
         // The Boo freezes and attacks when the player looks at it.
         if (playerIsFacingEnemy)
         {
             StopSneaking();
 
-            if (rotateWhileAttacking)
+            // Only rotate while still outside the stopping distance.
+            // Once the Boo reaches its destination, it keeps its current
+            // rotation instead of turning in place.
+            if (rotateWhileAttacking &&
+                distanceToPlayer > stoppingDistance)
             {
-                RotateTowardPlayer();
+                SetDesiredRotationTowardPlayer();
+            }
+            else
+            {
+                StopRotation();
             }
 
-            // This only runs on the frame the player first turns toward the Boo.
+            // Runs only when the player first turns toward the Boo.
             if (!wasPlayerFacingEnemy)
             {
                 nextAttackTime =
@@ -113,18 +153,90 @@ public class BooEnemy : Enemy
             return;
         }
 
-        // Player has looked away, allowing the next look to trigger
-        // a new reaction delay.
+        // Player looked away, allowing a new reaction delay next time.
         wasPlayerFacingEnemy = false;
 
-        // The player is not looking, so the Boo resumes sneaking.
         if (distanceToPlayer <= stoppingDistance)
         {
             StopSneaking();
+            StopRotation();
             return;
         }
 
         SneakTowardPlayer();
+    }
+
+    private void FixedUpdate()
+    {
+        if (rb == null)
+        {
+            return;
+        }
+
+        // Prevent collisions from physically spinning the enemy.
+        rb.angularVelocity = Vector3.zero;
+
+        if (isDead)
+        {
+            StopRigidbodyMovement();
+            return;
+        }
+
+        ApplyMovement();
+        ApplyRotation();
+    }
+
+    private void ApplyMovement()
+    {
+        Vector3 currentVelocity =
+            rb.linearVelocity;
+
+        if (!shouldMove)
+        {
+            currentVelocity.x = 0f;
+            currentVelocity.z = 0f;
+
+            rb.linearVelocity =
+                currentVelocity;
+
+            return;
+        }
+
+        Vector3 horizontalVelocity =
+            desiredMoveDirection * moveSpeed;
+
+        rb.linearVelocity = new Vector3(
+            horizontalVelocity.x,
+            currentVelocity.y,
+            horizontalVelocity.z
+        );
+    }
+
+    private void ApplyRotation()
+    {
+        if (!shouldRotate ||
+            desiredFacingDirection.sqrMagnitude <= 0.001f)
+        {
+            rb.MoveRotation(lastRotation);
+            return;
+        }
+
+        Quaternion targetRotation =
+            Quaternion.LookRotation(
+                desiredFacingDirection,
+                Vector3.up
+            );
+
+        Quaternion smoothedRotation =
+            Quaternion.Slerp(
+                rb.rotation,
+                targetRotation,
+                rotationSpeed * Time.fixedDeltaTime
+            );
+
+        lastRotation = smoothedRotation;
+
+        rb.MoveRotation(smoothedRotation);
     }
 
     private bool IsPlayerFacingEnemy()
@@ -141,7 +253,9 @@ public class BooEnemy : Enemy
 
         directionFromPlayerToEnemy.Normalize();
 
-        Vector3 playerForward = player.forward;
+        Vector3 playerForward =
+            player.forward;
+
         playerForward.y = 0f;
 
         if (playerForward.sqrMagnitude <= 0.001f)
@@ -151,21 +265,17 @@ public class BooEnemy : Enemy
 
         playerForward.Normalize();
 
-        float facingDotProduct = Vector3.Dot(
-            playerForward,
-            directionFromPlayerToEnemy
-        );
+        float facingDotProduct =
+            Vector3.Dot(
+                playerForward,
+                directionFromPlayerToEnemy
+            );
 
         return facingDotProduct >= facingThreshold;
     }
 
     private void SneakTowardPlayer()
     {
-        isSneaking = true;
-
-        SetSneakingAnimation(true);
-        SetAnimatorSpeed(sneakAnimationSpeed);
-
         Vector3 directionToPlayer =
             player.position - transform.position;
 
@@ -173,26 +283,26 @@ public class BooEnemy : Enemy
 
         if (directionToPlayer.sqrMagnitude <= 0.001f)
         {
+            StopSneaking();
+            StopRotation();
             return;
         }
 
         directionToPlayer.Normalize();
 
-        RotateTowardDirection(directionToPlayer);
+        shouldMove = true;
+        desiredMoveDirection = directionToPlayer;
 
-        Vector3 movement =
-            directionToPlayer *
-            moveSpeed *
-            Time.deltaTime;
+        shouldRotate = true;
+        desiredFacingDirection = directionToPlayer;
 
-        transform.position += movement;
-
-        if (keepStartingHeight)
+        if (!isSneaking)
         {
-            Vector3 correctedPosition = transform.position;
-            correctedPosition.y = startingHeight;
-            transform.position = correctedPosition;
+            isSneaking = true;
+            SetSneakingAnimation(true);
         }
+
+        SetAnimatorSpeed(sneakAnimationSpeed);
     }
 
     private void TryAttack()
@@ -213,7 +323,7 @@ public class BooEnemy : Enemy
             return;
         }
 
-        // Randomized cooldown prevents multiple Boos from staying synchronized.
+        // Randomized cooldown prevents Boos from staying synchronized.
         nextAttackTime =
             Time.time + GetRandomAttackCooldown();
 
@@ -249,7 +359,8 @@ public class BooEnemy : Enemy
 
         if (fireDirection.sqrMagnitude <= 0.001f)
         {
-            fireDirection = transform.forward;
+            fireDirection =
+                transform.forward;
         }
 
         fireDirection.Normalize();
@@ -260,11 +371,12 @@ public class BooEnemy : Enemy
                 Vector3.up
             );
 
-        GameObject fireballObject = Instantiate(
-            fireballPrefab,
-            firePoint.position,
-            fireRotation
-        );
+        GameObject fireballObject =
+            Instantiate(
+                fireballPrefab,
+                firePoint.position,
+                fireRotation
+            );
 
         FireballProjectile projectile =
             fireballObject.GetComponent<FireballProjectile>();
@@ -302,7 +414,7 @@ public class BooEnemy : Enemy
         );
     }
 
-    private void RotateTowardPlayer()
+    private void SetDesiredRotationTowardPlayer()
     {
         Vector3 directionToPlayer =
             player.position - transform.position;
@@ -311,28 +423,21 @@ public class BooEnemy : Enemy
 
         if (directionToPlayer.sqrMagnitude <= 0.001f)
         {
+            StopRotation();
             return;
         }
 
-        RotateTowardDirection(directionToPlayer.normalized);
-    }
+        shouldRotate = true;
 
-    private void RotateTowardDirection(Vector3 direction)
-    {
-        Quaternion targetRotation = Quaternion.LookRotation(
-            direction,
-            Vector3.up
-        );
-
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            targetRotation,
-            rotationSpeed * Time.deltaTime
-        );
+        desiredFacingDirection =
+            directionToPlayer.normalized;
     }
 
     private void StopSneaking()
     {
+        shouldMove = false;
+        desiredMoveDirection = Vector3.zero;
+
         if (!isSneaking)
         {
             return;
@@ -342,6 +447,41 @@ public class BooEnemy : Enemy
 
         SetSneakingAnimation(false);
         SetAnimatorSpeed(1f);
+    }
+
+    private void StopRotation()
+    {
+        shouldRotate = false;
+        desiredFacingDirection = Vector3.zero;
+
+        if (rb == null)
+        {
+            return;
+        }
+
+        lastRotation = rb.rotation;
+        rb.angularVelocity = Vector3.zero;
+    }
+
+    private void StopRigidbodyMovement()
+    {
+        shouldMove = false;
+        shouldRotate = false;
+
+        desiredMoveDirection = Vector3.zero;
+        desiredFacingDirection = Vector3.zero;
+
+        Vector3 stoppedVelocity =
+            rb.linearVelocity;
+
+        stoppedVelocity.x = 0f;
+        stoppedVelocity.z = 0f;
+
+        rb.linearVelocity =
+            stoppedVelocity;
+
+        rb.angularVelocity = Vector3.zero;
+        lastRotation = rb.rotation;
     }
 
     private void SetSneakingAnimation(bool value)
@@ -363,40 +503,68 @@ public class BooEnemy : Enemy
         }
     }
 
+    private void OnDisable()
+    {
+        if (rb != null)
+        {
+            StopRigidbodyMovement();
+        }
+
+        if (animator != null)
+        {
+            animator.speed = 1f;
+        }
+    }
+
     private void OnValidate()
     {
-        detectionRadius = Mathf.Max(0f, detectionRadius);
-        moveSpeed = Mathf.Max(0f, moveSpeed);
-        rotationSpeed = Mathf.Max(0f, rotationSpeed);
-        stoppingDistance = Mathf.Max(0f, stoppingDistance);
+        detectionRadius =
+            Mathf.Max(0f, detectionRadius);
 
-        sneakAnimationSpeed = Mathf.Max(
-            0.01f,
-            sneakAnimationSpeed
-        );
+        moveSpeed =
+            Mathf.Max(0f, moveSpeed);
 
-        attackRange = Mathf.Max(0f, attackRange);
-        aimHeightOffset = Mathf.Max(0f, aimHeightOffset);
+        rotationSpeed =
+            Mathf.Max(0f, rotationSpeed);
 
-        minimumAttackCooldown = Mathf.Max(
-            0.01f,
-            minimumAttackCooldown
-        );
+        stoppingDistance =
+            Mathf.Max(0f, stoppingDistance);
 
-        maximumAttackCooldown = Mathf.Max(
-            minimumAttackCooldown,
-            maximumAttackCooldown
-        );
+        sneakAnimationSpeed =
+            Mathf.Max(
+                0.01f,
+                sneakAnimationSpeed
+            );
 
-        minimumReactionDelay = Mathf.Max(
-            0f,
-            minimumReactionDelay
-        );
+        attackRange =
+            Mathf.Max(0f, attackRange);
 
-        maximumReactionDelay = Mathf.Max(
-            minimumReactionDelay,
-            maximumReactionDelay
-        );
+        aimHeightOffset =
+            Mathf.Max(0f, aimHeightOffset);
+
+        minimumAttackCooldown =
+            Mathf.Max(
+                0.01f,
+                minimumAttackCooldown
+            );
+
+        maximumAttackCooldown =
+            Mathf.Max(
+                minimumAttackCooldown,
+                maximumAttackCooldown
+            );
+
+        minimumReactionDelay =
+            Mathf.Max(
+                0f,
+                minimumReactionDelay
+            );
+
+        maximumReactionDelay =
+            Mathf.Max(
+                minimumReactionDelay,
+                maximumReactionDelay
+            );
     }
 
     private void OnDrawGizmosSelected()
