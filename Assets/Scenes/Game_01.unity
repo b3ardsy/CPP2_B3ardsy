@@ -334,8 +334,32 @@ PrefabInstance:
       value: Skeleton_Golem
       objectReference: {fileID: 0}
     - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: chaseSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
       propertyPath: attackRange
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: patrolSpeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: returnSpeed
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: attackRotationSpeed
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 7167398855894057203, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: m_Acceleration
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 7167398855894057203, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: m_AngularSpeed
+      value: 720
       objectReference: {fileID: 0}
     - target: {fileID: 7167398855894057203, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
       propertyPath: m_StoppingDistance
