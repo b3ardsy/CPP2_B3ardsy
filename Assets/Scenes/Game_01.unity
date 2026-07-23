@@ -271,7 +271,7 @@ MonoBehaviour:
   maxHealth: 10
   invulnerabilityDuration: 0
   hitReactionDuration: 0.4
-  hitAnimationStateName: Hit
+  hitAnimationStateName: Base Layer.Player_Hit
   deathRestartDelay: 2
   restartSceneOnDeath: 1
   animator: {fileID: 0}
@@ -595,7 +595,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 28.969358
+      value: 153.9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: m_LocalRotation.w
