@@ -1275,6 +1275,7 @@ GameObject:
   - component: {fileID: 4827822787523049710}
   - component: {fileID: 3351296584005733219}
   - component: {fileID: 3655405520464804888}
+  - component: {fileID: 2213948687854144992}
   m_Layer: 8
   m_Name: Skeleton_Mage
   m_TagString: Enemy
@@ -1343,15 +1344,17 @@ MonoBehaviour:
   maxHealth: 3
   destroyDelay: 2
   detectionRadius: 30
-  moveSpeed: 1.5
+  moveSpeed: 2
   rotationSpeed: 8
   stoppingDistance: 1.5
   sneakAnimationSpeed: 2
   facingThreshold: 0.5
-  keepStartingHeight: 1
   fireballPrefab: {fileID: 1587250918974726, guid: e9e9458c34ca3044d87b5f69ebf36957, type: 3}
   firePoint: {fileID: 7655535924878438980}
-  attackCooldown: 1
+  minimumAttackCooldown: 1.75
+  maximumAttackCooldown: 2.75
+  minimumReactionDelay: 0.1
+  maximumReactionDelay: 0.35
   attackRange: 20
   aimHeightOffset: 1
   rotateWhileAttacking: 1
@@ -1374,10 +1377,37 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2.4038196
+  m_Radius: 0.7
+  m_Height: 2.4831312
   m_Direction: 1
-  m_Center: {x: 0, y: 1.2980905, z: 0}
+  m_Center: {x: 0, y: 1.2584347, z: 0}
+--- !u!54 &2213948687854144992
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 80
+  m_CollisionDetection: 1
 --- !u!1 &1360172268146098638
 GameObject:
   m_ObjectHideFlags: 0
