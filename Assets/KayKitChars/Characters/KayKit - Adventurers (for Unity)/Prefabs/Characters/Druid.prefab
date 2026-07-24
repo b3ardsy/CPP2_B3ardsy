@@ -129,7 +129,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 0.0000016541869, y: 0.0000048558372, z: -90.00001}
+  m_LocalEulerAnglesHint: {x: 0.065584235, y: -2.7661204, z: -98.46525}
 --- !u!1 &-7016320567714146930
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_Children:
   - {fileID: 4620971032708974589}
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 0.0000006003103, y: -0.000002841468, z: 90.00001}
+  m_LocalEulerAnglesHint: {x: 0.00000024841802, y: -0.00000311494, z: 90.00001}
 --- !u!1 &-129758803659467788
 GameObject:
   m_ObjectHideFlags: 0
@@ -874,6 +874,9 @@ GameObject:
   - component: {fileID: 7388450041393902632}
   - component: {fileID: 193604228469644403}
   - component: {fileID: 8985355908063834351}
+  - component: {fileID: 3381857637876128048}
+  - component: {fileID: 4676927717882419232}
+  - component: {fileID: 4077327485264463941}
   m_Layer: 0
   m_Name: Druid
   m_TagString: Player
@@ -904,6 +907,7 @@ Transform:
   - {fileID: 3695356595909225138}
   - {fileID: 304975819009390847}
   - {fileID: 7120974878261079561}
+  - {fileID: 4050644116854047295}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7937088398246958496
@@ -990,15 +994,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de129cf8cd2220848965e1ec4b7f74ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement3D
-  walkSpeed: 7
+  walkSpeed: 10
   runSpeed: 14
   turnSpeed: 7
-  lockOnMoveSpeed: 4
+  lockOnMoveSpeed: 8.5
   lockOnTurnSpeed: 15
   jumpForce: 6
   cameraTransform: {fileID: 7468378734651127450}
   playerCombat: {fileID: 193604228469644403}
   playerLockOn: {fileID: 8985355908063834351}
+  playerDodge: {fileID: 0}
   groundCheck: {fileID: 7120974878261079561}
   groundCheckRadius: 0.2
   groundLayer:
@@ -1038,6 +1043,70 @@ MonoBehaviour:
   detectionRadius: 15
   maximumLockAngle: 60
   breakLockDistance: 20
+--- !u!114 &3381857637876128048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8d6fafa6ef62114baaf66b7c9d0f8ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDodge
+  playerLockOn: {fileID: 8985355908063834351}
+  playerCombat: {fileID: 193604228469644403}
+  dodgeSpeed: 15
+  dodgeDuration: 0.3
+  dodgeCooldown: 0.2
+--- !u!114 &4676927717882419232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa6d653a4f1b46043a78bc410698a56c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  maxHealth: 10
+  invulnerabilityDuration: 0
+  hitReactionDuration: 0.4
+  hitAnimationStateName: Base Layer.Player_Hit
+  deathRestartDelay: 2
+  restartSceneOnDeath: 1
+  animator: {fileID: 0}
+  playerRigidbody: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerCombat: {fileID: 0}
+  playerDodge: {fileID: 0}
+  playerLockOn: {fileID: 0}
+--- !u!114 &4077327485264463941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43a2bb8fe1dc6464097f12407d94d691, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpellcasting
+  animator: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerLockOn: {fileID: 0}
+  playerCombat: {fileID: 0}
+  firePoint: {fileID: 0}
+  projectilePrefab: {fileID: 0}
+  spellDamage: 1
+  projectileSpeed: 12
+  castDuration: 0.8
+  castCooldown: 0.25
+  usePlayerForwardWhenUnlocked: 1
 --- !u!1 &1115911922453957853
 GameObject:
   m_ObjectHideFlags: 0
@@ -1401,6 +1470,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1132417981933130226}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3926762445555284244
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4050644116854047295}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4050644116854047295
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926762445555284244}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.537, y: 1.085, z: 1.218}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: -8679921383154817045}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4260319478689324092
 GameObject:
   m_ObjectHideFlags: 0
@@ -1570,7 +1670,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
+  m_RequiresDepthTextureOption: 1
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []

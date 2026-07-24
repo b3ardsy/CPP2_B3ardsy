@@ -6,6 +6,7 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Animator animator;
+    [SerializeField] private PlayerSpellcasting playerSpellcasting;
 
     [Header("Attack Settings")]
     [SerializeField] private float attackDuration = 0.7f;
@@ -29,6 +30,12 @@ public class PlayerCombat : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
+        if (playerSpellcasting == null)
+        {
+            playerSpellcasting =
+                GetComponent<PlayerSpellcasting>();
+        }
+
         if (animator == null)
         {
             Debug.LogError(
@@ -46,7 +53,9 @@ public class PlayerCombat : MonoBehaviour
             return;
         }
 
-        if (Keyboard.current.fKey.wasPressedThisFrame)
+        if (
+            Keyboard.current.fKey.wasPressedThisFrame
+        )
         {
             TryAttack();
         }
@@ -59,12 +68,22 @@ public class PlayerCombat : MonoBehaviour
             return;
         }
 
+        if (
+            playerSpellcasting != null &&
+            playerSpellcasting.IsCasting
+        )
+        {
+            return;
+        }
+
         if (Time.time < nextAttackTime)
         {
             return;
         }
 
-        StartCoroutine(PerformRandomAttack());
+        StartCoroutine(
+            PerformRandomAttack()
+        );
     }
 
     private IEnumerator PerformRandomAttack()
@@ -86,7 +105,9 @@ public class PlayerCombat : MonoBehaviour
             animator.SetTrigger(KickTrigger);
         }
 
-        yield return new WaitForSeconds(attackDuration);
+        yield return new WaitForSeconds(
+            attackDuration
+        );
 
         isAttacking = false;
 
