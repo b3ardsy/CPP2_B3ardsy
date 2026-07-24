@@ -32,4 +32,12 @@ public class TankAnimationEventRelay : MonoBehaviour
             tankEnemy.DisableAxeHitbox();
         }
     }
+
+    public void EndAttack()
+    {
+        if (tankEnemy != null)
+        {
+            tankEnemy.EndAttack();
+        }
+    }
 }

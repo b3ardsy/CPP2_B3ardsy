@@ -67,6 +67,7 @@ public class TankEnemy : Enemy
 
     private bool isWaitingAtPatrolPoint;
     private bool hasPatrolDestination;
+    private bool isPerformingAttack;
 
     private static readonly int SpeedHash =
         Animator.StringToHash("Speed");
@@ -187,7 +188,6 @@ public class TankEnemy : Enemy
                 break;
 
             case TankState.Chasing:
-            case TankState.Attacking:
 
                 if (distanceToPlayer > loseTargetRange ||
                     IsPlayerDead())
@@ -198,7 +198,24 @@ public class TankEnemy : Enemy
                 {
                     BeginAttacking();
                 }
-                else
+
+                break;
+
+            case TankState.Attacking:
+
+                // Do not change states while the attack animation
+                // is still playing.
+                if (isPerformingAttack)
+                {
+                    break;
+                }
+
+                if (distanceToPlayer > loseTargetRange ||
+                    IsPlayerDead())
+                {
+                    ReturnHome();
+                }
+                else if (distanceToPlayer > attackRange)
                 {
                     BeginChasing();
                 }
@@ -335,17 +352,18 @@ public class TankEnemy : Enemy
 
     private void BeginChasing()
     {
-        if (currentState == TankState.Chasing)
-        {
-            return;
-        }
-
         currentState = TankState.Chasing;
+        isPerformingAttack = false;
 
         DisableAxeHitbox();
 
         isWaitingAtPatrolPoint = false;
         hasPatrolDestination = false;
+
+        if (!agent.isOnNavMesh)
+        {
+            return;
+        }
 
         agent.speed = chaseSpeed;
         agent.stoppingDistance = attackRange;
@@ -386,6 +404,13 @@ public class TankEnemy : Enemy
         StopAgent();
         FacePlayer();
 
+        // Remain completely stationary until the attack animation
+        // calls EndAttack().
+        if (isPerformingAttack)
+        {
+            return;
+        }
+
         if (distanceToPlayer > attackRange)
         {
             BeginChasing();
@@ -402,15 +427,17 @@ public class TankEnemy : Enemy
             return;
         }
 
+        isPerformingAttack = true;
+        attackCooldownTimer = attackCooldown;
+
+        // Ensure an old hit window cannot remain active.
+        DisableAxeHitbox();
+
         if (animator != null)
         {
             animator.ResetTrigger(AttackHash);
             animator.SetTrigger(AttackHash);
         }
-
-        // No damage is dealt here.
-        // The axe trigger handles damage during active hit windows.
-        attackCooldownTimer = attackCooldown;
     }
 
     /// <summary>
@@ -423,7 +450,8 @@ public class TankEnemy : Enemy
             return;
         }
 
-        if (currentState != TankState.Attacking)
+        if (!isPerformingAttack ||
+            currentState != TankState.Attacking)
         {
             return;
         }
@@ -433,7 +461,7 @@ public class TankEnemy : Enemy
             return;
         }
 
-        // Only damage the player this enemy is targeting.
+        // Only damage the player this tank is currently targeting.
         if (playerStats != null && targetPlayer != playerStats)
         {
             return;
@@ -443,12 +471,14 @@ public class TankEnemy : Enemy
     }
 
     /// <summary>
-    /// Called through an Animation Event relay.
-    /// Starts one damage window and clears the previous hit record.
+    /// Called through the Animation Event relay.
+    /// Begins one active axe damage window.
     /// </summary>
     public void EnableAxeHitbox()
     {
-        if (isDead || currentState != TankState.Attacking)
+        if (isDead ||
+            !isPerformingAttack ||
+            currentState != TankState.Attacking)
         {
             return;
         }
@@ -460,8 +490,8 @@ public class TankEnemy : Enemy
     }
 
     /// <summary>
-    /// Called through an Animation Event relay.
-    /// Ends the current damage window.
+    /// Called through the Animation Event relay.
+    /// Ends the current axe damage window.
     /// </summary>
     public void DisableAxeHitbox()
     {
@@ -469,6 +499,39 @@ public class TankEnemy : Enemy
         {
             axeHitbox.DisableHitbox();
         }
+    }
+
+    /// <summary>
+    /// Called by an Animation Event at the end of the complete
+    /// spin attack animation.
+    /// </summary>
+    public void EndAttack()
+    {
+        DisableAxeHitbox();
+
+        isPerformingAttack = false;
+
+        if (isDead || player == null || IsPlayerDead())
+        {
+            return;
+        }
+
+        float distanceToPlayer = GetFlatDistance(
+            transform.position,
+            player.position
+        );
+
+        if (distanceToPlayer > loseTargetRange)
+        {
+            ReturnHome();
+        }
+        else if (distanceToPlayer > attackRange)
+        {
+            BeginChasing();
+        }
+
+        // If the player remains within attack range, the tank stays
+        // in the Attacking state and waits for its cooldown.
     }
 
     private void FacePlayer()
@@ -510,6 +573,7 @@ public class TankEnemy : Enemy
         }
 
         currentState = TankState.ReturningHome;
+        isPerformingAttack = false;
 
         DisableAxeHitbox();
 
@@ -537,6 +601,7 @@ public class TankEnemy : Enemy
 
         agent.speed = returnSpeed;
         agent.stoppingDistance = 0f;
+        agent.isStopped = false;
 
         if (!agent.hasPath && !agent.pathPending)
         {
@@ -595,24 +660,24 @@ public class TankEnemy : Enemy
 
         float animationSpeed = 0f;
 
-        if (!agent.isStopped)
+        Vector3 movementVelocity = agent.velocity;
+        movementVelocity.y = 0f;
+
+        bool isActuallyMoving =
+            !agent.isStopped &&
+            movementVelocity.sqrMagnitude > 0.01f;
+
+        if (isActuallyMoving && !isPerformingAttack)
         {
             switch (currentState)
             {
                 case TankState.Patrolling:
+                case TankState.ReturningHome:
                     animationSpeed = 0.5f;
                     break;
 
                 case TankState.Chasing:
                     animationSpeed = 1f;
-                    break;
-
-                case TankState.ReturningHome:
-                    animationSpeed = 0.5f;
-                    break;
-
-                case TankState.Attacking:
-                    animationSpeed = 0f;
                     break;
             }
         }
@@ -620,7 +685,7 @@ public class TankEnemy : Enemy
         animator.SetFloat(
             SpeedHash,
             animationSpeed,
-            0.1f,
+            0.08f,
             Time.deltaTime
         );
     }
@@ -684,6 +749,8 @@ public class TankEnemy : Enemy
 
     protected override void Die()
     {
+        isPerformingAttack = false;
+
         DisableAxeHitbox();
         StopAgent();
 
@@ -702,8 +769,16 @@ public class TankEnemy : Enemy
 
     private void OnValidate()
     {
-        patrolRadius = Mathf.Max(0.5f, patrolRadius);
-        patrolWaitTime = Mathf.Max(0f, patrolWaitTime);
+        patrolRadius = Mathf.Max(
+            0.5f,
+            patrolRadius
+        );
+
+        patrolWaitTime = Mathf.Max(
+            0f,
+            patrolWaitTime
+        );
+
         destinationTolerance = Mathf.Max(
             0.05f,
             destinationTolerance
@@ -735,17 +810,35 @@ public class TankEnemy : Enemy
             detectionRange
         );
 
-        attackDamage = Mathf.Max(1, attackDamage);
-        attackCooldown = Mathf.Max(0.1f, attackCooldown);
+        attackDamage = Mathf.Max(
+            1,
+            attackDamage
+        );
+
+        attackCooldown = Mathf.Max(
+            0.1f,
+            attackCooldown
+        );
 
         attackRotationSpeed = Mathf.Max(
             0f,
             attackRotationSpeed
         );
 
-        patrolSpeed = Mathf.Max(0f, patrolSpeed);
-        chaseSpeed = Mathf.Max(0f, chaseSpeed);
-        returnSpeed = Mathf.Max(0f, returnSpeed);
+        patrolSpeed = Mathf.Max(
+            0f,
+            patrolSpeed
+        );
+
+        chaseSpeed = Mathf.Max(
+            0f,
+            chaseSpeed
+        );
+
+        returnSpeed = Mathf.Max(
+            0f,
+            returnSpeed
+        );
     }
 
     private void OnDrawGizmosSelected()
@@ -755,7 +848,10 @@ public class TankEnemy : Enemy
             : transform.position;
 
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(centre, patrolRadius);
+        Gizmos.DrawWireSphere(
+            centre,
+            patrolRadius
+        );
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(
