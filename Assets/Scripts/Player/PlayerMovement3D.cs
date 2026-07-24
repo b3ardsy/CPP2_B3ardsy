@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Animator))]
@@ -65,6 +66,36 @@ public class PlayerMovement3D : MonoBehaviour
 
     private static readonly int LockOnVerticalFloat =
         Animator.StringToHash("LockOnVertical");
+
+    private readonly HashSet<Object> movementLocks =
+    new HashSet<Object>();
+
+    public bool IsMovementLocked => movementLocks.Count > 0;
+
+    public void AddMovementLock(Object lockSource)
+    {
+        if (lockSource == null)
+        {
+            return;
+        }
+
+        movementLocks.Add(lockSource);
+
+        movementInput = Vector2.zero;
+        moveDirection = Vector3.zero;
+        isRunning = false;
+        jumpPressed = false;
+    }
+
+    public void RemoveMovementLock(Object lockSource)
+    {
+        if (lockSource == null)
+        {
+            return;
+        }
+
+        movementLocks.Remove(lockSource);
+    }
 
     private void Awake()
     {
@@ -152,6 +183,18 @@ public class PlayerMovement3D : MonoBehaviour
          */
         ReadMovementInput();
 
+        if (IsMovementLocked)
+        {
+            movementInput = Vector2.zero;
+            moveDirection = Vector3.zero;
+            isRunning = false;
+            jumpPressed = false;
+
+            UpdateAnimator();
+            HandleCursorUnlock();
+            return;
+        }
+
         if (isDodging)
         {
             moveDirection = Vector3.zero;
@@ -176,6 +219,8 @@ public class PlayerMovement3D : MonoBehaviour
 
             return;
         }
+
+
 
         CalculateMoveDirection();
         UpdateRunningState();
@@ -382,6 +427,19 @@ public class PlayerMovement3D : MonoBehaviour
         bool isDodging =
             playerDodge != null &&
             playerDodge.IsDodging;
+
+        // Movement locks must override dodging and attacking.
+        if (IsMovementLocked)
+        {
+            StopHorizontalMovement();
+
+            if (isLockedOn)
+            {
+                RotateTowardLockOnTarget();
+            }
+
+            return;
+        }
 
         if (isDodging)
         {
