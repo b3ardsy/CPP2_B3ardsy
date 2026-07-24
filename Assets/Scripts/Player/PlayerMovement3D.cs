@@ -81,6 +81,8 @@ public class PlayerMovement3D : MonoBehaviour
 
         movementLocks.Add(lockSource);
 
+        Debug.Log($"Movement Locks: {movementLocks.Count}");
+
         movementInput = Vector2.zero;
         moveDirection = Vector3.zero;
         isRunning = false;
@@ -89,12 +91,9 @@ public class PlayerMovement3D : MonoBehaviour
 
     public void RemoveMovementLock(Object lockSource)
     {
-        if (lockSource == null)
-        {
-            return;
-        }
-
         movementLocks.Remove(lockSource);
+
+        Debug.Log($"Movement Locks: {movementLocks.Count}");
     }
 
     private void Awake()
