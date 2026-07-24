@@ -6,7 +6,6 @@ public class PlayerSpellcasting : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Animator animator;
-    [SerializeField] private PlayerMovement3D playerMovement;
     [SerializeField] private PlayerLockOn playerLockOn;
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private Transform firePoint;
@@ -44,11 +43,6 @@ public class PlayerSpellcasting : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
-        if (playerMovement == null)
-        {
-            playerMovement = GetComponent<PlayerMovement3D>();
-        }
-
         if (playerLockOn == null)
         {
             playerLockOn = GetComponent<PlayerLockOn>();
@@ -63,17 +57,6 @@ public class PlayerSpellcasting : MonoBehaviour
         {
             Debug.LogError(
                 $"{name}: PlayerSpellcasting could not find an Animator."
-            );
-
-            enabled = false;
-            return;
-        }
-
-        if (playerMovement == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerSpellcasting could not find " +
-                "PlayerMovement3D."
             );
 
             enabled = false;
@@ -157,50 +140,19 @@ public class PlayerSpellcasting : MonoBehaviour
         isCasting = true;
         projectileReleased = false;
 
-        playerMovement.AddMovementLock(this);
-
-        RotateTowardCastTarget();
-
         animator.ResetTrigger(ShootTrigger);
         animator.SetTrigger(ShootTrigger);
 
-        yield return new WaitForSeconds(castDuration);
+        yield return new WaitForSeconds(
+            castDuration
+        );
 
         FinishCast();
     }
 
-    private void RotateTowardCastTarget()
-    {
-        if (
-            playerLockOn == null ||
-            !playerLockOn.IsLockedOn
-        )
-        {
-            return;
-        }
-
-        Vector3 directionToTarget =
-            playerLockOn.CurrentTargetPosition -
-            transform.position;
-
-        directionToTarget.y = 0f;
-
-        if (
-            directionToTarget.sqrMagnitude <=
-            0.001f
-        )
-        {
-            return;
-        }
-
-        transform.rotation = Quaternion.LookRotation(
-            directionToTarget.normalized
-        );
-    }
-
     /*
-     * Call this method using an Animation Event on the
-     * frame where the projectile leaves the druid's hand.
+     * Call this using an Animation Event on the frame
+     * where the spell leaves the player's hand.
      */
     public void ReleaseSpellProjectile()
     {
@@ -249,11 +201,8 @@ public class PlayerSpellcasting : MonoBehaviour
             playerLockOn.IsLockedOn
         )
         {
-            Vector3 targetPosition =
-                playerLockOn.CurrentTargetPosition;
-
             Vector3 directionToTarget =
-                targetPosition -
+                playerLockOn.CurrentTargetPosition -
                 firePoint.position;
 
             if (
@@ -275,7 +224,7 @@ public class PlayerSpellcasting : MonoBehaviour
 
     /*
      * This can optionally be called by an Animation Event
-     * at the end of the shoot animation.
+     * at the end of the casting animation.
      */
     public void EndSpellCast()
     {
@@ -306,22 +255,17 @@ public class PlayerSpellcasting : MonoBehaviour
 
         nextCastTime =
             Time.time + castCooldown;
-
-        if (playerMovement != null)
-        {
-            playerMovement.RemoveMovementLock(this);
-        }
     }
 
     private void OnDisable()
     {
-        if (playerMovement != null)
+        if (castCoroutine != null)
         {
-            playerMovement.RemoveMovementLock(this);
+            StopCoroutine(castCoroutine);
+            castCoroutine = null;
         }
 
         isCasting = false;
         projectileReleased = false;
-        castCoroutine = null;
     }
 }
