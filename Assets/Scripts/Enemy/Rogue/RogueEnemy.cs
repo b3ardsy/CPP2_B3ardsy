@@ -16,7 +16,7 @@ public class RogueEnemy : Enemy
     {
         None,
         BonePrison,
-        BoneCleave
+        BoneField
     }
 
     [Header("Patrol")]
@@ -26,20 +26,29 @@ public class RogueEnemy : Enemy
     [Tooltip("How long the rogue waits after reaching a patrol destination.")]
     [SerializeField] private float patrolWaitTime = 2f;
 
-    [Tooltip("Extra distance allowed when checking whether a destination was reached.")]
+    [Tooltip(
+        "Extra distance allowed when checking whether a " +
+        "destination was reached."
+    )]
     [SerializeField] private float destinationTolerance = 0.25f;
 
     [Tooltip("How far Unity searches for a valid NavMesh point.")]
     [SerializeField] private float navMeshSampleDistance = 3f;
 
-    [Tooltip("How many attempts are made to find a patrol destination.")]
+    [Tooltip(
+        "How many attempts are made to find a patrol destination."
+    )]
     [SerializeField] private int patrolSearchAttempts = 10;
 
     [Header("Detection")]
-    [Tooltip("The player must enter this distance before the rogue engages.")]
+    [Tooltip(
+        "The player must enter this distance before the rogue engages."
+    )]
     [SerializeField] private float detectionRange = 12f;
 
-    [Tooltip("The rogue disengages when the player moves beyond this distance.")]
+    [Tooltip(
+        "The rogue disengages when the player moves beyond this distance."
+    )]
     [SerializeField] private float loseTargetRange = 17f;
 
     [Tooltip("Maximum distance from which the rogue can cast.")]
@@ -56,26 +65,29 @@ public class RogueEnemy : Enemy
     [SerializeField] private float attackRotationSpeed = 8f;
 
     [Range(0f, 1f)]
-    [Tooltip("Chance that the rogue selects Bone Prison. The remaining chance selects Bone Cleave.")]
-    [SerializeField] private float bonePrisonChance = 0.4f;
+    [Tooltip(
+        "Chance that the Rogue selects Bone Prison. " +
+        "The remaining chance selects Bone Field."
+    )]
+    [SerializeField] private float bonePrisonChance = 0.5f;
 
     [Header("Bone Prison")]
     [SerializeField] private GameObject bonePrisonPrefab;
 
-    [Tooltip("Layers that the spell can use to find the ground.")]
+    [Header("Bone Field")]
+    [SerializeField] private GameObject boneFieldPrefab;
+
+    [Header("Ground Placement")]
+    [Tooltip("Layers that the spells can use to find the ground.")]
     [SerializeField] private LayerMask groundLayers;
 
-    [Tooltip("How far above the targeted position the ground check begins.")]
+    [Tooltip(
+        "How far above the targeted position the ground check begins."
+    )]
     [SerializeField] private float groundCheckHeight = 5f;
 
     [Tooltip("Maximum distance used when finding the ground.")]
     [SerializeField] private float groundCheckDistance = 15f;
-
-    [Header("Bone Cleave")]
-    [SerializeField] private BoneCleave boneCleavePrefab;
-
-    [Tooltip("Point from which Bone Cleave begins.")]
-    [SerializeField] private Transform castPoint;
 
     [Header("Movement")]
     [SerializeField] private float patrolSpeed = 2.5f;
@@ -89,7 +101,6 @@ public class RogueEnemy : Enemy
 
     private Vector3 homePosition;
     private Vector3 storedTargetPosition;
-    private Vector3 storedCleaveDirection;
 
     private float patrolWaitTimer;
     private float attackCooldownTimer;
@@ -112,28 +123,23 @@ public class RogueEnemy : Enemy
 
         if (player != null)
         {
-            playerStats = player.GetComponent<PlayerStats>();
+            playerStats =
+                player.GetComponent<PlayerStats>();
 
             if (playerStats == null)
             {
-                playerStats = player.GetComponentInParent<PlayerStats>();
+                playerStats =
+                    player.GetComponentInParent<PlayerStats>();
             }
 
             if (playerStats == null)
             {
                 Debug.LogError(
-                    $"{name}: The Player does not have a PlayerStats component.",
+                    $"{name}: The Player does not have a " +
+                    "PlayerStats component.",
                     this
                 );
             }
-        }
-
-        if (castPoint == null)
-        {
-            Debug.LogError(
-                $"{name}: Cast Point has not been assigned.",
-                this
-            );
         }
 
         if (bonePrisonPrefab == null)
@@ -144,10 +150,10 @@ public class RogueEnemy : Enemy
             );
         }
 
-        if (boneCleavePrefab == null)
+        if (boneFieldPrefab == null)
         {
             Debug.LogWarning(
-                $"{name}: Bone Cleave Prefab has not been assigned.",
+                $"{name}: Bone Field Prefab has not been assigned.",
                 this
             );
         }
@@ -158,15 +164,13 @@ public class RogueEnemy : Enemy
         homePosition = transform.position;
         currentState = RogueState.Patrolling;
 
-        attackCooldownTimer = Random.Range(
-            minimumAttackCooldown,
-            maximumAttackCooldown
-        );
+        ResetAttackCooldown();
 
         if (!agent.isOnNavMesh)
         {
             Debug.LogError(
-                $"{name}: RogueEnemy is not positioned on a baked NavMesh.",
+                $"{name}: RogueEnemy is not positioned on a " +
+                "baked NavMesh.",
                 this
             );
 
@@ -194,7 +198,8 @@ public class RogueEnemy : Enemy
 
         if (attackCooldownTimer > 0f)
         {
-            attackCooldownTimer -= Time.deltaTime;
+            attackCooldownTimer -=
+                Time.deltaTime;
         }
 
         if (IsPlayerDead())
@@ -202,41 +207,54 @@ public class RogueEnemy : Enemy
             ReturnHome();
         }
 
-        float distanceToPlayer = GetFlatDistance(
-            transform.position,
-            player.position
-        );
+        float distanceToPlayer =
+            GetFlatDistance(
+                transform.position,
+                player.position
+            );
 
         UpdateState(distanceToPlayer);
         RunCurrentState(distanceToPlayer);
         UpdateMovementAnimation();
     }
 
-    private void UpdateState(float distanceToPlayer)
+    private void UpdateState(
+        float distanceToPlayer
+    )
     {
         switch (currentState)
         {
             case RogueState.Patrolling:
             case RogueState.ReturningHome:
-                if (distanceToPlayer <= detectionRange &&
-                    !IsPlayerDead())
+
+                if (
+                    distanceToPlayer <= detectionRange &&
+                    !IsPlayerDead()
+                )
                 {
                     BeginEngagement();
                 }
+
                 break;
 
             case RogueState.Engaged:
             case RogueState.Attacking:
-                if (distanceToPlayer > loseTargetRange ||
-                    IsPlayerDead())
+
+                if (
+                    distanceToPlayer > loseTargetRange ||
+                    IsPlayerDead()
+                )
                 {
                     ReturnHome();
                 }
+
                 break;
         }
     }
 
-    private void RunCurrentState(float distanceToPlayer)
+    private void RunCurrentState(
+        float distanceToPlayer
+    )
     {
         switch (currentState)
         {
@@ -270,11 +288,14 @@ public class RogueEnemy : Enemy
         if (isWaitingAtPatrolPoint)
         {
             agent.isStopped = true;
-            patrolWaitTimer -= Time.deltaTime;
+
+            patrolWaitTimer -=
+                Time.deltaTime;
 
             if (patrolWaitTimer <= 0f)
             {
                 isWaitingAtPatrolPoint = false;
+
                 ChooseRandomPatrolDestination();
             }
 
@@ -305,12 +326,15 @@ public class RogueEnemy : Enemy
             return;
         }
 
-        for (int attempt = 0;
-             attempt < patrolSearchAttempts;
-             attempt++)
+        for (
+            int attempt = 0;
+            attempt < patrolSearchAttempts;
+            attempt++
+        )
         {
             Vector2 randomCircle =
-                Random.insideUnitCircle * patrolRadius;
+                Random.insideUnitCircle *
+                patrolRadius;
 
             Vector3 randomPosition =
                 homePosition +
@@ -320,16 +344,20 @@ public class RogueEnemy : Enemy
                     randomCircle.y
                 );
 
-            if (NavMesh.SamplePosition(
+            if (
+                NavMesh.SamplePosition(
                     randomPosition,
                     out NavMeshHit hit,
                     navMeshSampleDistance,
-                    agent.areaMask))
+                    agent.areaMask
+                )
+            )
             {
-                float distanceFromHome = GetFlatDistance(
-                    homePosition,
-                    hit.position
-                );
+                float distanceFromHome =
+                    GetFlatDistance(
+                        homePosition,
+                        hit.position
+                    );
 
                 if (distanceFromHome > patrolRadius)
                 {
@@ -341,7 +369,9 @@ public class RogueEnemy : Enemy
                 agent.isStopped = false;
 
                 hasPatrolDestination =
-                    agent.SetDestination(hit.position);
+                    agent.SetDestination(
+                        hit.position
+                    );
 
                 return;
             }
@@ -363,7 +393,8 @@ public class RogueEnemy : Enemy
 
     private void BeginEngagement()
     {
-        currentState = RogueState.Engaged;
+        currentState =
+            RogueState.Engaged;
 
         isWaitingAtPatrolPoint = false;
         hasPatrolDestination = false;
@@ -371,7 +402,9 @@ public class RogueEnemy : Enemy
         StopAgent();
     }
 
-    private void EngagePlayer(float distanceToPlayer)
+    private void EngagePlayer(
+        float distanceToPlayer
+    )
     {
         StopAgent();
         FacePlayer();
@@ -400,12 +433,33 @@ public class RogueEnemy : Enemy
 
     private void BeginAttack()
     {
-        if (isCasting || player == null || IsPlayerDead())
+        if (
+            isCasting ||
+            player == null ||
+            IsPlayerDead()
+        )
         {
             return;
         }
 
-        currentState = RogueState.Attacking;
+        if (
+            bonePrisonPrefab == null &&
+            boneFieldPrefab == null
+        )
+        {
+            Debug.LogWarning(
+                $"{name}: Cannot attack because no Rogue " +
+                "spell prefabs have been assigned.",
+                this
+            );
+
+            ResetAttackCooldown();
+            return;
+        }
+
+        currentState =
+            RogueState.Attacking;
+
         isCasting = true;
 
         StopAgent();
@@ -416,8 +470,13 @@ public class RogueEnemy : Enemy
 
         if (animator != null)
         {
-            animator.ResetTrigger(AttackHash);
-            animator.SetTrigger(AttackHash);
+            animator.ResetTrigger(
+                AttackHash
+            );
+
+            animator.SetTrigger(
+                AttackHash
+            );
         }
         else
         {
@@ -434,63 +493,69 @@ public class RogueEnemy : Enemy
 
     private void SelectSpell()
     {
-        bool canUsePrison = bonePrisonPrefab != null;
-        bool canUseCleave =
-            boneCleavePrefab != null && castPoint != null;
+        bool canUsePrison =
+            bonePrisonPrefab != null;
 
-        if (canUsePrison && canUseCleave)
+        bool canUseField =
+            boneFieldPrefab != null;
+
+        if (
+            canUsePrison &&
+            canUseField
+        )
         {
             pendingSpell =
                 Random.value <= bonePrisonChance
                     ? RogueSpell.BonePrison
-                    : RogueSpell.BoneCleave;
+                    : RogueSpell.BoneField;
 
             return;
         }
 
         if (canUsePrison)
         {
-            pendingSpell = RogueSpell.BonePrison;
+            pendingSpell =
+                RogueSpell.BonePrison;
+
             return;
         }
 
-        if (canUseCleave)
+        if (canUseField)
         {
-            pendingSpell = RogueSpell.BoneCleave;
+            pendingSpell =
+                RogueSpell.BoneField;
+
             return;
         }
 
-        pendingSpell = RogueSpell.None;
-
-        Debug.LogWarning(
-            $"{name}: No rogue spell prefabs have been assigned.",
-            this
-        );
+        pendingSpell =
+            RogueSpell.None;
     }
 
     private void StoreAttackTarget()
     {
-        storedTargetPosition = player.position;
-
-        storedCleaveDirection =
-            player.position - transform.position;
-
-        storedCleaveDirection.y = 0f;
-
-        if (storedCleaveDirection.sqrMagnitude <= 0.001f)
+        if (player == null)
         {
-            storedCleaveDirection = transform.forward;
+            storedTargetPosition =
+                transform.position;
+
+            return;
         }
 
-        storedCleaveDirection.Normalize();
+        storedTargetPosition =
+            player.position;
     }
 
     /// <summary>
-    /// Called through an Animation Event relay at the casting frame.
+    /// Called through the Rogue Animation Event Relay
+    /// at the casting frame.
     /// </summary>
     public void CastSpell()
     {
-        if (isDead || !isCasting)
+        if (
+            isDead ||
+            !isCasting
+        )
         {
             return;
         }
@@ -501,25 +566,26 @@ public class RogueEnemy : Enemy
                 CastBonePrison();
                 break;
 
-            case RogueSpell.BoneCleave:
-                CastBoneCleave();
+            case RogueSpell.BoneField:
+                CastBoneField();
                 break;
         }
 
-        pendingSpell = RogueSpell.None;
+        pendingSpell =
+            RogueSpell.None;
     }
 
     private void CastBonePrison()
     {
-        if (bonePrisonPrefab == null || player == null)
+        if (bonePrisonPrefab == null)
         {
             return;
         }
 
-        Vector3 playerPosition = player.position;
-
         Vector3 spawnPosition =
-            FindGroundPosition(playerPosition);
+            FindGroundPosition(
+                storedTargetPosition
+            );
 
         Instantiate(
             bonePrisonPrefab,
@@ -528,50 +594,44 @@ public class RogueEnemy : Enemy
         );
     }
 
-    private void CastBoneCleave()
+    private void CastBoneField()
     {
-        if (boneCleavePrefab == null || castPoint == null)
+        if (boneFieldPrefab == null)
         {
             return;
         }
 
-        Vector3 flatDirection = storedCleaveDirection;
-        flatDirection.y = 0f;
+        Vector3 spawnPosition =
+            FindGroundPosition(
+                storedTargetPosition
+            );
 
-        if (flatDirection.sqrMagnitude <= 0.001f)
-        {
-            flatDirection = transform.forward;
-        }
-
-        flatDirection.Normalize();
-
-        Quaternion rotation =
-            Quaternion.LookRotation(flatDirection, Vector3.up);
-
-        BoneCleave cleave = Instantiate(
-            boneCleavePrefab,
-            castPoint.position,
-            rotation
-        );
-
-        cleave.Initialize(
-            flatDirection,
-            gameObject
+        Instantiate(
+            boneFieldPrefab,
+            spawnPosition,
+            boneFieldPrefab.transform.rotation
         );
     }
 
-    private Vector3 FindGroundPosition(Vector3 targetPosition)
+    private Vector3 FindGroundPosition(
+        Vector3 targetPosition
+    )
     {
         Vector3 rayOrigin =
-            targetPosition + Vector3.up * groundCheckHeight;
+            targetPosition +
+            Vector3.up *
+            groundCheckHeight;
 
-        if (Physics.Raycast(
+        if (
+            Physics.Raycast(
                 rayOrigin,
                 Vector3.down,
                 out RaycastHit hit,
                 groundCheckDistance,
                 groundLayers,
-                QueryTriggerInteraction.Ignore))
+                QueryTriggerInteraction.Ignore
+            )
+        )
         {
             return hit.point;
         }
@@ -580,7 +640,8 @@ public class RogueEnemy : Enemy
     }
 
     /// <summary>
-    /// Add this as an Animation Event near the end of the attack.
+    /// Called through the Rogue Animation Event Relay
+    /// near the end of the attack animation.
     /// </summary>
     public void EndAttack()
     {
@@ -592,10 +653,7 @@ public class RogueEnemy : Enemy
         isCasting = false;
         pendingSpell = RogueSpell.None;
 
-        attackCooldownTimer = Random.Range(
-            minimumAttackCooldown,
-            maximumAttackCooldown
-        );
+        ResetAttackCooldown();
 
         float distanceToPlayer =
             player != null
@@ -605,16 +663,29 @@ public class RogueEnemy : Enemy
                 )
                 : Mathf.Infinity;
 
-        if (player != null &&
+        if (
+            player != null &&
             !IsPlayerDead() &&
-            distanceToPlayer <= loseTargetRange)
+            distanceToPlayer <=
+            loseTargetRange
+        )
         {
-            currentState = RogueState.Engaged;
+            currentState =
+                RogueState.Engaged;
         }
         else
         {
             ReturnHome();
         }
+    }
+
+    private void ResetAttackCooldown()
+    {
+        attackCooldownTimer =
+            Random.Range(
+                minimumAttackCooldown,
+                maximumAttackCooldown
+            );
     }
 
     // =========================================================
@@ -629,23 +700,31 @@ public class RogueEnemy : Enemy
         }
 
         Vector3 direction =
-            player.position - transform.position;
+            player.position -
+            transform.position;
 
         direction.y = 0f;
 
-        if (direction.sqrMagnitude <= 0.001f)
+        if (
+            direction.sqrMagnitude <=
+            0.001f
+        )
         {
             return;
         }
 
         Quaternion targetRotation =
-            Quaternion.LookRotation(direction.normalized);
+            Quaternion.LookRotation(
+                direction.normalized
+            );
 
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            targetRotation,
-            attackRotationSpeed * Time.deltaTime
-        );
+        transform.rotation =
+            Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                attackRotationSpeed *
+                Time.deltaTime
+            );
     }
 
     // =========================================================
@@ -654,21 +733,28 @@ public class RogueEnemy : Enemy
 
     private void ReturnHome()
     {
-        if (currentState == RogueState.ReturningHome)
+        if (
+            currentState ==
+            RogueState.ReturningHome
+        )
         {
             return;
         }
 
-        currentState = RogueState.ReturningHome;
+        currentState =
+            RogueState.ReturningHome;
 
         isCasting = false;
         pendingSpell = RogueSpell.None;
+
         isWaitingAtPatrolPoint = false;
         hasPatrolDestination = false;
 
         if (animator != null)
         {
-            animator.ResetTrigger(AttackHash);
+            animator.ResetTrigger(
+                AttackHash
+            );
         }
 
         if (!agent.isOnNavMesh)
@@ -694,7 +780,10 @@ public class RogueEnemy : Enemy
         agent.stoppingDistance = 0f;
         agent.isStopped = false;
 
-        if (!agent.hasPath && !agent.pathPending)
+        if (
+            !agent.hasPath &&
+            !agent.pathPending
+        )
         {
             SetHomeDestination();
         }
@@ -707,7 +796,9 @@ public class RogueEnemy : Enemy
         agent.isStopped = true;
         agent.ResetPath();
 
-        currentState = RogueState.Patrolling;
+        currentState =
+            RogueState.Patrolling;
+
         isWaitingAtPatrolPoint = true;
         patrolWaitTimer = patrolWaitTime;
         hasPatrolDestination = false;
@@ -715,22 +806,30 @@ public class RogueEnemy : Enemy
 
     private void SetHomeDestination()
     {
-        if (NavMesh.SamplePosition(
+        if (
+            NavMesh.SamplePosition(
                 homePosition,
                 out NavMeshHit hit,
                 navMeshSampleDistance,
-                agent.areaMask))
+                agent.areaMask
+            )
+        )
         {
-            agent.SetDestination(hit.position);
+            agent.SetDestination(
+                hit.position
+            );
         }
         else
         {
             Debug.LogWarning(
-                $"{name}: Could not find its home position on the NavMesh.",
+                $"{name}: Could not find its home position " +
+                "on the NavMesh.",
                 this
             );
 
-            currentState = RogueState.Patrolling;
+            currentState =
+                RogueState.Patrolling;
+
             ChooseRandomPatrolDestination();
         }
     }
@@ -741,9 +840,11 @@ public class RogueEnemy : Enemy
 
     private void UpdateMovementAnimation()
     {
-        if (animator == null ||
+        if (
+            animator == null ||
             agent == null ||
-            !agent.enabled)
+            !agent.enabled
+        )
         {
             return;
         }
@@ -785,7 +886,10 @@ public class RogueEnemy : Enemy
 
     private bool HasReachedDestination()
     {
-        if (!agent.isOnNavMesh || agent.pathPending)
+        if (
+            !agent.isOnNavMesh ||
+            agent.pathPending
+        )
         {
             return false;
         }
@@ -795,31 +899,40 @@ public class RogueEnemy : Enemy
             return false;
         }
 
-        return agent.remainingDistance <=
-               agent.stoppingDistance +
-               destinationTolerance;
+        return
+            agent.remainingDistance <=
+            agent.stoppingDistance +
+            destinationTolerance;
     }
 
     private bool IsPlayerDead()
     {
-        return playerStats != null && playerStats.IsDead;
+        return
+            playerStats != null &&
+            playerStats.IsDead;
     }
 
     private float GetFlatDistance(
         Vector3 first,
-        Vector3 second)
+        Vector3 second
+    )
     {
         first.y = 0f;
         second.y = 0f;
 
-        return Vector3.Distance(first, second);
+        return Vector3.Distance(
+            first,
+            second
+        );
     }
 
     private void StopAgent()
     {
-        if (agent == null ||
+        if (
+            agent == null ||
             !agent.enabled ||
-            !agent.isOnNavMesh)
+            !agent.isOnNavMesh
+        )
         {
             return;
         }
@@ -837,10 +950,15 @@ public class RogueEnemy : Enemy
 
         if (animator != null)
         {
-            animator.ResetTrigger(AttackHash);
+            animator.ResetTrigger(
+                AttackHash
+            );
         }
 
-        if (agent != null && agent.enabled)
+        if (
+            agent != null &&
+            agent.enabled
+        )
         {
             agent.enabled = false;
         }
@@ -850,64 +968,101 @@ public class RogueEnemy : Enemy
 
     private void OnValidate()
     {
-        patrolRadius = Mathf.Max(0.5f, patrolRadius);
-        patrolWaitTime = Mathf.Max(0f, patrolWaitTime);
+        patrolRadius =
+            Mathf.Max(
+                0.5f,
+                patrolRadius
+            );
 
-        destinationTolerance = Mathf.Max(
-            0.05f,
-            destinationTolerance
-        );
+        patrolWaitTime =
+            Mathf.Max(
+                0f,
+                patrolWaitTime
+            );
 
-        navMeshSampleDistance = Mathf.Max(
-            0.5f,
-            navMeshSampleDistance
-        );
+        destinationTolerance =
+            Mathf.Max(
+                0.05f,
+                destinationTolerance
+            );
 
-        patrolSearchAttempts = Mathf.Max(
-            1,
-            patrolSearchAttempts
-        );
+        navMeshSampleDistance =
+            Mathf.Max(
+                0.5f,
+                navMeshSampleDistance
+            );
 
-        detectionRange = Mathf.Max(0.5f, detectionRange);
+        patrolSearchAttempts =
+            Mathf.Max(
+                1,
+                patrolSearchAttempts
+            );
 
-        loseTargetRange = Mathf.Max(
-            detectionRange + 0.5f,
-            loseTargetRange
-        );
+        detectionRange =
+            Mathf.Max(
+                0.5f,
+                detectionRange
+            );
 
-        attackRange = Mathf.Clamp(
-            attackRange,
-            0.1f,
-            loseTargetRange
-        );
+        loseTargetRange =
+            Mathf.Max(
+                detectionRange + 0.5f,
+                loseTargetRange
+            );
 
-        minimumAttackCooldown = Mathf.Max(
-            0.1f,
-            minimumAttackCooldown
-        );
+        attackRange =
+            Mathf.Clamp(
+                attackRange,
+                0.1f,
+                loseTargetRange
+            );
 
-        maximumAttackCooldown = Mathf.Max(
-            minimumAttackCooldown,
-            maximumAttackCooldown
-        );
+        minimumAttackCooldown =
+            Mathf.Max(
+                0.1f,
+                minimumAttackCooldown
+            );
 
-        attackRotationSpeed = Mathf.Max(
-            0f,
-            attackRotationSpeed
-        );
+        maximumAttackCooldown =
+            Mathf.Max(
+                minimumAttackCooldown,
+                maximumAttackCooldown
+            );
 
-        groundCheckHeight = Mathf.Max(
-            0f,
-            groundCheckHeight
-        );
+        attackRotationSpeed =
+            Mathf.Max(
+                0f,
+                attackRotationSpeed
+            );
 
-        groundCheckDistance = Mathf.Max(
-            0.1f,
-            groundCheckDistance
-        );
+        bonePrisonChance =
+            Mathf.Clamp01(
+                bonePrisonChance
+            );
 
-        patrolSpeed = Mathf.Max(0f, patrolSpeed);
-        returnSpeed = Mathf.Max(0f, returnSpeed);
+        groundCheckHeight =
+            Mathf.Max(
+                0f,
+                groundCheckHeight
+            );
+
+        groundCheckDistance =
+            Mathf.Max(
+                0.1f,
+                groundCheckDistance
+            );
+
+        patrolSpeed =
+            Mathf.Max(
+                0f,
+                patrolSpeed
+            );
+
+        returnSpeed =
+            Mathf.Max(
+                0f,
+                returnSpeed
+            );
     }
 
     private void OnDrawGizmosSelected()
@@ -918,21 +1073,28 @@ public class RogueEnemy : Enemy
                 : transform.position;
 
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(centre, patrolRadius);
+
+        Gizmos.DrawWireSphere(
+            centre,
+            patrolRadius
+        );
 
         Gizmos.color = Color.yellow;
+
         Gizmos.DrawWireSphere(
             transform.position,
             detectionRange
         );
 
         Gizmos.color = Color.red;
+
         Gizmos.DrawWireSphere(
             transform.position,
             loseTargetRange
         );
 
         Gizmos.color = Color.magenta;
+
         Gizmos.DrawWireSphere(
             transform.position,
             attackRange
