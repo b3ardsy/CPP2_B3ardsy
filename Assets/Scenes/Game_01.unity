@@ -804,7 +804,7 @@ PrefabInstance:
       objectReference: {fileID: 4599434463630467427, guid: 39d9958756681c142b696fc53d807cf2, type: 3}
     - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: bonePrisonChance
-      value: 0.5
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: bonePrisonPrefab
@@ -878,6 +878,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5467663387165454508, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7081252157819880815, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7448976394040872657, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}
+      propertyPath: playOnAwake
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7471805100603596015, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}

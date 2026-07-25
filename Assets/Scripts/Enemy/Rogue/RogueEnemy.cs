@@ -577,14 +577,25 @@ public class RogueEnemy : Enemy
 
     private void CastBonePrison()
     {
-        if (bonePrisonPrefab == null)
+        if (
+            bonePrisonPrefab == null ||
+            player == null
+        )
         {
             return;
         }
 
+        /*
+         * Target the player's current position at the actual
+         * casting frame rather than their position at the
+         * beginning of the attack animation.
+         */
+        Vector3 currentTargetPosition =
+            player.position;
+
         Vector3 spawnPosition =
             FindGroundPosition(
-                storedTargetPosition
+                currentTargetPosition
             );
 
         Instantiate(
@@ -596,14 +607,25 @@ public class RogueEnemy : Enemy
 
     private void CastBoneField()
     {
-        if (boneFieldPrefab == null)
+        if (
+            boneFieldPrefab == null ||
+            player == null
+        )
         {
             return;
         }
 
+        /*
+         * Bone Field targets the player's position at the actual
+         * release frame rather than at the beginning of the
+         * casting animation.
+         */
+        Vector3 currentTargetPosition =
+            player.position;
+
         Vector3 spawnPosition =
             FindGroundPosition(
-                storedTargetPosition
+                currentTargetPosition
             );
 
         Instantiate(

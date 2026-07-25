@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2911680282481281304}
@@ -4958,8 +4958,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfed0fed9fbe9be4b9ccc4e2937864e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoneField
-  activationDelay: 0.1
-  activeDuration: 0.5
+  activationDelay: 0.3
+  activeDuration: 0.3
   lifetime: 2
   damage: 1
   damageTrigger: {fileID: 2611224649211166842}
