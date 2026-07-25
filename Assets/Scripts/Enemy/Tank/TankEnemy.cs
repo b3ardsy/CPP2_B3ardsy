@@ -747,6 +747,33 @@ public class TankEnemy : Enemy
         agent.ResetPath();
     }
 
+    public override void TakeDamage(int damage)
+    {
+        if (isDead || damage <= 0)
+        {
+            return;
+        }
+
+        /*
+         * A hit reaction may interrupt the attack animation before
+         * its EndAttack Animation Event runs. Clean up the attack
+         * manually so the tank cannot become permanently stuck.
+         */
+        if (isPerformingAttack)
+        {
+            isPerformingAttack = false;
+
+            DisableAxeHitbox();
+
+            if (animator != null)
+            {
+                animator.ResetTrigger(AttackHash);
+            }
+        }
+
+        base.TakeDamage(damage);
+    }
+
     protected override void Die()
     {
         isPerformingAttack = false;
