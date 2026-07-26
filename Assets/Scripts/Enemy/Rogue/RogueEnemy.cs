@@ -94,13 +94,12 @@ public class RogueEnemy : Enemy
     [SerializeField] private float returnSpeed = 3.5f;
 
     private NavMeshAgent agent;
-    private PlayerStats playerStats;
+    private PlayerStatsNew playerStats;
 
     private RogueState currentState;
     private RogueSpell pendingSpell;
 
     private Vector3 homePosition;
-    private Vector3 storedTargetPosition;
 
     private float patrolWaitTimer;
     private float attackCooldownTimer;
@@ -121,26 +120,7 @@ public class RogueEnemy : Enemy
 
         agent = GetComponent<NavMeshAgent>();
 
-        if (player != null)
-        {
-            playerStats =
-                player.GetComponent<PlayerStats>();
-
-            if (playerStats == null)
-            {
-                playerStats =
-                    player.GetComponentInParent<PlayerStats>();
-            }
-
-            if (playerStats == null)
-            {
-                Debug.LogError(
-                    $"{name}: The Player does not have a " +
-                    "PlayerStats component.",
-                    this
-                );
-            }
-        }
+        FindPlayerStats();
 
         if (bonePrisonPrefab == null)
         {
@@ -154,6 +134,38 @@ public class RogueEnemy : Enemy
         {
             Debug.LogWarning(
                 $"{name}: Bone Field Prefab has not been assigned.",
+                this
+            );
+        }
+    }
+
+    private void FindPlayerStats()
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        playerStats =
+            player.GetComponent<PlayerStatsNew>();
+
+        if (playerStats == null)
+        {
+            playerStats =
+                player.GetComponentInParent<PlayerStatsNew>();
+        }
+
+        if (playerStats == null)
+        {
+            playerStats =
+                player.GetComponentInChildren<PlayerStatsNew>();
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError(
+                $"{name}: The Player does not have a " +
+                "PlayerStatsNew component.",
                 this
             );
         }
@@ -194,6 +206,11 @@ public class RogueEnemy : Enemy
         {
             StopAgent();
             return;
+        }
+
+        if (playerStats == null)
+        {
+            FindPlayerStats();
         }
 
         if (attackCooldownTimer > 0f)
@@ -276,10 +293,6 @@ public class RogueEnemy : Enemy
         }
     }
 
-    // =========================================================
-    // PATROL
-    // =========================================================
-
     private void Patrol()
     {
         agent.speed = patrolSpeed;
@@ -295,7 +308,6 @@ public class RogueEnemy : Enemy
             if (patrolWaitTimer <= 0f)
             {
                 isWaitingAtPatrolPoint = false;
-
                 ChooseRandomPatrolDestination();
             }
 
@@ -387,10 +399,6 @@ public class RogueEnemy : Enemy
         patrolWaitTimer = patrolWaitTime;
     }
 
-    // =========================================================
-    // ENGAGEMENT
-    // =========================================================
-
     private void BeginEngagement()
     {
         currentState =
@@ -427,10 +435,6 @@ public class RogueEnemy : Enemy
         BeginAttack();
     }
 
-    // =========================================================
-    // ATTACK
-    // =========================================================
-
     private void BeginAttack()
     {
         if (
@@ -466,7 +470,6 @@ public class RogueEnemy : Enemy
         FacePlayer();
 
         SelectSpell();
-        StoreAttackTarget();
 
         if (animator != null)
         {
@@ -499,10 +502,7 @@ public class RogueEnemy : Enemy
         bool canUseField =
             boneFieldPrefab != null;
 
-        if (
-            canUsePrison &&
-            canUseField
-        )
+        if (canUsePrison && canUseField)
         {
             pendingSpell =
                 Random.value <= bonePrisonChance
@@ -532,24 +532,6 @@ public class RogueEnemy : Enemy
             RogueSpell.None;
     }
 
-    private void StoreAttackTarget()
-    {
-        if (player == null)
-        {
-            storedTargetPosition =
-                transform.position;
-
-            return;
-        }
-
-        storedTargetPosition =
-            player.position;
-    }
-
-    /// <summary>
-    /// Called through the Rogue Animation Event Relay
-    /// at the casting frame.
-    /// </summary>
     public void CastSpell()
     {
         if (
@@ -585,17 +567,9 @@ public class RogueEnemy : Enemy
             return;
         }
 
-        /*
-         * Target the player's current position at the actual
-         * casting frame rather than their position at the
-         * beginning of the attack animation.
-         */
-        Vector3 currentTargetPosition =
-            player.position;
-
         Vector3 spawnPosition =
             FindGroundPosition(
-                currentTargetPosition
+                player.position
             );
 
         Instantiate(
@@ -615,17 +589,9 @@ public class RogueEnemy : Enemy
             return;
         }
 
-        /*
-         * Bone Field targets the player's position at the actual
-         * release frame rather than at the beginning of the
-         * casting animation.
-         */
-        Vector3 currentTargetPosition =
-            player.position;
-
         Vector3 spawnPosition =
             FindGroundPosition(
-                currentTargetPosition
+                player.position
             );
 
         Instantiate(
@@ -661,10 +627,6 @@ public class RogueEnemy : Enemy
         return targetPosition;
     }
 
-    /// <summary>
-    /// Called through the Rogue Animation Event Relay
-    /// near the end of the attack animation.
-    /// </summary>
     public void EndAttack()
     {
         if (isDead)
@@ -710,10 +672,6 @@ public class RogueEnemy : Enemy
             );
     }
 
-    // =========================================================
-    // ROTATION
-    // =========================================================
-
     private void FacePlayer()
     {
         if (player == null)
@@ -748,10 +706,6 @@ public class RogueEnemy : Enemy
                 Time.deltaTime
             );
     }
-
-    // =========================================================
-    // RETURN HOME
-    // =========================================================
 
     private void ReturnHome()
     {
@@ -856,10 +810,6 @@ public class RogueEnemy : Enemy
         }
     }
 
-    // =========================================================
-    // ANIMATION
-    // =========================================================
-
     private void UpdateMovementAnimation()
     {
         if (
@@ -894,10 +844,6 @@ public class RogueEnemy : Enemy
             Time.deltaTime
         );
     }
-
-    // =========================================================
-    // HELPERS
-    // =========================================================
 
     private void ConfigureAgentForPatrol()
     {

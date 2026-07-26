@@ -4919,7 +4919,6 @@ GameObject:
   - component: {fileID: 6230385208243191277}
   - component: {fileID: 2922360603621068855}
   - component: {fileID: 8907027800864590064}
-  - component: {fileID: 4599434463630467427}
   m_Layer: 0
   m_Name: CleaveBoneBig
   m_TagString: Untagged
@@ -9864,22 +9863,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 5.904311, y: 0.51841277, z: 2}
   m_Center: {x: 2.5771556, y: 0.009206384, z: -1.9808315e-17}
---- !u!114 &4599434463630467427
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8211761322938863762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a2e235bf19534349a2c490b23e192e2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BoneCleave
-  damage: 1
-  moveSpeed: 10
-  lifetime: 3
-  keepStartingHeight: 1
 --- !u!1 &8993979002046228860
 GameObject:
   m_ObjectHideFlags: 0

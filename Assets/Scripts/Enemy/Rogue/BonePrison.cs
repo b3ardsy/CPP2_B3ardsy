@@ -24,7 +24,7 @@ public class BonePrison : MonoBehaviour
     [SerializeField] private bool dealDamageOnCapture;
     [SerializeField] private int captureDamage = 1;
 
-    private PlayerMovement3D trappedPlayer;
+    private PlayerMovement3DNew trappedPlayer;
 
     private bool canCapture;
     private bool hasDamagedPlayer;
@@ -62,28 +62,34 @@ public class BonePrison : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(PrisonRoutine());
+        StartCoroutine(
+            PrisonRoutine()
+        );
     }
 
     private void FindReferences()
     {
         if (captureTrigger == null)
         {
-            captureTrigger = GetComponent<Collider>();
+            captureTrigger =
+                GetComponent<Collider>();
 
             if (captureTrigger == null)
             {
-                captureTrigger = GetComponentInChildren<Collider>();
+                captureTrigger =
+                    GetComponentInChildren<Collider>();
             }
         }
 
         if (prisonParticles == null)
         {
-            prisonParticles = GetComponent<ParticleSystem>();
+            prisonParticles =
+                GetComponent<ParticleSystem>();
 
             if (prisonParticles == null)
             {
-                prisonParticles = GetComponentInChildren<ParticleSystem>();
+                prisonParticles =
+                    GetComponentInChildren<ParticleSystem>();
             }
         }
     }
@@ -97,13 +103,17 @@ public class BonePrison : MonoBehaviour
 
         if (activationDelay > 0f)
         {
-            yield return new WaitForSeconds(activationDelay);
+            yield return new WaitForSeconds(
+                activationDelay
+            );
         }
 
         canCapture = true;
         captureTrigger.enabled = true;
 
-        yield return new WaitForSeconds(captureWindow);
+        yield return new WaitForSeconds(
+            captureWindow
+        );
 
         canCapture = false;
         captureTrigger.enabled = false;
@@ -119,61 +129,82 @@ public class BonePrison : MonoBehaviour
                 captureWindow
             );
 
-        yield return new WaitForSeconds(remainingParticleTime);
+        yield return new WaitForSeconds(
+            remainingParticleTime
+        );
 
         EndPrison();
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(
+        Collider other
+    )
     {
         TryCapturePlayer(other);
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerStay(
+        Collider other
+    )
     {
-        /*
-         * Needed because the capture trigger may activate while
-         * the player is already standing inside it.
-         */
         TryCapturePlayer(other);
     }
 
-    private void TryCapturePlayer(Collider other)
+    private void TryCapturePlayer(
+        Collider other
+    )
     {
-        if (!canCapture || isEnding || trappedPlayer != null)
+        if (
+            !canCapture ||
+            isEnding ||
+            trappedPlayer != null
+        )
         {
             return;
         }
 
-        PlayerMovement3D playerMovement =
-            other.GetComponentInParent<PlayerMovement3D>();
+        PlayerMovement3DNew playerMovement =
+            other.GetComponentInParent<PlayerMovement3DNew>();
 
         if (playerMovement == null)
         {
             return;
         }
 
-        trappedPlayer = playerMovement;
+        trappedPlayer =
+            playerMovement;
+
+        trappedPlayer.StopMovementImmediately();
         trappedPlayer.AddMovementLock(this);
 
-        StartCoroutine(ReleasePlayerAfterDelay());
+        StartCoroutine(
+            ReleasePlayerAfterDelay()
+        );
 
-        if (dealDamageOnCapture && !hasDamagedPlayer)
+        if (
+            dealDamageOnCapture &&
+            !hasDamagedPlayer
+        )
         {
-            PlayerStats playerStats =
-                other.GetComponentInParent<PlayerStats>();
+            PlayerStatsNew playerStats =
+                other.GetComponentInParent<PlayerStatsNew>();
 
             if (playerStats != null)
             {
                 hasDamagedPlayer = true;
-                playerStats.TakeDamage(captureDamage);
+
+                playerStats.TakeDamage(
+                    captureDamage
+                );
             }
         }
     }
 
     private IEnumerator ReleasePlayerAfterDelay()
     {
-        yield return new WaitForSeconds(trapDuration);
+        yield return new WaitForSeconds(
+            trapDuration
+        );
 
         ReleasePlayer();
     }
@@ -185,7 +216,10 @@ public class BonePrison : MonoBehaviour
             return;
         }
 
-        trappedPlayer.RemoveMovementLock(this);
+        trappedPlayer.RemoveMovementLock(
+            this
+        );
+
         trappedPlayer = null;
     }
 
@@ -207,30 +241,41 @@ public class BonePrison : MonoBehaviour
         }
 
         ReleasePlayer();
-        Destroy(gameObject);
+
+        Destroy(
+            gameObject
+        );
     }
 
     private void OnDestroy()
     {
-        /*
-         * Safety release if the prison is destroyed externally
-         * before its normal routine finishes.
-         */
         ReleasePlayer();
     }
 
     private void OnValidate()
     {
         activationDelay =
-            Mathf.Max(0f, activationDelay);
+            Mathf.Max(
+                0f,
+                activationDelay
+            );
 
         captureWindow =
-            Mathf.Max(0.02f, captureWindow);
+            Mathf.Max(
+                0.02f,
+                captureWindow
+            );
 
         trapDuration =
-            Mathf.Max(0.1f, trapDuration);
+            Mathf.Max(
+                0.1f,
+                trapDuration
+            );
 
         captureDamage =
-            Mathf.Max(1, captureDamage);
+            Mathf.Max(
+                1,
+                captureDamage
+            );
     }
 }

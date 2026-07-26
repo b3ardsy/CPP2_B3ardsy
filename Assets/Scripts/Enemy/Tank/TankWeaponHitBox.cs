@@ -11,8 +11,8 @@ public class TankWeaponHitbox : MonoBehaviour
 
     // Prevents multiple player colliders or repeated physics frames
     // from dealing damage more than once during one hit window.
-    private readonly HashSet<PlayerStats> playersHitThisWindow =
-        new HashSet<PlayerStats>();
+    private readonly HashSet<PlayerStatsNew> playersHitThisWindow =
+        new HashSet<PlayerStatsNew>();
 
     private void Awake()
     {
@@ -78,8 +78,8 @@ public class TankWeaponHitbox : MonoBehaviour
             return;
         }
 
-        PlayerStats targetPlayer =
-            other.GetComponentInParent<PlayerStats>();
+        PlayerStatsNew targetPlayer =
+            other.GetComponentInParent<PlayerStatsNew>();
 
         if (targetPlayer == null)
         {
@@ -92,6 +92,7 @@ public class TankWeaponHitbox : MonoBehaviour
         }
 
         playersHitThisWindow.Add(targetPlayer);
+
         owner.TryDamagePlayer(targetPlayer);
     }
 
