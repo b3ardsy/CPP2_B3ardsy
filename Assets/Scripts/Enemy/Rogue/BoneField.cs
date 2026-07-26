@@ -92,9 +92,6 @@ public class BoneField : MonoBehaviour
 
     private IEnumerator BoneFieldRoutine()
     {
-        /*
-         * Warning period before the spikes appear.
-         */
         if (activationDelay > 0f)
         {
             yield return new WaitForSeconds(
@@ -102,30 +99,16 @@ public class BoneField : MonoBehaviour
             );
         }
 
-        /*
-         * Start the visible spikes.
-         */
         if (boneFieldParticles != null)
         {
             boneFieldParticles.Play();
         }
 
-        /*
-         * Activate the damage area.
-         */
         canDamage = true;
         damageTrigger.enabled = true;
 
-        /*
-         * Make sure Unity immediately recognizes the newly
-         * enabled collider before checking for the player.
-         */
         Physics.SyncTransforms();
 
-        /*
-         * Check immediately instead of waiting for the next
-         * OnTriggerEnter or OnTriggerStay physics callback.
-         */
         CheckForPlayerImmediately();
 
         if (activeDuration > 0f)
@@ -205,10 +188,6 @@ public class BoneField : MonoBehaviour
         Collider other
     )
     {
-        /*
-         * Allows the player to be damaged if they enter the
-         * field shortly after it becomes active.
-         */
         TryDamagePlayer(
             other
         );
@@ -227,8 +206,8 @@ public class BoneField : MonoBehaviour
             return;
         }
 
-        PlayerStats playerStats =
-            other.GetComponentInParent<PlayerStats>();
+        PlayerStatsNew playerStats =
+            other.GetComponentInParent<PlayerStatsNew>();
 
         if (playerStats == null)
         {

@@ -57,7 +57,7 @@ public class TankEnemy : Enemy
     [SerializeField] private float returnSpeed = 3f;
 
     private NavMeshAgent agent;
-    private PlayerStats playerStats;
+    private PlayerStatsNew playerStats;
 
     private TankState currentState;
     private Vector3 homePosition;
@@ -83,7 +83,8 @@ public class TankEnemy : Enemy
 
         if (axeHitbox == null)
         {
-            axeHitbox = GetComponentInChildren<TankWeaponHitbox>(true);
+            axeHitbox =
+                GetComponentInChildren<TankWeaponHitbox>(true);
         }
 
         if (axeHitbox == null)
@@ -99,22 +100,37 @@ public class TankEnemy : Enemy
             axeHitbox.DisableHitbox();
         }
 
-        if (player != null)
+        FindPlayerStats();
+    }
+
+    private void FindPlayerStats()
+    {
+        if (player == null)
         {
-            playerStats = player.GetComponent<PlayerStats>();
+            return;
+        }
 
-            if (playerStats == null)
-            {
-                playerStats = player.GetComponentInParent<PlayerStats>();
-            }
+        playerStats =
+            player.GetComponent<PlayerStatsNew>();
 
-            if (playerStats == null)
-            {
-                Debug.LogError(
-                    $"{name}: The Player does not have a PlayerStats component.",
-                    this
-                );
-            }
+        if (playerStats == null)
+        {
+            playerStats =
+                player.GetComponentInParent<PlayerStatsNew>();
+        }
+
+        if (playerStats == null)
+        {
+            playerStats =
+                player.GetComponentInChildren<PlayerStatsNew>();
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError(
+                $"{name}: The Player does not have a PlayerStatsNew component.",
+                this
+            );
         }
     }
 
@@ -152,20 +168,34 @@ public class TankEnemy : Enemy
             return;
         }
 
-        if (attackCooldownTimer > 0f)
+        /*
+         * Allows the tank to recover if the player reference was
+         * assigned before PlayerStatsNew became available.
+         */
+        if (playerStats == null)
         {
-            attackCooldownTimer -= Time.deltaTime;
+            FindPlayerStats();
         }
 
-        if (playerStats != null && playerStats.IsDead)
+        if (attackCooldownTimer > 0f)
+        {
+            attackCooldownTimer -=
+                Time.deltaTime;
+        }
+
+        if (
+            playerStats != null &&
+            playerStats.IsDead
+        )
         {
             ReturnHome();
         }
 
-        float distanceToPlayer = GetFlatDistance(
-            transform.position,
-            player.position
-        );
+        float distanceToPlayer =
+            GetFlatDistance(
+                transform.position,
+                player.position
+            );
 
         UpdateState(distanceToPlayer);
         RunCurrentState(distanceToPlayer);
@@ -179,8 +209,10 @@ public class TankEnemy : Enemy
             case TankState.Patrolling:
             case TankState.ReturningHome:
 
-                if (distanceToPlayer <= detectionRange &&
-                    !IsPlayerDead())
+                if (
+                    distanceToPlayer <= detectionRange &&
+                    !IsPlayerDead()
+                )
                 {
                     BeginChasing();
                 }
@@ -189,12 +221,16 @@ public class TankEnemy : Enemy
 
             case TankState.Chasing:
 
-                if (distanceToPlayer > loseTargetRange ||
-                    IsPlayerDead())
+                if (
+                    distanceToPlayer > loseTargetRange ||
+                    IsPlayerDead()
+                )
                 {
                     ReturnHome();
                 }
-                else if (distanceToPlayer <= attackRange)
+                else if (
+                    distanceToPlayer <= attackRange
+                )
                 {
                     BeginAttacking();
                 }
@@ -210,12 +246,16 @@ public class TankEnemy : Enemy
                     break;
                 }
 
-                if (distanceToPlayer > loseTargetRange ||
-                    IsPlayerDead())
+                if (
+                    distanceToPlayer > loseTargetRange ||
+                    IsPlayerDead()
+                )
                 {
                     ReturnHome();
                 }
-                else if (distanceToPlayer > attackRange)
+                else if (
+                    distanceToPlayer > attackRange
+                )
                 {
                     BeginChasing();
                 }
@@ -259,7 +299,8 @@ public class TankEnemy : Enemy
         {
             agent.isStopped = true;
 
-            patrolWaitTimer -= Time.deltaTime;
+            patrolWaitTimer -=
+                Time.deltaTime;
 
             if (patrolWaitTimer <= 0f)
             {
@@ -294,12 +335,15 @@ public class TankEnemy : Enemy
             return;
         }
 
-        for (int attempt = 0;
-             attempt < patrolSearchAttempts;
-             attempt++)
+        for (
+            int attempt = 0;
+            attempt < patrolSearchAttempts;
+            attempt++
+        )
         {
             Vector2 randomCircle =
-                Random.insideUnitCircle * patrolRadius;
+                Random.insideUnitCircle *
+                patrolRadius;
 
             Vector3 randomPosition =
                 homePosition +
@@ -309,18 +353,25 @@ public class TankEnemy : Enemy
                     randomCircle.y
                 );
 
-            if (NavMesh.SamplePosition(
+            if (
+                NavMesh.SamplePosition(
                     randomPosition,
                     out NavMeshHit hit,
                     navMeshSampleDistance,
-                    agent.areaMask))
+                    agent.areaMask
+                )
+            )
             {
-                float distanceFromHome = GetFlatDistance(
-                    homePosition,
-                    hit.position
-                );
+                float distanceFromHome =
+                    GetFlatDistance(
+                        homePosition,
+                        hit.position
+                    );
 
-                if (distanceFromHome > patrolRadius)
+                if (
+                    distanceFromHome >
+                    patrolRadius
+                )
                 {
                     continue;
                 }
@@ -330,7 +381,9 @@ public class TankEnemy : Enemy
                 agent.isStopped = false;
 
                 hasPatrolDestination =
-                    agent.SetDestination(hit.position);
+                    agent.SetDestination(
+                        hit.position
+                    );
 
                 return;
             }
@@ -352,7 +405,9 @@ public class TankEnemy : Enemy
 
     private void BeginChasing()
     {
-        currentState = TankState.Chasing;
+        currentState =
+            TankState.Chasing;
+
         isPerformingAttack = false;
 
         DisableAxeHitbox();
@@ -372,7 +427,10 @@ public class TankEnemy : Enemy
 
     private void ChasePlayer()
     {
-        if (!agent.isOnNavMesh || player == null)
+        if (
+            !agent.isOnNavMesh ||
+            player == null
+        )
         {
             return;
         }
@@ -381,7 +439,9 @@ public class TankEnemy : Enemy
         agent.stoppingDistance = attackRange;
         agent.isStopped = false;
 
-        agent.SetDestination(player.position);
+        agent.SetDestination(
+            player.position
+        );
     }
 
     // =========================================================
@@ -390,7 +450,8 @@ public class TankEnemy : Enemy
 
     private void BeginAttacking()
     {
-        currentState = TankState.Attacking;
+        currentState =
+            TankState.Attacking;
 
         if (agent.isOnNavMesh)
         {
@@ -422,7 +483,10 @@ public class TankEnemy : Enemy
             return;
         }
 
-        if (playerStats == null || playerStats.IsDead)
+        if (
+            playerStats == null ||
+            playerStats.IsDead
+        )
         {
             return;
         }
@@ -435,39 +499,57 @@ public class TankEnemy : Enemy
 
         if (animator != null)
         {
-            animator.ResetTrigger(AttackHash);
-            animator.SetTrigger(AttackHash);
+            animator.ResetTrigger(
+                AttackHash
+            );
+
+            animator.SetTrigger(
+                AttackHash
+            );
         }
     }
 
     /// <summary>
-    /// Called by the axe hitbox when it overlaps a PlayerStats component.
+    /// Called by the axe hitbox when it overlaps a
+    /// PlayerStatsNew component.
     /// </summary>
-    public void TryDamagePlayer(PlayerStats targetPlayer)
+    public void TryDamagePlayer(
+        PlayerStatsNew targetPlayer
+    )
     {
         if (isDead)
         {
             return;
         }
 
-        if (!isPerformingAttack ||
-            currentState != TankState.Attacking)
+        if (
+            !isPerformingAttack ||
+            currentState != TankState.Attacking
+        )
         {
             return;
         }
 
-        if (targetPlayer == null || targetPlayer.IsDead)
+        if (
+            targetPlayer == null ||
+            targetPlayer.IsDead
+        )
         {
             return;
         }
 
         // Only damage the player this tank is currently targeting.
-        if (playerStats != null && targetPlayer != playerStats)
+        if (
+            playerStats != null &&
+            targetPlayer != playerStats
+        )
         {
             return;
         }
 
-        targetPlayer.TakeDamage(attackDamage);
+        targetPlayer.TakeDamage(
+            attackDamage
+        );
     }
 
     /// <summary>
@@ -476,9 +558,11 @@ public class TankEnemy : Enemy
     /// </summary>
     public void EnableAxeHitbox()
     {
-        if (isDead ||
+        if (
+            isDead ||
             !isPerformingAttack ||
-            currentState != TankState.Attacking)
+            currentState != TankState.Attacking
+        )
         {
             return;
         }
@@ -511,21 +595,28 @@ public class TankEnemy : Enemy
 
         isPerformingAttack = false;
 
-        if (isDead || player == null || IsPlayerDead())
+        if (
+            isDead ||
+            player == null ||
+            IsPlayerDead()
+        )
         {
             return;
         }
 
-        float distanceToPlayer = GetFlatDistance(
-            transform.position,
-            player.position
-        );
+        float distanceToPlayer =
+            GetFlatDistance(
+                transform.position,
+                player.position
+            );
 
         if (distanceToPlayer > loseTargetRange)
         {
             ReturnHome();
         }
-        else if (distanceToPlayer > attackRange)
+        else if (
+            distanceToPlayer > attackRange
+        )
         {
             BeginChasing();
         }
@@ -542,23 +633,31 @@ public class TankEnemy : Enemy
         }
 
         Vector3 direction =
-            player.position - transform.position;
+            player.position -
+            transform.position;
 
         direction.y = 0f;
 
-        if (direction.sqrMagnitude <= 0.001f)
+        if (
+            direction.sqrMagnitude <=
+            0.001f
+        )
         {
             return;
         }
 
         Quaternion targetRotation =
-            Quaternion.LookRotation(direction);
+            Quaternion.LookRotation(
+                direction
+            );
 
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            targetRotation,
-            attackRotationSpeed * Time.deltaTime
-        );
+        transform.rotation =
+            Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                attackRotationSpeed *
+                Time.deltaTime
+            );
     }
 
     // =========================================================
@@ -567,12 +666,17 @@ public class TankEnemy : Enemy
 
     private void ReturnHome()
     {
-        if (currentState == TankState.ReturningHome)
+        if (
+            currentState ==
+            TankState.ReturningHome
+        )
         {
             return;
         }
 
-        currentState = TankState.ReturningHome;
+        currentState =
+            TankState.ReturningHome;
+
         isPerformingAttack = false;
 
         DisableAxeHitbox();
@@ -603,7 +707,10 @@ public class TankEnemy : Enemy
         agent.stoppingDistance = 0f;
         agent.isStopped = false;
 
-        if (!agent.hasPath && !agent.pathPending)
+        if (
+            !agent.hasPath &&
+            !agent.pathPending
+        )
         {
             SetHomeDestination();
         }
@@ -616,7 +723,8 @@ public class TankEnemy : Enemy
         agent.isStopped = true;
         agent.ResetPath();
 
-        currentState = TankState.Patrolling;
+        currentState =
+            TankState.Patrolling;
 
         isWaitingAtPatrolPoint = true;
         patrolWaitTimer = patrolWaitTime;
@@ -625,13 +733,18 @@ public class TankEnemy : Enemy
 
     private void SetHomeDestination()
     {
-        if (NavMesh.SamplePosition(
+        if (
+            NavMesh.SamplePosition(
                 homePosition,
                 out NavMeshHit hit,
                 navMeshSampleDistance,
-                agent.areaMask))
+                agent.areaMask
+            )
+        )
         {
-            agent.SetDestination(hit.position);
+            agent.SetDestination(
+                hit.position
+            );
         }
         else
         {
@@ -640,7 +753,9 @@ public class TankEnemy : Enemy
                 this
             );
 
-            currentState = TankState.Patrolling;
+            currentState =
+                TankState.Patrolling;
+
             ChooseRandomPatrolDestination();
         }
     }
@@ -651,23 +766,31 @@ public class TankEnemy : Enemy
 
     private void UpdateMovementAnimation()
     {
-        if (animator == null ||
+        if (
+            animator == null ||
             agent == null ||
-            !agent.enabled)
+            !agent.enabled
+        )
         {
             return;
         }
 
         float animationSpeed = 0f;
 
-        Vector3 movementVelocity = agent.velocity;
+        Vector3 movementVelocity =
+            agent.velocity;
+
         movementVelocity.y = 0f;
 
         bool isActuallyMoving =
             !agent.isStopped &&
-            movementVelocity.sqrMagnitude > 0.01f;
+            movementVelocity.sqrMagnitude >
+            0.01f;
 
-        if (isActuallyMoving && !isPerformingAttack)
+        if (
+            isActuallyMoving &&
+            !isPerformingAttack
+        )
         {
             switch (currentState)
             {
@@ -703,7 +826,10 @@ public class TankEnemy : Enemy
 
     private bool HasReachedDestination()
     {
-        if (!agent.isOnNavMesh || agent.pathPending)
+        if (
+            !agent.isOnNavMesh ||
+            agent.pathPending
+        )
         {
             return false;
         }
@@ -713,32 +839,40 @@ public class TankEnemy : Enemy
             return false;
         }
 
-        return agent.remainingDistance <=
-               agent.stoppingDistance +
-               destinationTolerance;
+        return
+            agent.remainingDistance <=
+            agent.stoppingDistance +
+            destinationTolerance;
     }
 
     private bool IsPlayerDead()
     {
-        return playerStats != null &&
-               playerStats.IsDead;
+        return
+            playerStats != null &&
+            playerStats.IsDead;
     }
 
     private float GetFlatDistance(
         Vector3 first,
-        Vector3 second)
+        Vector3 second
+    )
     {
         first.y = 0f;
         second.y = 0f;
 
-        return Vector3.Distance(first, second);
+        return Vector3.Distance(
+            first,
+            second
+        );
     }
 
     private void StopAgent()
     {
-        if (agent == null ||
+        if (
+            agent == null ||
             !agent.enabled ||
-            !agent.isOnNavMesh)
+            !agent.isOnNavMesh
+        )
         {
             return;
         }
@@ -749,7 +883,10 @@ public class TankEnemy : Enemy
 
     public override void TakeDamage(int damage)
     {
-        if (isDead || damage <= 0)
+        if (
+            isDead ||
+            damage <= 0
+        )
         {
             return;
         }
@@ -767,7 +904,9 @@ public class TankEnemy : Enemy
 
             if (animator != null)
             {
-                animator.ResetTrigger(AttackHash);
+                animator.ResetTrigger(
+                    AttackHash
+                );
             }
         }
 
@@ -783,10 +922,15 @@ public class TankEnemy : Enemy
 
         if (animator != null)
         {
-            animator.ResetTrigger(AttackHash);
+            animator.ResetTrigger(
+                AttackHash
+            );
         }
 
-        if (agent != null && agent.enabled)
+        if (
+            agent != null &&
+            agent.enabled
+        )
         {
             agent.enabled = false;
         }
@@ -796,103 +940,122 @@ public class TankEnemy : Enemy
 
     private void OnValidate()
     {
-        patrolRadius = Mathf.Max(
-            0.5f,
-            patrolRadius
-        );
+        patrolRadius =
+            Mathf.Max(
+                0.5f,
+                patrolRadius
+            );
 
-        patrolWaitTime = Mathf.Max(
-            0f,
-            patrolWaitTime
-        );
+        patrolWaitTime =
+            Mathf.Max(
+                0f,
+                patrolWaitTime
+            );
 
-        destinationTolerance = Mathf.Max(
-            0.05f,
-            destinationTolerance
-        );
+        destinationTolerance =
+            Mathf.Max(
+                0.05f,
+                destinationTolerance
+            );
 
-        navMeshSampleDistance = Mathf.Max(
-            0.5f,
-            navMeshSampleDistance
-        );
+        navMeshSampleDistance =
+            Mathf.Max(
+                0.5f,
+                navMeshSampleDistance
+            );
 
-        patrolSearchAttempts = Mathf.Max(
-            1,
-            patrolSearchAttempts
-        );
+        patrolSearchAttempts =
+            Mathf.Max(
+                1,
+                patrolSearchAttempts
+            );
 
-        detectionRange = Mathf.Max(
-            0.5f,
-            detectionRange
-        );
+        detectionRange =
+            Mathf.Max(
+                0.5f,
+                detectionRange
+            );
 
-        loseTargetRange = Mathf.Max(
-            detectionRange + 0.5f,
-            loseTargetRange
-        );
+        loseTargetRange =
+            Mathf.Max(
+                detectionRange + 0.5f,
+                loseTargetRange
+            );
 
-        attackRange = Mathf.Clamp(
-            attackRange,
-            0.1f,
-            detectionRange
-        );
+        attackRange =
+            Mathf.Clamp(
+                attackRange,
+                0.1f,
+                detectionRange
+            );
 
-        attackDamage = Mathf.Max(
-            1,
-            attackDamage
-        );
+        attackDamage =
+            Mathf.Max(
+                1,
+                attackDamage
+            );
 
-        attackCooldown = Mathf.Max(
-            0.1f,
-            attackCooldown
-        );
+        attackCooldown =
+            Mathf.Max(
+                0.1f,
+                attackCooldown
+            );
 
-        attackRotationSpeed = Mathf.Max(
-            0f,
-            attackRotationSpeed
-        );
+        attackRotationSpeed =
+            Mathf.Max(
+                0f,
+                attackRotationSpeed
+            );
 
-        patrolSpeed = Mathf.Max(
-            0f,
-            patrolSpeed
-        );
+        patrolSpeed =
+            Mathf.Max(
+                0f,
+                patrolSpeed
+            );
 
-        chaseSpeed = Mathf.Max(
-            0f,
-            chaseSpeed
-        );
+        chaseSpeed =
+            Mathf.Max(
+                0f,
+                chaseSpeed
+            );
 
-        returnSpeed = Mathf.Max(
-            0f,
-            returnSpeed
-        );
+        returnSpeed =
+            Mathf.Max(
+                0f,
+                returnSpeed
+            );
     }
 
     private void OnDrawGizmosSelected()
     {
-        Vector3 centre = Application.isPlaying
-            ? homePosition
-            : transform.position;
+        Vector3 centre =
+            Application.isPlaying
+                ? homePosition
+                : transform.position;
 
         Gizmos.color = Color.cyan;
+
         Gizmos.DrawWireSphere(
             centre,
             patrolRadius
         );
 
         Gizmos.color = Color.yellow;
+
         Gizmos.DrawWireSphere(
             transform.position,
             detectionRange
         );
 
         Gizmos.color = Color.red;
+
         Gizmos.DrawWireSphere(
             transform.position,
             loseTargetRange
         );
 
         Gizmos.color = Color.magenta;
+
         Gizmos.DrawWireSphere(
             transform.position,
             attackRange

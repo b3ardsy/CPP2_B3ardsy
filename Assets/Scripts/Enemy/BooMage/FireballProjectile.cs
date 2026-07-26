@@ -134,8 +134,8 @@ public class FireballProjectile : MonoBehaviour
 
         hasHitSomething = true;
 
-        PlayerStats playerStats =
-            other.GetComponentInParent<PlayerStats>();
+        PlayerStatsNew playerStats =
+    other.GetComponentInParent<PlayerStatsNew>();
 
         if (playerStats != null)
         {
