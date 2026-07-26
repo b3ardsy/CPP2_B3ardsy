@@ -1346,7 +1346,7 @@ MonoBehaviour:
   detectionRadius: 30
   moveSpeed: 2
   rotationSpeed: 8
-  stoppingDistance: 1.5
+  stoppingDistance: 5
   sneakAnimationSpeed: 2
   facingThreshold: 0.5
   fireballPrefab: {fileID: 1587250918974726, guid: e9e9458c34ca3044d87b5f69ebf36957, type: 3}
