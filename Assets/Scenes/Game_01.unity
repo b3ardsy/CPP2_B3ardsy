@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 6d63a9c4af405ed4d9e205d4ae870e07, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: e031b380d95ac884186fd36cba811494, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -941,6 +941,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Druid
       objectReference: {fileID: 0}
+    - target: {fileID: 1703729817657369139, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: m_Interpolate
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1703729817657369139, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: m_CollisionDetection
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4077327485264463941, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: firePoint
       value: 
@@ -1232,6 +1240,63 @@ Transform:
   - {fileID: 791437899}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1515107699
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 97.86234
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 24.346336
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 65.16328
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ed09329ad499822428e58a630436d822, type: 3}
+      propertyPath: m_Name
+      value: barrel_large
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ed09329ad499822428e58a630436d822, type: 3}
 --- !u!1001 &1661426155
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1563,7 +1628,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: cd04d2843abe25d4f8d33cb2a0a4f7b5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 98.93734
+      value: 98.68734
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: cd04d2843abe25d4f8d33cb2a0a4f7b5, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2000,3 +2065,4 @@ SceneRoots:
   - {fileID: 2133496281}
   - {fileID: 1661426155}
   - {fileID: 1980499309}
+  - {fileID: 1515107699}
