@@ -941,6 +941,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Druid
       objectReference: {fileID: 0}
+    - target: {fileID: 1157173817122883046, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: 3e7741c07cff8e1429287ac57526ed33, type: 2}
     - target: {fileID: 1703729817657369139, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: m_Interpolate
       value: 1
@@ -976,6 +980,14 @@ PrefabInstance:
     - target: {fileID: 7214371169738337839, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: -0.000004268868
+      objectReference: {fileID: 0}
+    - target: {fileID: 7388450041393902632, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: maxSlopeAngle
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7388450041393902632, guid: 95bff2ae58cd81f4a8c72e949ec3ef60, type: 3}
+      propertyPath: groundStickForce
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

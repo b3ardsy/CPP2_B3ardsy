@@ -18,6 +18,34 @@ public class PlayerMovement3D : MonoBehaviour
     [Header("Jump")]
     [SerializeField] private float jumpForce = 6f;
 
+    [Tooltip(
+        "Briefly ignores ground detection after jumping so slope movement " +
+        "cannot immediately overwrite the jump."
+    )]
+    [SerializeField] private float jumpGroundIgnoreDuration = 0.15f;
+
+    [Header("Slope Movement")]
+    [Tooltip("The steepest slope that the player can move along normally.")]
+    [Range(0f, 89f)]
+    [SerializeField] private float maxSlopeAngle = 45f;
+
+    [Tooltip(
+        "Small downward acceleration used to keep the player attached " +
+        "to rolling terrain."
+    )]
+    [SerializeField] private float groundStickForce = 20f;
+
+    [Tooltip(
+        "How far beneath the GroundCheck the slope probe looks."
+    )]
+    [SerializeField] private float slopeProbeDistance = 0.4f;
+
+    [Tooltip(
+        "Raises the slope probe slightly so it does not begin inside " +
+        "the terrain."
+    )]
+    [SerializeField] private float slopeProbeStartOffset = 0.1f;
+
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private PlayerCombat playerCombat;
@@ -39,6 +67,17 @@ public class PlayerMovement3D : MonoBehaviour
     private bool isGrounded;
     private bool wasGrounded;
     private bool isRunning;
+
+    // Slope information from the terrain beneath the player.
+    private RaycastHit slopeHit;
+    private Vector3 groundNormal = Vector3.up;
+    private float slopeAngle;
+    private bool hasSlopeHit;
+    private bool isOnWalkableSlope;
+
+    // Prevents the ground check from immediately re-grounding the player.
+    private float lastJumpTime =
+        float.NegativeInfinity;
 
     // Stores the movement speed used when the player leaves the ground.
     private float airborneSpeed;
@@ -68,9 +107,10 @@ public class PlayerMovement3D : MonoBehaviour
         Animator.StringToHash("LockOnVertical");
 
     private readonly HashSet<Object> movementLocks =
-    new HashSet<Object>();
+        new HashSet<Object>();
 
-    public bool IsMovementLocked => movementLocks.Count > 0;
+    public bool IsMovementLocked =>
+        movementLocks.Count > 0;
 
     public void AddMovementLock(Object lockSource)
     {
@@ -81,7 +121,9 @@ public class PlayerMovement3D : MonoBehaviour
 
         movementLocks.Add(lockSource);
 
-        Debug.Log($"Movement Locks: {movementLocks.Count}");
+        Debug.Log(
+            $"Movement Locks: {movementLocks.Count}"
+        );
 
         movementInput = Vector2.zero;
         moveDirection = Vector3.zero;
@@ -93,7 +135,9 @@ public class PlayerMovement3D : MonoBehaviour
     {
         movementLocks.Remove(lockSource);
 
-        Debug.Log($"Movement Locks: {movementLocks.Count}");
+        Debug.Log(
+            $"Movement Locks: {movementLocks.Count}"
+        );
     }
 
     private void Awake()
@@ -191,6 +235,7 @@ public class PlayerMovement3D : MonoBehaviour
 
             UpdateAnimator();
             HandleCursorUnlock();
+
             return;
         }
 
@@ -218,8 +263,6 @@ public class PlayerMovement3D : MonoBehaviour
 
             return;
         }
-
-
 
         CalculateMoveDirection();
         UpdateRunningState();
@@ -487,16 +530,105 @@ public class PlayerMovement3D : MonoBehaviour
                 airborneSpeed;
         }
 
+        Vector3 movementDirection =
+            moveDirection;
+
+        bool movingOnSlope =
+            isGrounded &&
+            isOnWalkableSlope &&
+            moveDirection.sqrMagnitude > 0.01f;
+
+        if (movingOnSlope)
+        {
+            Vector3 projectedDirection =
+                Vector3.ProjectOnPlane(
+                    moveDirection,
+                    groundNormal
+                ).normalized;
+
+            /*
+             * Downhill movement keeps the projected negative Y
+             * component so the Rigidbody follows the terrain.
+             *
+             * Uphill movement uses only the horizontal portion.
+             * This prevents the hill from becoming a launch ramp.
+             */
+            if (projectedDirection.y <= 0f)
+            {
+                movementDirection =
+                    projectedDirection;
+            }
+            else
+            {
+                Vector3 horizontalSlopeDirection =
+                    new Vector3(
+                        projectedDirection.x,
+                        0f,
+                        projectedDirection.z
+                    );
+
+                if (
+                    horizontalSlopeDirection.sqrMagnitude >
+                    0.001f
+                )
+                {
+                    movementDirection =
+                        horizontalSlopeDirection.normalized;
+                }
+                else
+                {
+                    movementDirection =
+                        Vector3.zero;
+                }
+            }
+        }
+
         Vector3 velocity =
-            moveDirection *
+            movementDirection *
             currentSpeed;
 
-        rb.linearVelocity =
-            new Vector3(
-                velocity.x,
-                rb.linearVelocity.y,
-                velocity.z
+        if (
+            movingOnSlope &&
+            movementDirection.y < 0f
+        )
+        {
+            /*
+             * Use the projected vertical velocity only while moving
+             * downhill.
+             */
+            rb.linearVelocity =
+                velocity;
+        }
+        else
+        {
+            /*
+             * Uphill and flat movement retain the Rigidbody's
+             * existing vertical velocity. No positive slope velocity
+             * is injected.
+             */
+            rb.linearVelocity =
+                new Vector3(
+                    velocity.x,
+                    rb.linearVelocity.y,
+                    velocity.z
+                );
+        }
+
+        /*
+         * Keep the capsule pressed against the terrain while grounded.
+         * Do not apply this during the physics frame containing a jump.
+         */
+        if (
+            isGrounded &&
+            !jumpPressed
+        )
+        {
+            rb.AddForce(
+                Vector3.down *
+                groundStickForce,
+                ForceMode.Acceleration
             );
+        }
 
         if (isLockedOn)
         {
@@ -522,8 +654,14 @@ public class PlayerMovement3D : MonoBehaviour
                 ForceMode.Impulse
             );
 
+            lastJumpTime =
+                Time.time;
+
             jumpPressed = false;
             isGrounded = false;
+            hasSlopeHit = false;
+            isOnWalkableSlope = false;
+            groundNormal = Vector3.up;
         }
     }
 
@@ -606,9 +744,33 @@ public class PlayerMovement3D : MonoBehaviour
         if (groundCheck == null)
         {
             isGrounded = false;
+            hasSlopeHit = false;
+            isOnWalkableSlope = false;
+            groundNormal = Vector3.up;
+
             return;
         }
 
+        bool isIgnoringGround =
+            Time.time <
+            lastJumpTime +
+            jumpGroundIgnoreDuration;
+
+        if (isIgnoringGround)
+        {
+            isGrounded = false;
+            hasSlopeHit = false;
+            isOnWalkableSlope = false;
+            groundNormal = Vector3.up;
+            slopeAngle = 0f;
+
+            return;
+        }
+
+        /*
+         * Keep the original grounded check so the animator and jump
+         * behaviour remain largely unchanged.
+         */
         isGrounded =
             Physics.CheckSphere(
                 groundCheck.position,
@@ -616,6 +778,54 @@ public class PlayerMovement3D : MonoBehaviour
                 groundLayer,
                 QueryTriggerInteraction.Ignore
             );
+
+        /*
+         * This SphereCast gathers terrain-angle information without
+         * replacing the original grounded check.
+         */
+        Vector3 probeOrigin =
+            groundCheck.position +
+            Vector3.up *
+            slopeProbeStartOffset;
+
+        float probeDistance =
+            slopeProbeDistance +
+            slopeProbeStartOffset;
+
+        hasSlopeHit =
+            Physics.SphereCast(
+                probeOrigin,
+                groundCheckRadius * 0.9f,
+                Vector3.down,
+                out slopeHit,
+                probeDistance,
+                groundLayer,
+                QueryTriggerInteraction.Ignore
+            );
+
+        if (hasSlopeHit)
+        {
+            groundNormal =
+                slopeHit.normal;
+
+            slopeAngle =
+                Vector3.Angle(
+                    Vector3.up,
+                    groundNormal
+                );
+
+            isOnWalkableSlope =
+                slopeAngle <=
+                maxSlopeAngle;
+        }
+        else
+        {
+            groundNormal =
+                Vector3.up;
+
+            slopeAngle = 0f;
+            isOnWalkableSlope = false;
+        }
     }
 
     private void UpdateAnimator()
@@ -720,9 +930,49 @@ public class PlayerMovement3D : MonoBehaviour
             return;
         }
 
+        // Original grounded-check sphere.
         Gizmos.DrawWireSphere(
             groundCheck.position,
             groundCheckRadius
         );
+
+        // Additional slope-information probe.
+        Vector3 probeOrigin =
+            groundCheck.position +
+            Vector3.up *
+            slopeProbeStartOffset;
+
+        float probeDistance =
+            slopeProbeDistance +
+            slopeProbeStartOffset;
+
+        Vector3 probeEnd =
+            probeOrigin +
+            Vector3.down *
+            probeDistance;
+
+        Gizmos.DrawWireSphere(
+            probeOrigin,
+            groundCheckRadius * 0.9f
+        );
+
+        Gizmos.DrawLine(
+            probeOrigin,
+            probeEnd
+        );
+
+        Gizmos.DrawWireSphere(
+            probeEnd,
+            groundCheckRadius * 0.9f
+        );
+
+        if (hasSlopeHit)
+        {
+            Gizmos.DrawLine(
+                slopeHit.point,
+                slopeHit.point +
+                slopeHit.normal
+            );
+        }
     }
 }
