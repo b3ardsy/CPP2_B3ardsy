@@ -909,6 +909,53 @@ public class RogueEnemy : Enemy
         agent.ResetPath();
     }
 
+    public override void TakeDamage(int damage)
+    {
+        if (isDead || damage <= 0)
+        {
+            return;
+        }
+
+        /*
+         * A hit animation can interrupt the attack animation before
+         * its EndAttack animation event runs. Clear the casting state
+         * here so the Rogue cannot become stuck in Attacking.
+         */
+        InterruptAttack();
+
+        base.TakeDamage(damage);
+    }
+
+    private void InterruptAttack()
+    {
+        if (!isCasting &&
+            currentState != RogueState.Attacking)
+        {
+            return;
+        }
+
+        isCasting = false;
+        pendingSpell = RogueSpell.None;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                AttackHash
+            );
+        }
+
+        ResetAttackCooldown();
+
+        /*
+         * Return to engagement. UpdateState will send the Rogue home
+         * on the next frame if the player is dead or out of range.
+         */
+        currentState =
+            RogueState.Engaged;
+
+        StopAgent();
+    }
+
     protected override void Die()
     {
         isCasting = false;
