@@ -5,7 +5,7 @@ public class PlayerDodgeNew : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerLockOn playerLockOn;
-    [SerializeField] private PlayerCombat playerCombat;
+    [SerializeField] private PlayerCombatNew playerCombat;
 
     [Header("Dodge Settings")]
     [SerializeField] private float dodgeSpeed = 15f;
@@ -63,7 +63,7 @@ public class PlayerDodgeNew : MonoBehaviour
         if (playerCombat == null)
         {
             playerCombat =
-                GetComponent<PlayerCombat>();
+                GetComponent<PlayerCombatNew>();
         }
 
         if (animator == null)

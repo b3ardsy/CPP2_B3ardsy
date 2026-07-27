@@ -35,7 +35,7 @@ public class PlayerStatsNew : MonoBehaviour
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement3DNew playerMovement;
-    [SerializeField] private PlayerCombat playerCombat;
+    [SerializeField] private PlayerCombatNew playerCombat;
     [SerializeField] private PlayerDodgeNew playerDodge;
     [SerializeField] private PlayerLockOn playerLockOn;
 
@@ -150,7 +150,7 @@ public class PlayerStatsNew : MonoBehaviour
         if (playerCombat == null)
         {
             playerCombat =
-                GetComponent<PlayerCombat>();
+                GetComponent<PlayerCombatNew>();
         }
 
         if (playerDodge == null)

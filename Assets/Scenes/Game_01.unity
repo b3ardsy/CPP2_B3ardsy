@@ -774,7 +774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDodgeNew
   playerLockOn: {fileID: 959484219}
-  playerCombat: {fileID: 0}
+  playerCombat: {fileID: 959484233}
   dodgeSpeed: 15
   dodgeDuration: 0.3
   dodgeCooldown: 0.2
@@ -806,7 +806,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   cameraTransform: {fileID: 158945046}
-  playerCombat: {fileID: 0}
+  playerCombat: {fileID: 959484233}
   playerLockOn: {fileID: 959484219}
   playerDodge: {fileID: 959484229}
 --- !u!114 &959484231
@@ -829,7 +829,7 @@ MonoBehaviour:
   restartSceneOnDeath: 1
   animator: {fileID: 959484227}
   playerMovement: {fileID: 959484230}
-  playerCombat: {fileID: 0}
+  playerCombat: {fileID: 959484233}
   playerDodge: {fileID: 959484229}
   playerLockOn: {fileID: 959484219}
 --- !u!114 &959484232
@@ -847,7 +847,7 @@ MonoBehaviour:
   animator: {fileID: 959484227}
   playerMovement: {fileID: 959484230}
   playerLockOn: {fileID: 959484219}
-  playerCombat: {fileID: 0}
+  playerCombat: {fileID: 959484233}
   firePoint: {fileID: 1115952230}
   projectilePrefab: {fileID: 8981286214329543514, guid: 548b5707a607e864dbd877959b546418, type: 3}
   spellDamage: 1
