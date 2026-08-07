@@ -75,6 +75,8 @@ public class TankEnemy : Enemy
     private static readonly int AttackHash =
         Animator.StringToHash("Attack");
 
+
+
     protected override void Awake()
     {
         base.Awake();
@@ -547,7 +549,7 @@ public class TankEnemy : Enemy
             return;
         }
 
-        targetPlayer.TakeDamage(
+        targetPlayer.TakeAxeDamage(
             attackDamage
         );
     }

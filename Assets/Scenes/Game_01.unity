@@ -887,6 +887,7 @@ MonoBehaviour:
   invulnerabilityDuration: 0
   hitReactionDuration: 0.4
   hitAnimationStateName: Base Layer.Player_Hit
+  axeHitAnimationStateName: AxeHit
   deathRestartDelay: 2
   restartSceneOnDeath: 1
   animator: {fileID: 959484227}

@@ -18,11 +18,18 @@ public class PlayerStatsNew : MonoBehaviour
     [SerializeField] private float hitReactionDuration = 0.4f;
 
     [Tooltip(
-        "Exact Animator state name used for the hit animation."
+        "Exact Animator state name used for the normal hit animation."
     )]
     [SerializeField]
     private string hitAnimationStateName =
         "Player_Hit";
+
+    [Tooltip(
+        "Exact Animator state name used for the axe hit animation."
+    )]
+    [SerializeField]
+    private string axeHitAnimationStateName =
+        "Player_AxeHit";
 
     [Header("Death")]
     [SerializeField] private float deathRestartDelay = 2f;
@@ -50,6 +57,7 @@ public class PlayerStatsNew : MonoBehaviour
     private Coroutine deathCoroutine;
 
     private int hitAnimationStateHash;
+    private int axeHitAnimationStateHash;
 
     public int CurrentHealth =>
         currentHealth;
@@ -68,6 +76,9 @@ public class PlayerStatsNew : MonoBehaviour
 
     private static readonly int HitTrigger =
         Animator.StringToHash("Hit");
+
+    private static readonly int AxeHitTrigger =
+        Animator.StringToHash("AxeHit");
 
     private static readonly int DeathTrigger =
         Animator.StringToHash("Death");
@@ -131,6 +142,11 @@ public class PlayerStatsNew : MonoBehaviour
             Animator.StringToHash(
                 hitAnimationStateName
             );
+
+        axeHitAnimationStateHash =
+            Animator.StringToHash(
+                axeHitAnimationStateName
+            );
     }
 
     private void FindReferences()
@@ -177,6 +193,34 @@ public class PlayerStatsNew : MonoBehaviour
             return;
         }
 
+        ApplyDamage(
+            damage,
+            false
+        );
+    }
+
+    public void TakeAxeDamage(int damage)
+    {
+        if (
+            isDead ||
+            isInvulnerable ||
+            damage <= 0
+        )
+        {
+            return;
+        }
+
+        ApplyDamage(
+            damage,
+            true
+        );
+    }
+
+    private void ApplyDamage(
+        int damage,
+        bool useAxeHitReaction
+    )
+    {
         currentHealth =
             Mathf.Clamp(
                 currentHealth - damage,
@@ -196,7 +240,15 @@ public class PlayerStatsNew : MonoBehaviour
             return;
         }
 
-        StartHitReaction();
+        if (useAxeHitReaction)
+        {
+            StartAxeHitReaction();
+        }
+        else
+        {
+            StartHitReaction();
+        }
+
         StartInvulnerability();
     }
 
@@ -252,12 +304,49 @@ public class PlayerStatsNew : MonoBehaviour
             );
     }
 
+    private void StartAxeHitReaction()
+    {
+        if (hitReactionCoroutine != null)
+        {
+            StopCoroutine(
+                hitReactionCoroutine
+            );
+
+            hitReactionCoroutine = null;
+        }
+
+        hitReactionCoroutine =
+            StartCoroutine(
+                AxeHitReactionCoroutine()
+            );
+    }
+
     private IEnumerator HitReactionCoroutine()
     {
         isInHitReaction = true;
 
         DisableTemporaryPlayerActions();
         PlayHitAnimationImmediately();
+
+        yield return new WaitForSeconds(
+            hitReactionDuration
+        );
+
+        if (!isDead)
+        {
+            EnableTemporaryPlayerActions();
+        }
+
+        isInHitReaction = false;
+        hitReactionCoroutine = null;
+    }
+
+    private IEnumerator AxeHitReactionCoroutine()
+    {
+        isInHitReaction = true;
+
+        DisableTemporaryPlayerActions();
+        PlayAxeHitAnimationImmediately();
 
         yield return new WaitForSeconds(
             hitReactionDuration
@@ -287,6 +376,10 @@ public class PlayerStatsNew : MonoBehaviour
 
         animator.ResetTrigger(
             HitTrigger
+        );
+
+        animator.ResetTrigger(
+            AxeHitTrigger
         );
 
         /*
@@ -322,6 +415,63 @@ public class PlayerStatsNew : MonoBehaviour
 
             animator.SetTrigger(
                 HitTrigger
+            );
+        }
+    }
+
+    private void PlayAxeHitAnimationImmediately()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        ClearActionTriggers();
+
+        animator.ResetTrigger(
+            DeathTrigger
+        );
+
+        animator.ResetTrigger(
+            HitTrigger
+        );
+
+        animator.ResetTrigger(
+            AxeHitTrigger
+        );
+
+        /*
+         * Restart the axe hit state immediately so the reaction
+         * begins as soon as the tank's axe damages the player.
+         */
+        if (
+            animator.HasState(
+                0,
+                axeHitAnimationStateHash
+            )
+        )
+        {
+            animator.Play(
+                axeHitAnimationStateHash,
+                0,
+                0f
+            );
+
+            animator.Update(
+                0f
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"Animator state '{axeHitAnimationStateName}' " +
+                "was not found on layer 0. " +
+                "Falling back to the AxeHit trigger.",
+                this
+            );
+
+            animator.SetTrigger(
+                AxeHitTrigger
             );
         }
     }
@@ -379,6 +529,10 @@ public class PlayerStatsNew : MonoBehaviour
 
             animator.ResetTrigger(
                 HitTrigger
+            );
+
+            animator.ResetTrigger(
+                AxeHitTrigger
             );
 
             animator.ResetTrigger(
@@ -631,9 +785,25 @@ public class PlayerStatsNew : MonoBehaviour
                 "Player_Hit";
         }
 
+        if (
+            string.IsNullOrWhiteSpace(
+                axeHitAnimationStateName
+            )
+        )
+        {
+            axeHitAnimationStateName =
+                "Player_AxeHit";
+        }
+
         hitAnimationStateHash =
             Animator.StringToHash(
                 hitAnimationStateName
             );
+
+        axeHitAnimationStateHash =
+            Animator.StringToHash(
+                axeHitAnimationStateName
+            );
     }
 }
+
