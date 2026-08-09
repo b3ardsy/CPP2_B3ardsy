@@ -116,6 +116,9 @@ public class PlayerStatsNew : MonoBehaviour
     private static readonly int IsLockedOnBool =
         Animator.StringToHash("IsLockedOn");
 
+    private static readonly int IsTrappedBool =
+        Animator.StringToHash("IsTrapped");
+
     private static readonly int SpeedFloat =
         Animator.StringToHash("Speed");
 
@@ -181,6 +184,10 @@ public class PlayerStatsNew : MonoBehaviour
                 GetComponent<PlayerLockOn>();
         }
     }
+
+    // =========================================================
+    // DAMAGE
+    // =========================================================
 
     public void TakeDamage(int damage)
     {
@@ -252,6 +259,10 @@ public class PlayerStatsNew : MonoBehaviour
         StartInvulnerability();
     }
 
+    // =========================================================
+    // HEALTH
+    // =========================================================
+
     public void Heal(int amount)
     {
         if (
@@ -285,7 +296,17 @@ public class PlayerStatsNew : MonoBehaviour
 
         currentHealth =
             maxHealth;
+
+        Debug.Log(
+            $"{name} restored to full health. " +
+            $"Health: {currentHealth}/{maxHealth}",
+            this
+        );
     }
+
+    // =========================================================
+    // NORMAL HIT REACTION
+    // =========================================================
 
     private void StartHitReaction()
     {
@@ -304,49 +325,12 @@ public class PlayerStatsNew : MonoBehaviour
             );
     }
 
-    private void StartAxeHitReaction()
-    {
-        if (hitReactionCoroutine != null)
-        {
-            StopCoroutine(
-                hitReactionCoroutine
-            );
-
-            hitReactionCoroutine = null;
-        }
-
-        hitReactionCoroutine =
-            StartCoroutine(
-                AxeHitReactionCoroutine()
-            );
-    }
-
     private IEnumerator HitReactionCoroutine()
     {
         isInHitReaction = true;
 
         DisableTemporaryPlayerActions();
         PlayHitAnimationImmediately();
-
-        yield return new WaitForSeconds(
-            hitReactionDuration
-        );
-
-        if (!isDead)
-        {
-            EnableTemporaryPlayerActions();
-        }
-
-        isInHitReaction = false;
-        hitReactionCoroutine = null;
-    }
-
-    private IEnumerator AxeHitReactionCoroutine()
-    {
-        isInHitReaction = true;
-
-        DisableTemporaryPlayerActions();
-        PlayAxeHitAnimationImmediately();
 
         yield return new WaitForSeconds(
             hitReactionDuration
@@ -382,11 +366,6 @@ public class PlayerStatsNew : MonoBehaviour
             AxeHitTrigger
         );
 
-        /*
-         * Restart the hit state immediately. This allows another
-         * valid hit to restart the reaction instead of waiting for
-         * the current hit animation to finish.
-         */
         if (
             animator.HasState(
                 0,
@@ -419,6 +398,47 @@ public class PlayerStatsNew : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // AXE HIT REACTION
+    // =========================================================
+
+    private void StartAxeHitReaction()
+    {
+        if (hitReactionCoroutine != null)
+        {
+            StopCoroutine(
+                hitReactionCoroutine
+            );
+
+            hitReactionCoroutine = null;
+        }
+
+        hitReactionCoroutine =
+            StartCoroutine(
+                AxeHitReactionCoroutine()
+            );
+    }
+
+    private IEnumerator AxeHitReactionCoroutine()
+    {
+        isInHitReaction = true;
+
+        DisableTemporaryPlayerActions();
+        PlayAxeHitAnimationImmediately();
+
+        yield return new WaitForSeconds(
+            hitReactionDuration
+        );
+
+        if (!isDead)
+        {
+            EnableTemporaryPlayerActions();
+        }
+
+        isInHitReaction = false;
+        hitReactionCoroutine = null;
+    }
+
     private void PlayAxeHitAnimationImmediately()
     {
         if (animator == null)
@@ -440,10 +460,6 @@ public class PlayerStatsNew : MonoBehaviour
             AxeHitTrigger
         );
 
-        /*
-         * Restart the axe hit state immediately so the reaction
-         * begins as soon as the tank's axe damages the player.
-         */
         if (
             animator.HasState(
                 0,
@@ -463,18 +479,58 @@ public class PlayerStatsNew : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning(
-                $"Animator state '{axeHitAnimationStateName}' " +
-                "was not found on layer 0. " +
-                "Falling back to the AxeHit trigger.",
-                this
-            );
-
             animator.SetTrigger(
                 AxeHitTrigger
             );
         }
     }
+
+    // =========================================================
+    // BONE PRISON REACTION
+    // =========================================================
+
+    public void StartBonePrisonReaction()
+    {
+        if (
+            isDead ||
+            animator == null
+        )
+        {
+            return;
+        }
+
+        ClearActionTriggers();
+
+        animator.ResetTrigger(
+            HitTrigger
+        );
+
+        animator.ResetTrigger(
+            AxeHitTrigger
+        );
+
+        animator.SetBool(
+            IsTrappedBool,
+            true
+        );
+    }
+
+    public void EndBonePrisonReaction()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.SetBool(
+            IsTrappedBool,
+            false
+        );
+    }
+
+    // =========================================================
+    // INVULNERABILITY
+    // =========================================================
 
     private void StartInvulnerability()
     {
@@ -509,6 +565,10 @@ public class PlayerStatsNew : MonoBehaviour
         invulnerabilityCoroutine = null;
     }
 
+    // =========================================================
+    // DEATH
+    // =========================================================
+
     private void Die()
     {
         if (isDead)
@@ -537,6 +597,11 @@ public class PlayerStatsNew : MonoBehaviour
 
             animator.ResetTrigger(
                 DeathTrigger
+            );
+
+            animator.SetBool(
+                IsTrappedBool,
+                false
             );
 
             animator.SetFloat(
@@ -606,6 +671,10 @@ public class PlayerStatsNew : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // ANIMATOR / ACTION HELPERS
+    // =========================================================
+
     private void ClearActionTriggers()
     {
         if (animator == null)
@@ -648,9 +717,6 @@ public class PlayerStatsNew : MonoBehaviour
 
     private void DisableTemporaryPlayerActions()
     {
-        /*
-         * Stop any active dodge before disabling its script.
-         */
         if (playerDodge != null)
         {
             playerDodge.CancelDodge();
@@ -712,6 +778,10 @@ public class PlayerStatsNew : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // SCENE RESTART
+    // =========================================================
+
     private IEnumerator DeathCoroutine()
     {
         yield return new WaitForSeconds(
@@ -734,10 +804,6 @@ public class PlayerStatsNew : MonoBehaviour
 
     private void OnDisable()
     {
-        /*
-         * Avoid leaving a permanent movement lock if this component
-         * is disabled independently during play.
-         */
         if (
             !isDead &&
             playerMovement != null
@@ -745,6 +811,14 @@ public class PlayerStatsNew : MonoBehaviour
         {
             playerMovement.RemoveMovementLock(
                 this
+            );
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool(
+                IsTrappedBool,
+                false
             );
         }
     }
@@ -806,4 +880,3 @@ public class PlayerStatsNew : MonoBehaviour
             );
     }
 }
-

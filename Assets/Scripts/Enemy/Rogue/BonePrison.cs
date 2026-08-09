@@ -25,6 +25,7 @@ public class BonePrison : MonoBehaviour
     [SerializeField] private int captureDamage = 1;
 
     private PlayerMovement3DNew trappedPlayer;
+    private PlayerStatsNew trappedPlayerStats;
 
     private bool canCapture;
     private bool hasDamagedPlayer;
@@ -174,30 +175,52 @@ public class BonePrison : MonoBehaviour
         trappedPlayer =
             playerMovement;
 
+        trappedPlayerStats =
+            other.GetComponentInParent<PlayerStatsNew>();
+
+        if (trappedPlayerStats == null)
+        {
+            trappedPlayerStats =
+                trappedPlayer.GetComponent<PlayerStatsNew>();
+        }
+
+        /*
+         * Stop the player immediately and apply a movement lock
+         * owned by this Bone Prison instance.
+         */
         trappedPlayer.StopMovementImmediately();
         trappedPlayer.AddMovementLock(this);
+
+        /*
+         * Apply optional capture damage first.
+         * This allows the regular Hit animation to process before
+         * switching the player into the persistent trapped state.
+         */
+        if (
+            dealDamageOnCapture &&
+            !hasDamagedPlayer &&
+            trappedPlayerStats != null
+        )
+        {
+            hasDamagedPlayer = true;
+
+            trappedPlayerStats.TakeDamage(
+                captureDamage
+            );
+        }
+
+        /*
+         * Enter the Bone Prison animation state after any capture
+         * damage has been processed.
+         */
+        if (trappedPlayerStats != null)
+        {
+            trappedPlayerStats.StartBonePrisonReaction();
+        }
 
         StartCoroutine(
             ReleasePlayerAfterDelay()
         );
-
-        if (
-            dealDamageOnCapture &&
-            !hasDamagedPlayer
-        )
-        {
-            PlayerStatsNew playerStats =
-                other.GetComponentInParent<PlayerStatsNew>();
-
-            if (playerStats != null)
-            {
-                hasDamagedPlayer = true;
-
-                playerStats.TakeDamage(
-                    captureDamage
-                );
-            }
-        }
     }
 
     private IEnumerator ReleasePlayerAfterDelay()
@@ -216,10 +239,19 @@ public class BonePrison : MonoBehaviour
             return;
         }
 
+        /*
+         * Leave the trapped animation before restoring movement.
+         */
+        if (trappedPlayerStats != null)
+        {
+            trappedPlayerStats.EndBonePrisonReaction();
+        }
+
         trappedPlayer.RemoveMovementLock(
             this
         );
 
+        trappedPlayerStats = null;
         trappedPlayer = null;
     }
 
@@ -240,6 +272,10 @@ public class BonePrison : MonoBehaviour
             captureTrigger.enabled = false;
         }
 
+        /*
+         * Always release the player before destroying the prison.
+         * This also clears the trapped animation state.
+         */
         ReleasePlayer();
 
         Destroy(
@@ -249,6 +285,10 @@ public class BonePrison : MonoBehaviour
 
     private void OnDestroy()
     {
+        /*
+         * Safety cleanup in case the prison is destroyed
+         * unexpectedly while holding the player.
+         */
         ReleasePlayer();
     }
 
