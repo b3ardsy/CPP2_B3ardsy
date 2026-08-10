@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -26,6 +27,14 @@ public abstract class Enemy : MonoBehaviour
     protected bool isDead;
 
     public bool IsDead => isDead;
+    public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
+
+    // Fired whenever the enemy's health changes.
+    public event Action<int, int> OnHealthChanged;
+
+    // Fired immediately when the enemy dies.
+    public event Action OnDied;
 
     public enum PickupType
     {
@@ -116,6 +125,13 @@ public abstract class Enemy : MonoBehaviour
             maxHealth
         );
 
+        // Update anything listening to this enemy's health,
+        // such as the enemy health bar.
+        OnHealthChanged?.Invoke(
+            currentHealth,
+            maxHealth
+        );
+
         if (currentHealth <= 0)
         {
             Die();
@@ -137,11 +153,15 @@ public abstract class Enemy : MonoBehaviour
 
         isDead = true;
 
+        // Hide/update anything listening for enemy death.
+        OnDied?.Invoke();
+
         if (animator != null)
         {
             animator.SetTrigger(DeathTrigger);
         }
 
+        // Spawn the configured pickup.
         DropPickup();
 
         StartCoroutine(DestroyAfterDelay());
@@ -156,7 +176,8 @@ public abstract class Enemy : MonoBehaviour
             if (pickupToDrop != PickupType.None)
             {
                 Debug.LogWarning(
-                    $"{name}: No prefab assigned for {pickupToDrop} pickup."
+                    $"{name}: No prefab assigned for " +
+                    $"{pickupToDrop} pickup."
                 );
             }
 
