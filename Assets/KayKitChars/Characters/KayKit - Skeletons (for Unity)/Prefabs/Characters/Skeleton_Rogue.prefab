@@ -244,7 +244,7 @@ Transform:
   m_Children:
   - {fileID: 6256410046460404839}
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 30.530275, y: 46.98848, z: -0.7006996}
+  m_LocalEulerAnglesHint: {x: 30.986769, y: 40.995934, z: -10.032228}
 --- !u!1 &-6415790494268509736
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 16.421404, y: -24.810612, z: 26.70924}
+  m_LocalEulerAnglesHint: {x: 14.672551, y: -20.819765, z: 31.944405}
 --- !u!1 &-638838958707032469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1077,7 +1077,6 @@ Transform:
   - {fileID: 7850838345898610376}
   - {fileID: 2933752591867835225}
   - {fileID: -8476837481360442385}
-  - {fileID: 3303715141566098697}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &9058671232915413650
@@ -1186,8 +1185,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd6a30f31696f24595f561c0b91388c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RogueEnemy
-  maxHealth: 3
+  maxHealth: 5
   destroyDelay: 2
+  pickupToDrop: 1
+  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
+  ammoPickupPrefab: {fileID: 0}
+  specialPickupPrefab: {fileID: 0}
+  pickupSpawnHeight: 1
   patrolRadius: 10
   patrolWaitTime: 2
   destinationTolerance: 0.25
@@ -1200,14 +1204,13 @@ MonoBehaviour:
   maximumAttackCooldown: 3
   attackRotationSpeed: 8
   bonePrisonChance: 0.4
-  bonePrisonPrefab: {fileID: 4411834128484324482, guid: 428810aacd5e50744b854f59b5f09e40, type: 3}
+  bonePrisonPrefab: {fileID: 3707785849623107936, guid: 63db9f6aaa147c54489b93972f6de6ae, type: 3}
+  boneFieldPrefab: {fileID: 7471805100603596015, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}
   groundLayers:
     serializedVersion: 2
     m_Bits: 64
   groundCheckHeight: 5
   groundCheckDistance: 15
-  boneCleavePrefab: {fileID: 0}
-  castPoint: {fileID: 0}
   patrolSpeed: 10
   returnSpeed: 3.5
 --- !u!114 &8102211318610968479
@@ -1715,37 +1718,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000056773424, y: 1.6409333, z: 0.26019937}
     m_Extent: {x: 0.22978659, y: 0.063201904, z: 0.03776092}
   m_DirtyAABB: 0
---- !u!1 &3255594428901693621
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3303715141566098697}
-  m_Layer: 8
-  m_Name: CastPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3303715141566098697
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3255594428901693621}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.127}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: -8679921383154817045}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3424958915229829536
 GameObject:
   m_ObjectHideFlags: 0

@@ -1056,10 +1056,10 @@ NavMeshAgent:
   m_AgentTypeID: 0
   m_Radius: 1
   m_Speed: 2.5
-  m_Acceleration: 8
+  m_Acceleration: 16
   avoidancePriority: 50
-  m_AngularSpeed: 360
-  m_StoppingDistance: 1.75
+  m_AngularSpeed: 720
+  m_StoppingDistance: 2
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -1081,6 +1081,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankEnemy
   maxHealth: 10
   destroyDelay: 2
+  pickupToDrop: 1
+  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
+  ammoPickupPrefab: {fileID: 0}
+  specialPickupPrefab: {fileID: 0}
+  pickupSpawnHeight: 1
   patrolRadius: 10
   patrolWaitTime: 2
   destinationTolerance: 0.25
@@ -1088,14 +1093,14 @@ MonoBehaviour:
   patrolSearchAttempts: 10
   detectionRange: 10
   loseTargetRange: 15
-  attackRange: 2.5
+  attackRange: 4
   attackDamage: 1
-  attackCooldown: 1.25
-  attackRotationSpeed: 8
+  attackCooldown: 3
+  attackRotationSpeed: 25
   axeHitbox: {fileID: 8722070175505448502}
-  patrolSpeed: 2.5
-  chaseSpeed: 4
-  returnSpeed: 3
+  patrolSpeed: 3
+  chaseSpeed: 5
+  returnSpeed: 4
 --- !u!114 &4516182743743952825
 MonoBehaviour:
   m_ObjectHideFlags: 0

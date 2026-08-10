@@ -1343,6 +1343,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BooEnemy
   maxHealth: 3
   destroyDelay: 2
+  pickupToDrop: 1
+  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
+  ammoPickupPrefab: {fileID: 0}
+  specialPickupPrefab: {fileID: 0}
+  pickupSpawnHeight: 1
   detectionRadius: 30
   moveSpeed: 2
   rotationSpeed: 8
