@@ -7,6 +7,8 @@ public class PlayerCombatNew : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement3DNew playerMovement;
     [SerializeField] private PlayerLockOn playerLockOn;
+    [SerializeField] private PlayerWeaponManager playerWeaponManager;
+    [SerializeField] private PlayerStaffCombat playerStaffCombat;
 
     [Header("Wand")]
     [Tooltip("Projectile used by the currently equipped wand.")]
@@ -20,28 +22,36 @@ public class PlayerCombatNew : MonoBehaviour
 
     [Header("Aiming")]
     [Tooltip(
-        "When not locked on, wand projectiles travel " +
+        "When not locked on, Wand projectiles travel " +
         "in the direction the player is facing."
     )]
-    [SerializeField] private bool usePlayerForwardWhenUnlocked = true;
+    [SerializeField]
+    private bool usePlayerForwardWhenUnlocked = true;
 
-    /*
-     * Tracks the Wand animation separately from IsAttacking.
-     *
-     * Wand attacks do not block normal movement or dodging,
-     * but we still need to prevent the attack animation from
-     * being restarted before it reaches its projectile event.
-     */
     private bool isWandAttackInProgress;
 
     /*
-     * PlayerMovement3DNew and PlayerDodgeNew currently use
-     * IsAttacking to determine whether movement should be blocked.
+     * Used by movement and dodge.
      *
-     * Wand attacks do not block movement, so this remains false.
-     * Heavier Staff attacks may use this property later.
+     * Wand attacks do not restrict movement.
+     * Staff casting currently does.
      */
-    public bool IsAttacking => false;
+    public bool IsAttacking =>
+        playerStaffCombat != null &&
+        playerStaffCombat.IsCasting;
+
+    /*
+     * Used for things such as weapon swapping.
+     *
+     * Both Wand and Staff animation states count
+     * as combat being busy.
+     */
+    public bool IsCombatBusy =>
+        isWandAttackInProgress ||
+        (
+            playerStaffCombat != null &&
+            playerStaffCombat.IsCasting
+        );
 
     private static readonly int ShootTrigger =
         Animator.StringToHash("Shoot");
@@ -83,6 +93,30 @@ public class PlayerCombatNew : MonoBehaviour
             playerLockOn =
                 GetComponentInParent<PlayerLockOn>();
         }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponent<PlayerWeaponManager>();
+        }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponentInParent<PlayerWeaponManager>();
+        }
+
+        if (playerStaffCombat == null)
+        {
+            playerStaffCombat =
+                GetComponent<PlayerStaffCombat>();
+        }
+
+        if (playerStaffCombat == null)
+        {
+            playerStaffCombat =
+                GetComponentInParent<PlayerStaffCombat>();
+        }
     }
 
     private void ValidateReferences()
@@ -107,6 +141,27 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
+        if (playerWeaponManager == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerWeaponManager.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (playerStaffCombat == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerStaffCombat.",
+                this
+            );
+        }
+
         if (wandFirePoint == null)
         {
             Debug.LogWarning(
@@ -127,9 +182,8 @@ public class PlayerCombatNew : MonoBehaviour
     private void Update()
     {
         /*
-         * If the player becomes trapped, hit, or otherwise
-         * action locked during a Wand attack, cancel the
-         * current attack state.
+         * Cancel the Wand attack if the player becomes
+         * trapped, hit, or otherwise action locked.
          */
         if (
             isWandAttackInProgress &&
@@ -140,24 +194,116 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        HandleStaffSpellSelection();
+
         if (Mouse.current == null)
         {
             return;
         }
 
-        /*
-         * One Wand attack begins per click.
-         *
-         * There is no cooldown or mana cost.
-         * The attack animation determines how quickly
-         * another projectile can be fired.
-         */
         if (
             Mouse.current.leftButton
                 .wasPressedThisFrame
         )
         {
+            HandlePrimaryAttack();
+        }
+    }
+
+    private void HandlePrimaryAttack()
+    {
+        if (IsPlayerActionLocked())
+        {
+            return;
+        }
+
+        if (
+            playerWeaponManager.CurrentWeapon ==
+            PlayerWeaponManager.WeaponType.Wand
+        )
+        {
             TryFireWand();
+            return;
+        }
+
+        if (
+            playerWeaponManager.CurrentWeapon ==
+            PlayerWeaponManager.WeaponType.Staff
+        )
+        {
+            if (playerStaffCombat == null)
+            {
+                return;
+            }
+
+            playerStaffCombat.TryCastSelectedSpell();
+        }
+    }
+
+    private void HandleStaffSpellSelection()
+    {
+        if (playerStaffCombat == null)
+        {
+            return;
+        }
+
+        if (
+            playerWeaponManager.CurrentWeapon !=
+            PlayerWeaponManager.WeaponType.Staff
+        )
+        {
+            return;
+        }
+
+        if (
+            Keyboard.current.digit1Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.SelectSpell(
+                PlayerStaffCombat.StaffSpell.Flamethrower
+            );
+
+            return;
+        }
+
+        if (
+            Keyboard.current.digit2Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.SelectSpell(
+                PlayerStaffCombat.StaffSpell.IceTornado
+            );
+
+            return;
+        }
+
+        if (
+            Keyboard.current.digit3Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.SelectSpell(
+                PlayerStaffCombat.StaffSpell.LightningStrike
+            );
+
+            return;
+        }
+
+        if (
+            Keyboard.current.digit4Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.SelectSpell(
+                PlayerStaffCombat.StaffSpell.Shield
+            );
         }
     }
 
@@ -168,10 +314,6 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
-        /*
-         * Do not restart the attack animation before
-         * the current Wand attack has completed.
-         */
         if (isWandAttackInProgress)
         {
             return;
@@ -205,10 +347,7 @@ public class PlayerCombatNew : MonoBehaviour
     }
 
     /*
-     * Called by an Animation Event on the Wand attack clip.
-     *
-     * Place this event on the exact animation frame where
-     * the projectile should leave the Wand.
+     * Wand animation event.
      */
     public void ShootFireball()
     {
@@ -236,7 +375,7 @@ public class PlayerCombatNew : MonoBehaviour
     private void FireWandProjectile()
     {
         Vector3 fireDirection =
-            CalculateFireDirection();
+            CalculateWandFireDirection();
 
         if (
             fireDirection.sqrMagnitude <=
@@ -270,12 +409,8 @@ public class PlayerCombatNew : MonoBehaviour
         );
     }
 
-    private Vector3 CalculateFireDirection()
+    private Vector3 CalculateWandFireDirection()
     {
-        /*
-         * When locked on, fire directly toward the
-         * currently selected enemy.
-         */
         if (
             playerLockOn != null &&
             playerLockOn.IsLockedOn
@@ -295,10 +430,6 @@ public class PlayerCombatNew : MonoBehaviour
             }
         }
 
-        /*
-         * When unlocked, fire in the direction
-         * the player is facing.
-         */
         if (usePlayerForwardWhenUnlocked)
         {
             return
@@ -327,11 +458,7 @@ public class PlayerCombatNew : MonoBehaviour
     }
 
     /*
-     * Called by an Animation Event near the end
-     * of the Wand attack animation.
-     *
-     * Once called, another click may immediately
-     * begin another Wand attack.
+     * Wand animation event.
      */
     public void EndWandAttack()
     {
@@ -360,6 +487,11 @@ public class PlayerCombatNew : MonoBehaviour
     private void OnDisable()
     {
         CancelWandAttack();
+
+        if (playerStaffCombat != null)
+        {
+            playerStaffCombat.CancelStaffCast();
+        }
     }
 
     private void OnValidate()

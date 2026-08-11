@@ -24,16 +24,22 @@ public class PlayerSpellProjectile : MonoBehaviour
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        projectileCollider = GetComponent<Collider>();
+        rb =
+            GetComponent<Rigidbody>();
+
+        projectileCollider =
+            GetComponent<Collider>();
 
         rb.useGravity = false;
         rb.isKinematic = false;
 
         projectileCollider.isTrigger = true;
 
-        damage = defaultDamage;
-        speed = defaultSpeed;
+        damage =
+            defaultDamage;
+
+        speed =
+            defaultSpeed;
     }
 
     private void Start()
@@ -48,35 +54,51 @@ public class PlayerSpellProjectile : MonoBehaviour
         GameObject projectileOwner,
         Vector3 direction,
         int projectileDamage,
-        float projectileSpeed
+        float projectileSpeed,
+        bool preserveSpawnRotation = false
     )
     {
-        owner = projectileOwner;
+        owner =
+            projectileOwner;
 
-        damage = Mathf.Max(
-            1,
-            projectileDamage
-        );
+        damage =
+            Mathf.Max(
+                1,
+                projectileDamage
+            );
 
-        speed = Mathf.Max(
-            0f,
-            projectileSpeed
-        );
+        speed =
+            Mathf.Max(
+                0f,
+                projectileSpeed
+            );
 
         Vector3 normalizedDirection =
             direction.sqrMagnitude > 0.001f
                 ? direction.normalized
                 : transform.forward;
 
-        transform.rotation =
-            Quaternion.LookRotation(
-                normalizedDirection
-            );
+        /*
+         * Most projectiles should rotate to face
+         * their travel direction.
+         *
+         * Some effects, such as the Fire Tornado,
+         * use a custom authored rotation and should
+         * preserve the rotation they were spawned with.
+         */
+        if (!preserveSpawnRotation)
+        {
+            transform.rotation =
+                Quaternion.LookRotation(
+                    normalizedDirection
+                );
+        }
 
         IgnoreOwnerCollisions();
 
         rb.linearVelocity =
-            normalizedDirection * speed;
+            normalizedDirection *
+            speed;
 
         initialized = true;
     }
@@ -89,8 +111,8 @@ public class PlayerSpellProjectile : MonoBehaviour
         }
 
         /*
-         * Maintaining the velocity prevents the projectile
-         * from slowing down after minor physics interactions.
+         * Maintain projectile speed after minor
+         * physics interactions.
          */
         if (
             rb.linearVelocity.sqrMagnitude >
@@ -116,7 +138,10 @@ public class PlayerSpellProjectile : MonoBehaviour
         Collider[] ownerColliders =
             owner.GetComponentsInChildren<Collider>();
 
-        foreach (Collider ownerCollider in ownerColliders)
+        foreach (
+            Collider ownerCollider
+            in ownerColliders
+        )
         {
             if (ownerCollider == null)
             {
@@ -131,7 +156,9 @@ public class PlayerSpellProjectile : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(
+        Collider other
+    )
     {
         if (hasHit)
         {
@@ -162,15 +189,17 @@ public class PlayerSpellProjectile : MonoBehaviour
                 return;
             }
 
-            enemy.TakeDamage(damage);
+            enemy.TakeDamage(
+                damage
+            );
 
             HandleImpact();
             return;
         }
 
         /*
-         * Ignore other player projectiles so spells do not
-         * destroy each other immediately.
+         * Ignore other player projectiles so spells
+         * do not destroy each other immediately.
          */
         if (
             other.GetComponentInParent
@@ -192,7 +221,8 @@ public class PlayerSpellProjectile : MonoBehaviour
 
         hasHit = true;
 
-        rb.linearVelocity = Vector3.zero;
+        rb.linearVelocity =
+            Vector3.zero;
 
         if (impactEffectPrefab != null)
         {
@@ -203,6 +233,8 @@ public class PlayerSpellProjectile : MonoBehaviour
             );
         }
 
-        Destroy(gameObject);
+        Destroy(
+            gameObject
+        );
     }
 }

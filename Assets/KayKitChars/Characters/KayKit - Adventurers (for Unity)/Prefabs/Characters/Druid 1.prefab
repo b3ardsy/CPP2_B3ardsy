@@ -129,7 +129,7 @@ Transform:
   m_Children:
   - {fileID: 6997228443641770522}
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 0.46480572, y: 0.034719527, z: -87.27052}
+  m_LocalEulerAnglesHint: {x: 30.530275, y: 46.98848, z: -0.70069885}
 --- !u!1 &-7016320567714146930
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_Children:
   - {fileID: 4620971032708974589}
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 0.0000003030626, y: -0.0000038001333, z: 90.00001}
+  m_LocalEulerAnglesHint: {x: 16.421406, y: -24.810612, z: 26.70924}
 --- !u!1 &-129758803659467788
 GameObject:
   m_ObjectHideFlags: 0
@@ -876,6 +876,8 @@ GameObject:
   - component: {fileID: 2891897481618495717}
   - component: {fileID: 1929804244283084515}
   - component: {fileID: 7690415708235302229}
+  - component: {fileID: 5198917100671412841}
+  - component: {fileID: 2427465129357510108}
   m_Layer: 0
   m_Name: Druid 1
   m_TagString: Player
@@ -1062,6 +1064,8 @@ MonoBehaviour:
   animator: {fileID: 7937088398246958496}
   playerMovement: {fileID: 3364010743847596850}
   playerLockOn: {fileID: 0}
+  playerWeaponManager: {fileID: 0}
+  playerStaffCombat: {fileID: 0}
   wandProjectilePrefab: {fileID: 652429852690551798, guid: cbee370379a30094a936e7155b2be5eb, type: 3}
   wandFirePoint: {fileID: 4050644116854047295}
   wandDamage: 1
@@ -1079,9 +1083,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd28cd2e8fbfe8547b91adc113138481, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
+  playerCombat: {fileID: 0}
   wandObject: {fileID: 7660894127998281888}
   staffObject: {fileID: 5434485785058172231}
   startingWeapon: 0
+--- !u!114 &5198917100671412841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc39d77d864f290489a5d1ba45c5c3c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  interactionPrompt: {fileID: 0}
+--- !u!114 &2427465129357510108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed83f462f17973847ac73c612c884a98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStaffCombat
+  animator: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerLockOn: {fileID: 0}
+  staffFirePoint: {fileID: 5520820917836687221}
+  selectedSpell: 1
+  fireTornadoPrefab: {fileID: 4247989493703643989, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
+  fireTornadoDamage: 1
+  fireTornadoSpeed: 10
+  usePlayerForwardWhenUnlocked: 1
 --- !u!1 &1115911922453957853
 GameObject:
   m_ObjectHideFlags: 0
@@ -2066,6 +2105,37 @@ Transform:
   - {fileID: 33407622243363717}
   m_Father: {fileID: 8052791189861519797}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &9133472536329820978
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5520820917836687221}
+  m_Layer: 0
+  m_Name: StaffFirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5520820917836687221
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9133472536329820978}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.0000000443971, y: 0.7071067, z: 0.70710695, w: -0.00000037412363}
+  m_LocalPosition: {x: -0.9721294, y: 1.2240007, z: -0.20325854}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4620971032708974589}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &5164016710965026838
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2124,7 +2194,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: ba8a51aaf645ead45a1d3543f7fffd00, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5520820917836687221}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ba8a51aaf645ead45a1d3543f7fffd00, type: 3}
 --- !u!4 &4620971032708974589 stripped

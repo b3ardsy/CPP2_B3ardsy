@@ -1,0 +1,581 @@
+using UnityEngine;
+
+public class PlayerStaffCombat : MonoBehaviour
+{
+    public enum StaffSpell
+    {
+        Flamethrower,
+        IceTornado,
+        LightningStrike,
+        Shield
+    }
+
+    [Header("References")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private PlayerMovement3DNew playerMovement;
+    [SerializeField] private PlayerLockOn playerLockOn;
+
+    [Header("Staff")]
+    [Tooltip(
+        "Spawn point used by Staff spells that originate " +
+        "from the Staff, such as Flamethrower."
+    )]
+    [SerializeField] private Transform staffFirePoint;
+
+    [Header("Selected Spell")]
+    [SerializeField]
+    private StaffSpell selectedSpell =
+        StaffSpell.IceTornado;
+
+    [Header("Ice Tornado")]
+    [SerializeField]
+    private PlayerSpellProjectile iceTornadoPrefab;
+
+    [SerializeField]
+    private int iceTornadoDamage = 1;
+
+    [SerializeField]
+    private float iceTornadoSpeed = 10f;
+
+    [Tooltip(
+        "How far in front of the player the Ice Tornado " +
+        "attempts to spawn."
+    )]
+    [SerializeField]
+    private float iceTornadoSpawnDistance = 1.5f;
+
+    [Tooltip(
+        "How high above the intended spawn point the " +
+        "ground check begins."
+    )]
+    [SerializeField]
+    private float iceTornadoGroundCheckHeight = 3f;
+
+    [Tooltip(
+        "Small vertical offset above the detected ground " +
+        "to prevent the Tornado from spawning inside it."
+    )]
+    [SerializeField]
+    private float iceTornadoGroundOffset = 0.05f;
+
+    [Tooltip(
+        "Layers considered valid ground for Ice Tornado spawning."
+    )]
+    [SerializeField]
+    private LayerMask groundLayer;
+
+    [Tooltip(
+        "Rotation correction applied after aiming the Ice Tornado. " +
+        "The current prefab looks correct at X = -90."
+    )]
+    [SerializeField]
+    private Vector3 iceTornadoRotationOffset =
+        new Vector3(-90f, 0f, 0f);
+
+    [Header("Aiming")]
+    [Tooltip(
+        "When not locked on, Ice Tornado travels " +
+        "in the direction the player is facing."
+    )]
+    [SerializeField]
+    private bool usePlayerForwardWhenUnlocked = true;
+
+    private bool isCasting;
+
+    /*
+     * Stores the spell that actually began the cast.
+     * This prevents changing spell selection halfway
+     * through an animation and changing what gets released.
+     */
+    private StaffSpell activeSpell;
+
+    public StaffSpell SelectedSpell =>
+        selectedSpell;
+
+    public bool IsCasting =>
+        isCasting;
+
+    private static readonly int MagicSummonTrigger =
+        Animator.StringToHash("MagicSummon");
+
+    private void Awake()
+    {
+        FindReferences();
+        ValidateReferences();
+    }
+
+    private void FindReferences()
+    {
+        if (animator == null)
+        {
+            animator =
+                GetComponentInChildren<Animator>();
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponent<PlayerMovement3DNew>();
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponentInParent<PlayerMovement3DNew>();
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                GetComponent<PlayerLockOn>();
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                GetComponentInParent<PlayerLockOn>();
+        }
+    }
+
+    private void ValidateReferences()
+    {
+        if (animator == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStaffCombat could not find an Animator.",
+                this
+            );
+        }
+
+        if (playerMovement == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStaffCombat could not find " +
+                "PlayerMovement3DNew.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (staffFirePoint == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Staff Fire Point has not been assigned.",
+                this
+            );
+        }
+
+        if (iceTornadoPrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Ice Tornado Prefab has not been assigned.",
+                this
+            );
+        }
+
+        if (groundLayer.value == 0)
+        {
+            Debug.LogWarning(
+                $"{name}: Ground Layer has not been assigned " +
+                "for Ice Tornado spawning.",
+                this
+            );
+        }
+    }
+
+    public void SelectSpell(
+        StaffSpell spell
+    )
+    {
+        if (isCasting)
+        {
+            return;
+        }
+
+        if (selectedSpell == spell)
+        {
+            return;
+        }
+
+        selectedSpell =
+            spell;
+
+        Debug.Log(
+            $"{name}: Selected Staff spell: {selectedSpell}.",
+            this
+        );
+    }
+
+    public void TryCastSelectedSpell()
+    {
+        if (IsPlayerActionLocked())
+        {
+            return;
+        }
+
+        if (isCasting)
+        {
+            return;
+        }
+
+        switch (selectedSpell)
+        {
+            case StaffSpell.IceTornado:
+                TryBeginIceTornado();
+                break;
+
+            case StaffSpell.Flamethrower:
+                LogSpellNotImplemented();
+                break;
+
+            case StaffSpell.LightningStrike:
+                LogSpellNotImplemented();
+                break;
+
+            case StaffSpell.Shield:
+                LogSpellNotImplemented();
+                break;
+        }
+    }
+
+    private void TryBeginIceTornado()
+    {
+        if (iceTornadoPrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Cannot cast Ice Tornado because " +
+                "no Ice Tornado Prefab is assigned.",
+                this
+            );
+
+            return;
+        }
+
+        BeginStaffCast(
+            StaffSpell.IceTornado
+        );
+    }
+
+    private void BeginStaffCast(
+        StaffSpell spell
+    )
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        activeSpell =
+            spell;
+
+        isCasting = true;
+
+        animator.ResetTrigger(
+            MagicSummonTrigger
+        );
+
+        animator.SetTrigger(
+            MagicSummonTrigger
+        );
+    }
+
+    /*
+     * Animation Event.
+     * Place this on the Magic Summon animation at
+     * the exact frame where the spell should activate.
+     */
+    public void StaffSpellActivate()
+    {
+        if (!isCasting)
+        {
+            return;
+        }
+
+        if (IsPlayerActionLocked())
+        {
+            CancelStaffCast();
+            return;
+        }
+
+        switch (activeSpell)
+        {
+            case StaffSpell.IceTornado:
+                ReleaseIceTornado();
+                break;
+
+            case StaffSpell.Flamethrower:
+                break;
+
+            case StaffSpell.LightningStrike:
+                break;
+
+            case StaffSpell.Shield:
+                break;
+        }
+    }
+
+    private void ReleaseIceTornado()
+    {
+        if (iceTornadoPrefab == null)
+        {
+            return;
+        }
+
+        Vector3 spawnPosition =
+            CalculateIceTornadoSpawnPosition();
+
+        Vector3 fireDirection =
+            CalculateIceTornadoDirection(
+                spawnPosition
+            );
+
+        if (
+            fireDirection.sqrMagnitude <=
+            0.001f
+        )
+        {
+            fireDirection =
+                transform.forward;
+        }
+
+        /*
+         * Ice Tornado is intended to travel along the ground,
+         * so remove vertical aiming from its travel direction.
+         */
+        fireDirection.y = 0f;
+
+        if (
+            fireDirection.sqrMagnitude <=
+            0.001f
+        )
+        {
+            fireDirection =
+                transform.forward;
+        }
+
+        fireDirection.Normalize();
+
+        Quaternion directionRotation =
+            Quaternion.LookRotation(
+                fireDirection,
+                Vector3.up
+            );
+
+        Quaternion rotationOffset =
+            Quaternion.Euler(
+                iceTornadoRotationOffset
+            );
+
+        Quaternion spawnRotation =
+            directionRotation *
+            rotationOffset;
+
+        PlayerSpellProjectile tornado =
+            Instantiate(
+                iceTornadoPrefab,
+                spawnPosition,
+                spawnRotation
+            );
+
+        tornado.Initialize(
+            gameObject,
+            fireDirection,
+            iceTornadoDamage,
+            iceTornadoSpeed,
+            true
+        );
+    }
+
+    private Vector3 CalculateIceTornadoSpawnPosition()
+    {
+        Vector3 forwardDirection =
+            transform.forward;
+
+        forwardDirection.y = 0f;
+
+        if (
+            forwardDirection.sqrMagnitude <=
+            0.001f
+        )
+        {
+            forwardDirection =
+                Vector3.forward;
+        }
+
+        forwardDirection.Normalize();
+
+        Vector3 intendedPosition =
+            transform.position +
+            forwardDirection *
+            iceTornadoSpawnDistance;
+
+        Vector3 rayStart =
+            intendedPosition +
+            Vector3.up *
+            iceTornadoGroundCheckHeight;
+
+        float rayDistance =
+            iceTornadoGroundCheckHeight * 2f;
+
+        if (
+            Physics.Raycast(
+                rayStart,
+                Vector3.down,
+                out RaycastHit hit,
+                rayDistance,
+                groundLayer,
+                QueryTriggerInteraction.Ignore
+            )
+        )
+        {
+            return
+                hit.point +
+                Vector3.up *
+                iceTornadoGroundOffset;
+        }
+
+        /*
+         * Fallback if no valid ground is detected.
+         */
+        return intendedPosition;
+    }
+
+    private Vector3 CalculateIceTornadoDirection(
+        Vector3 spawnPosition
+    )
+    {
+        if (
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn
+        )
+        {
+            Vector3 directionToTarget =
+                playerLockOn.CurrentTargetPosition -
+                spawnPosition;
+
+            /*
+             * Keep the Tornado travelling across the ground
+             * rather than aiming upward toward the enemy's
+             * lock-on point.
+             */
+            directionToTarget.y = 0f;
+
+            if (
+                directionToTarget.sqrMagnitude >
+                0.001f
+            )
+            {
+                return
+                    directionToTarget.normalized;
+            }
+        }
+
+        if (usePlayerForwardWhenUnlocked)
+        {
+            Vector3 forwardDirection =
+                transform.forward;
+
+            forwardDirection.y = 0f;
+
+            return
+                forwardDirection.normalized;
+        }
+
+        if (staffFirePoint != null)
+        {
+            Vector3 staffDirection =
+                staffFirePoint.forward;
+
+            staffDirection.y = 0f;
+
+            if (
+                staffDirection.sqrMagnitude >
+                0.001f
+            )
+            {
+                return
+                    staffDirection.normalized;
+            }
+        }
+
+        return
+            transform.forward.normalized;
+    }
+
+    /*
+     * Animation Event.
+     * Place this before the Magic Summon animation
+     * begins transitioning back to locomotion.
+     */
+    public void EndStaffCast()
+    {
+        isCasting = false;
+    }
+
+    public void CancelStaffCast()
+    {
+        isCasting = false;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                MagicSummonTrigger
+            );
+        }
+    }
+
+    private bool IsPlayerActionLocked()
+    {
+        return
+            playerMovement != null &&
+            playerMovement.IsMovementLocked;
+    }
+
+    private void LogSpellNotImplemented()
+    {
+        Debug.Log(
+            $"{name}: {selectedSpell} is not implemented yet.",
+            this
+        );
+    }
+
+    private void OnDisable()
+    {
+        CancelStaffCast();
+    }
+
+    private void OnValidate()
+    {
+        iceTornadoDamage =
+            Mathf.Max(
+                1,
+                iceTornadoDamage
+            );
+
+        iceTornadoSpeed =
+            Mathf.Max(
+                0f,
+                iceTornadoSpeed
+            );
+
+        iceTornadoSpawnDistance =
+            Mathf.Max(
+                0f,
+                iceTornadoSpawnDistance
+            );
+
+        iceTornadoGroundCheckHeight =
+            Mathf.Max(
+                0.1f,
+                iceTornadoGroundCheckHeight
+            );
+
+        iceTornadoGroundOffset =
+            Mathf.Max(
+                0f,
+                iceTornadoGroundOffset
+            );
+    }
+}

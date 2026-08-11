@@ -9,6 +9,9 @@ public class PlayerWeaponManager : MonoBehaviour
         Staff
     }
 
+    [Header("References")]
+    [SerializeField] private PlayerCombatNew playerCombat;
+
     [Header("Weapon Models")]
     [Tooltip("The Wand object already attached to the player's hand.")]
     [SerializeField] private GameObject wandObject;
@@ -37,6 +40,7 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void Awake()
     {
+        FindReferences();
         ValidateReferences();
 
         currentWeapon =
@@ -70,8 +74,26 @@ public class PlayerWeaponManager : MonoBehaviour
         }
     }
 
+    private void FindReferences()
+    {
+        if (playerCombat == null)
+        {
+            playerCombat =
+                GetComponent<PlayerCombatNew>();
+        }
+    }
+
     private void ValidateReferences()
     {
+        if (playerCombat == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerWeaponManager could not find " +
+                "PlayerCombatNew.",
+                this
+            );
+        }
+
         if (wandObject == null)
         {
             Debug.LogError(
@@ -113,6 +135,17 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void TrySwapWeapon()
     {
+        /*
+         * Prevent swapping during an active combat animation.
+         */
+        if (
+            playerCombat != null &&
+            playerCombat.IsCombatBusy
+        )
+        {
+            return;
+        }
+
         /*
          * There is nothing to swap to until
          * the Staff has been collected.
