@@ -21,14 +21,11 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PolySolidGlow
-  m_Shader: {fileID: -6465566751694194690, guid: f357cd2b88ac2184b9bfbea024efc978, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 73ee7737f5488f84c8f0f635ec9b5d0d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords:
-  - _COLORCOLOR_ON
-  - _FADING_ON
-  - _SOFTPARTICLES_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 1
