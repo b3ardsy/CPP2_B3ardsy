@@ -14,6 +14,7 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement3DNew playerMovement;
     [SerializeField] private PlayerLockOn playerLockOn;
+    [SerializeField] private PlayerStatsNew playerStats;
 
     [Header("Staff")]
     [Tooltip(
@@ -47,29 +48,15 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField]
     private float iceTornadoSpeed = 10f;
 
-    [Tooltip(
-        "How far in front of the player the Ice Tornado " +
-        "attempts to spawn."
-    )]
     [SerializeField]
     private float iceTornadoSpawnDistance = 1.5f;
 
-    [Tooltip(
-        "How high above the intended spawn point the " +
-        "ground check begins."
-    )]
     [SerializeField]
     private float iceTornadoGroundCheckHeight = 3f;
 
-    [Tooltip(
-        "Small vertical offset above the detected ground."
-    )]
     [SerializeField]
     private float iceTornadoGroundOffset = 0.05f;
 
-    [Tooltip(
-        "Visual rotation correction for the Ice Tornado prefab."
-    )]
     [SerializeField]
     private Vector3 iceTornadoRotationOffset =
         new Vector3(-90f, 0f, 0f);
@@ -85,63 +72,55 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField]
     private int lightningStrikeDamage = 2;
 
-    [Tooltip(
-        "Radius around the strike position that receives damage."
-    )]
     [SerializeField]
     private float lightningStrikeDamageRadius = 1.25f;
 
-    [Tooltip(
-        "When not locked on, Lightning Strike appears this " +
-        "far in front of the player."
-    )]
     [SerializeField]
     private float lightningStrikeRange = 6f;
 
-    [Tooltip(
-        "How high above the intended strike point the " +
-        "ground check begins."
-    )]
     [SerializeField]
     private float lightningGroundCheckHeight = 5f;
 
-    [Tooltip(
-        "Small offset above the detected ground."
-    )]
     [SerializeField]
     private float lightningGroundOffset = 0.05f;
 
-    [Tooltip(
-        "Layers containing enemies that Lightning Strike can damage."
-    )]
     [SerializeField]
     private LayerMask enemyLayer;
 
     // =========================================================
-    // SHARED GROUND / AIMING
+    // SHIELD
+    // =========================================================
+
+    [Header("Shield")]
+    [Tooltip(
+        "Shield effect spawned around the player."
+    )]
+    [SerializeField]
+    private PlayerShieldEffect shieldPrefab;
+
+    [Tooltip(
+        "Local position offset used to center the Shield " +
+        "around the player's body."
+    )]
+    [SerializeField]
+    private Vector3 shieldLocalOffset =
+        new Vector3(0f, 0.8f, 0f);
+
+    // =========================================================
+    // SHARED
     // =========================================================
 
     [Header("Ground Detection")]
-    [Tooltip(
-        "Layers considered valid ground for Staff spell placement."
-    )]
     [SerializeField]
     private LayerMask groundLayer;
 
     [Header("Aiming")]
-    [Tooltip(
-        "When not locked on, directional Staff spells travel " +
-        "in the direction the player is facing."
-    )]
     [SerializeField]
     private bool usePlayerForwardWhenUnlocked = true;
 
     private bool isCasting;
     private StaffSpell activeSpell;
 
-    /*
-     * Independent cooldown timers.
-     */
     private float nextFlamethrowerTime;
     private float nextIceTornadoTime;
     private float nextLightningStrikeTime;
@@ -193,6 +172,18 @@ public class PlayerStaffCombat : MonoBehaviour
             playerLockOn =
                 GetComponentInParent<PlayerLockOn>();
         }
+
+        if (playerStats == null)
+        {
+            playerStats =
+                GetComponent<PlayerStatsNew>();
+        }
+
+        if (playerStats == null)
+        {
+            playerStats =
+                GetComponentInParent<PlayerStatsNew>();
+        }
     }
 
     private void ValidateReferences()
@@ -215,6 +206,14 @@ public class PlayerStaffCombat : MonoBehaviour
 
             enabled = false;
             return;
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStaffCombat could not find PlayerStatsNew.",
+                this
+            );
         }
 
         if (staffFirePoint == null)
@@ -241,6 +240,14 @@ public class PlayerStaffCombat : MonoBehaviour
             );
         }
 
+        if (shieldPrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Shield Prefab has not been assigned.",
+                this
+            );
+        }
+
         if (groundLayer.value == 0)
         {
             Debug.LogWarning(
@@ -252,8 +259,7 @@ public class PlayerStaffCombat : MonoBehaviour
         if (enemyLayer.value == 0)
         {
             Debug.LogWarning(
-                $"{name}: Enemy Layer has not been assigned " +
-                "for Lightning Strike.",
+                $"{name}: Enemy Layer has not been assigned.",
                 this
             );
         }
@@ -292,12 +298,10 @@ public class PlayerStaffCombat : MonoBehaviour
 
     public void TryCastSelectedSpell()
     {
-        if (IsPlayerActionLocked())
-        {
-            return;
-        }
-
-        if (isCasting)
+        if (
+            IsPlayerActionLocked() ||
+            isCasting
+        )
         {
             return;
         }
@@ -328,7 +332,7 @@ public class PlayerStaffCombat : MonoBehaviour
                 break;
 
             case StaffSpell.Shield:
-                LogSpellNotImplemented();
+                TryBeginShield();
                 break;
         }
     }
@@ -398,13 +402,17 @@ public class PlayerStaffCombat : MonoBehaviour
                 break;
 
             case StaffSpell.Shield:
+                if (ReleaseShield())
+                {
+                    StartCooldown(
+                        StaffSpell.Shield
+                    );
+                }
+
                 break;
         }
     }
 
-    /*
-     * Animation Event on Magic Summon.
-     */
     public void EndStaffCast()
     {
         isCasting = false;
@@ -430,12 +438,6 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         if (iceTornadoPrefab == null)
         {
-            Debug.LogWarning(
-                $"{name}: Cannot cast Ice Tornado because " +
-                "no Ice Tornado Prefab is assigned.",
-                this
-            );
-
             return;
         }
 
@@ -467,17 +469,7 @@ public class PlayerStaffCombat : MonoBehaviour
         )
         {
             fireDirection =
-                transform.forward;
-
-            fireDirection.y = 0f;
-        }
-
-        if (
-            fireDirection.sqrMagnitude <=
-            0.001f
-        )
-        {
-            return false;
+                GetFlatForwardDirection();
         }
 
         fireDirection.Normalize();
@@ -493,15 +485,11 @@ public class PlayerStaffCombat : MonoBehaviour
                 iceTornadoRotationOffset
             );
 
-        Quaternion spawnRotation =
-            directionRotation *
-            rotationOffset;
-
         IceTornadoProjectile tornado =
             Instantiate(
                 iceTornadoPrefab,
                 spawnPosition,
-                spawnRotation
+                directionRotation * rotationOffset
             );
 
         tornado.Initialize(
@@ -516,12 +504,9 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private Vector3 CalculateIceTornadoSpawnPosition()
     {
-        Vector3 forwardDirection =
-            GetFlatForwardDirection();
-
         Vector3 intendedPosition =
             transform.position +
-            forwardDirection *
+            GetFlatForwardDirection() *
             iceTornadoSpawnDistance;
 
         return GetGroundPosition(
@@ -591,12 +576,6 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         if (lightningStrikePrefab == null)
         {
-            Debug.LogWarning(
-                $"{name}: Cannot cast Lightning Strike because " +
-                "no Lightning Strike Prefab is assigned.",
-                this
-            );
-
             return;
         }
 
@@ -615,12 +594,15 @@ public class PlayerStaffCombat : MonoBehaviour
         Vector3 strikePosition =
             CalculateLightningStrikePosition();
 
+        Quaternion strikeRotation =
+            lightningStrikePrefab.transform.rotation;
+
         LightningStrikeEffect strike =
-        Instantiate(
-        lightningStrikePrefab,
-        strikePosition,
-        lightningStrikePrefab.transform.rotation
-    );
+            Instantiate(
+                lightningStrikePrefab,
+                strikePosition,
+                strikeRotation
+            );
 
         strike.Initialize(
             lightningStrikeDamage,
@@ -633,37 +615,21 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private Vector3 CalculateLightningStrikePosition()
     {
-        /*
-         * Locked-on cast:
-         * place the Lightning Strike underneath the
-         * currently selected enemy.
-         */
         if (
             playerLockOn != null &&
             playerLockOn.IsLockedOn
         )
         {
-            Vector3 targetPosition =
-                playerLockOn.CurrentTargetPosition;
-
             return GetGroundPosition(
-                targetPosition,
+                playerLockOn.CurrentTargetPosition,
                 lightningGroundCheckHeight,
                 lightningGroundOffset
             );
         }
 
-        /*
-         * Unlocked cast:
-         * place the strike on the ground a fixed
-         * distance in front of the player.
-         */
-        Vector3 forwardDirection =
-            GetFlatForwardDirection();
-
         Vector3 intendedPosition =
             transform.position +
-            forwardDirection *
+            GetFlatForwardDirection() *
             lightningStrikeRange;
 
         return GetGroundPosition(
@@ -671,6 +637,66 @@ public class PlayerStaffCombat : MonoBehaviour
             lightningGroundCheckHeight,
             lightningGroundOffset
         );
+    }
+
+    // =========================================================
+    // SHIELD
+    // =========================================================
+
+    private void TryBeginShield()
+    {
+        if (
+            shieldPrefab == null ||
+            playerStats == null
+        )
+        {
+            return;
+        }
+
+        BeginStaffCast(
+            StaffSpell.Shield
+        );
+    }
+
+    private bool ReleaseShield()
+    {
+        if (
+            shieldPrefab == null ||
+            playerStats == null
+        )
+        {
+            return false;
+        }
+
+        /*
+         * Spawn the Shield as a child of the player so
+         * it follows the Druid while active.
+         */
+        Quaternion shieldRotation =
+            transform.rotation *
+            shieldPrefab.transform.rotation;
+
+        PlayerShieldEffect shield =
+            Instantiate(
+                shieldPrefab,
+                transform.position,
+                shieldRotation,
+                transform
+            );
+
+        /*
+         * Apply a local offset so the visual bubble
+         * can be centered around the player's body
+         * instead of the player's ground-level root.
+         */
+        shield.transform.localPosition =
+            shieldLocalOffset;
+
+        shield.Initialize(
+            playerStats
+        );
+
+        return true;
     }
 
     // =========================================================
@@ -709,9 +735,6 @@ public class PlayerStaffCombat : MonoBehaviour
                 groundOffset;
         }
 
-        /*
-         * Fallback if valid ground is not detected.
-         */
         return intendedPosition;
     }
 
@@ -844,7 +867,7 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     // =========================================================
-    // GENERAL HELPERS
+    // GENERAL
     // =========================================================
 
     private bool IsPlayerActionLocked()

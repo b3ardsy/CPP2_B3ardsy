@@ -48,7 +48,20 @@ public class PlayerStatsNew : MonoBehaviour
 
     private int currentHealth;
 
+    /*
+     * Short post-hit invulnerability.
+     */
     private bool isInvulnerable;
+
+    /*
+     * Number of active Shield protection sources.
+     *
+     * Using a counter instead of a bool prevents one Shield
+     * instance from accidentally removing protection supplied
+     * by another source.
+     */
+    private int shieldProtectionSources;
+
     private bool isDead;
     private bool isInHitReaction;
 
@@ -68,8 +81,15 @@ public class PlayerStatsNew : MonoBehaviour
     public bool IsDead =>
         isDead;
 
+    /*
+     * Reports all current forms of damage invulnerability.
+     */
     public bool IsInvulnerable =>
-        isInvulnerable;
+        isInvulnerable ||
+        IsShieldProtected;
+
+    public bool IsShieldProtected =>
+        shieldProtectionSources > 0;
 
     public bool IsInHitReaction =>
         isInHitReaction;
@@ -139,6 +159,8 @@ public class PlayerStatsNew : MonoBehaviour
         currentHealth =
             maxHealth;
 
+        shieldProtectionSources = 0;
+
         FindReferences();
 
         hitAnimationStateHash =
@@ -192,8 +214,7 @@ public class PlayerStatsNew : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (
-            isDead ||
-            isInvulnerable ||
+            IsDamageBlocked() ||
             damage <= 0
         )
         {
@@ -209,8 +230,7 @@ public class PlayerStatsNew : MonoBehaviour
     public void TakeAxeDamage(int damage)
     {
         if (
-            isDead ||
-            isInvulnerable ||
+            IsDamageBlocked() ||
             damage <= 0
         )
         {
@@ -221,6 +241,14 @@ public class PlayerStatsNew : MonoBehaviour
             damage,
             true
         );
+    }
+
+    private bool IsDamageBlocked()
+    {
+        return
+            isDead ||
+            isInvulnerable ||
+            IsShieldProtected;
     }
 
     private void ApplyDamage(
@@ -257,6 +285,42 @@ public class PlayerStatsNew : MonoBehaviour
         }
 
         StartInvulnerability();
+    }
+
+    // =========================================================
+    // SHIELD PROTECTION
+    // =========================================================
+
+    public void AddShieldProtection()
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        shieldProtectionSources++;
+
+        Debug.Log(
+            $"{name}: Shield protection activated.",
+            this
+        );
+    }
+
+    public void RemoveShieldProtection()
+    {
+        shieldProtectionSources =
+            Mathf.Max(
+                0,
+                shieldProtectionSources - 1
+            );
+
+        if (!IsShieldProtected)
+        {
+            Debug.Log(
+                $"{name}: Shield protection ended.",
+                this
+            );
+        }
     }
 
     // =========================================================
@@ -579,6 +643,11 @@ public class PlayerStatsNew : MonoBehaviour
         isDead = true;
         isInvulnerable = true;
         isInHitReaction = false;
+
+        /*
+         * Shield is no longer relevant once the player dies.
+         */
+        shieldProtectionSources = 0;
 
         StopActiveGameplayCoroutines();
         StopPlayerActions();

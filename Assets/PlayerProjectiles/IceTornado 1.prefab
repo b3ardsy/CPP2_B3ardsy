@@ -24774,6 +24774,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72b138ab5ded355438195d36ab92b0eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IceTornadoProjectile
+  defaultSpeed: 10
+  defaultDamage: 1
+  lifetime: 3
 --- !u!1 &1795019024838690
 GameObject:
   m_ObjectHideFlags: 0
