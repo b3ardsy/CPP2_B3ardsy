@@ -729,6 +729,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 461920816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &664333207 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+  m_PrefabInstance: {fileID: 1034567081}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &681449839
 GameObject:
   m_ObjectHideFlags: 0
@@ -1058,6 +1063,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd04d2843abe25d4f8d33cb2a0a4f7b5, type: 3}
+--- !u!1001 &1034567081
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1376334988}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 31.27
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -79.72
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.17553166
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.9844738
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 200.219
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: m_Name
+      value: Skeleton_Mage (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
 --- !u!20 &1116078652 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 7274144138896859639, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -1365,6 +1427,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 470521076}
+  - {fileID: 664333207}
   - {fileID: 365845639}
   - {fileID: 791437899}
   m_Father: {fileID: 0}
@@ -1647,9 +1710,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 3246411546289460215, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 256
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 64
       objectReference: {fileID: 0}
+    - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: lightningStrikePrefab
+      value: 
+      objectReference: {fileID: -6621363650049744213, guid: 5a00130b18b389a499fb14acfe26bc2d, type: 3}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: iceTornadoSpawnDistance
       value: 0

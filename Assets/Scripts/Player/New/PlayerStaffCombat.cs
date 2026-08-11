@@ -33,6 +33,10 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField] private float lightningStrikeCooldown = 5f;
     [SerializeField] private float shieldCooldown = 5f;
 
+    // =========================================================
+    // ICE TORNADO
+    // =========================================================
+
     [Header("Ice Tornado")]
     [SerializeField]
     private IceTornadoProjectile iceTornadoPrefab;
@@ -64,32 +68,79 @@ public class PlayerStaffCombat : MonoBehaviour
     private float iceTornadoGroundOffset = 0.05f;
 
     [Tooltip(
-        "Layers considered valid ground for Ice Tornado spawning."
-    )]
-    [SerializeField]
-    private LayerMask groundLayer;
-
-    [Tooltip(
         "Visual rotation correction for the Ice Tornado prefab."
     )]
     [SerializeField]
     private Vector3 iceTornadoRotationOffset =
         new Vector3(-90f, 0f, 0f);
 
+    // =========================================================
+    // LIGHTNING STRIKE
+    // =========================================================
+
+    [Header("Lightning Strike")]
+    [SerializeField]
+    private LightningStrikeEffect lightningStrikePrefab;
+
+    [SerializeField]
+    private int lightningStrikeDamage = 2;
+
+    [Tooltip(
+        "Radius around the strike position that receives damage."
+    )]
+    [SerializeField]
+    private float lightningStrikeDamageRadius = 1.25f;
+
+    [Tooltip(
+        "When not locked on, Lightning Strike appears this " +
+        "far in front of the player."
+    )]
+    [SerializeField]
+    private float lightningStrikeRange = 6f;
+
+    [Tooltip(
+        "How high above the intended strike point the " +
+        "ground check begins."
+    )]
+    [SerializeField]
+    private float lightningGroundCheckHeight = 5f;
+
+    [Tooltip(
+        "Small offset above the detected ground."
+    )]
+    [SerializeField]
+    private float lightningGroundOffset = 0.05f;
+
+    [Tooltip(
+        "Layers containing enemies that Lightning Strike can damage."
+    )]
+    [SerializeField]
+    private LayerMask enemyLayer;
+
+    // =========================================================
+    // SHARED GROUND / AIMING
+    // =========================================================
+
+    [Header("Ground Detection")]
+    [Tooltip(
+        "Layers considered valid ground for Staff spell placement."
+    )]
+    [SerializeField]
+    private LayerMask groundLayer;
+
     [Header("Aiming")]
     [Tooltip(
-        "When not locked on, Ice Tornado travels " +
+        "When not locked on, directional Staff spells travel " +
         "in the direction the player is facing."
     )]
     [SerializeField]
     private bool usePlayerForwardWhenUnlocked = true;
 
     private bool isCasting;
-
     private StaffSpell activeSpell;
 
     /*
-     * Each Staff spell owns its own cooldown timer.
+     * Independent cooldown timers.
      */
     private float nextFlamethrowerTime;
     private float nextIceTornadoTime;
@@ -182,15 +233,35 @@ public class PlayerStaffCombat : MonoBehaviour
             );
         }
 
+        if (lightningStrikePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Lightning Strike Prefab has not been assigned.",
+                this
+            );
+        }
+
         if (groundLayer.value == 0)
         {
             Debug.LogWarning(
-                $"{name}: Ground Layer has not been assigned " +
-                "for Ice Tornado spawning.",
+                $"{name}: Ground Layer has not been assigned.",
+                this
+            );
+        }
+
+        if (enemyLayer.value == 0)
+        {
+            Debug.LogWarning(
+                $"{name}: Enemy Layer has not been assigned " +
+                "for Lightning Strike.",
                 this
             );
         }
     }
+
+    // =========================================================
+    // SPELL SELECTION
+    // =========================================================
 
     public void SelectSpell(
         StaffSpell spell
@@ -214,6 +285,10 @@ public class PlayerStaffCombat : MonoBehaviour
             this
         );
     }
+
+    // =========================================================
+    // CASTING
+    // =========================================================
 
     public void TryCastSelectedSpell()
     {
@@ -249,31 +324,13 @@ public class PlayerStaffCombat : MonoBehaviour
                 break;
 
             case StaffSpell.LightningStrike:
-                LogSpellNotImplemented();
+                TryBeginLightningStrike();
                 break;
 
             case StaffSpell.Shield:
                 LogSpellNotImplemented();
                 break;
         }
-    }
-
-    private void TryBeginIceTornado()
-    {
-        if (iceTornadoPrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Cannot cast Ice Tornado because " +
-                "no Ice Tornado Prefab is assigned.",
-                this
-            );
-
-            return;
-        }
-
-        BeginStaffCast(
-            StaffSpell.IceTornado
-        );
     }
 
     private void BeginStaffCast(
@@ -331,11 +388,60 @@ public class PlayerStaffCombat : MonoBehaviour
                 break;
 
             case StaffSpell.LightningStrike:
+                if (ReleaseLightningStrike())
+                {
+                    StartCooldown(
+                        StaffSpell.LightningStrike
+                    );
+                }
+
                 break;
 
             case StaffSpell.Shield:
                 break;
         }
+    }
+
+    /*
+     * Animation Event on Magic Summon.
+     */
+    public void EndStaffCast()
+    {
+        isCasting = false;
+    }
+
+    public void CancelStaffCast()
+    {
+        isCasting = false;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                MagicSummonTrigger
+            );
+        }
+    }
+
+    // =========================================================
+    // ICE TORNADO
+    // =========================================================
+
+    private void TryBeginIceTornado()
+    {
+        if (iceTornadoPrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Cannot cast Ice Tornado because " +
+                "no Ice Tornado Prefab is assigned.",
+                this
+            );
+
+            return;
+        }
+
+        BeginStaffCast(
+            StaffSpell.IceTornado
+        );
     }
 
     private bool ReleaseIceTornado()
@@ -411,53 +517,18 @@ public class PlayerStaffCombat : MonoBehaviour
     private Vector3 CalculateIceTornadoSpawnPosition()
     {
         Vector3 forwardDirection =
-            transform.forward;
-
-        forwardDirection.y = 0f;
-
-        if (
-            forwardDirection.sqrMagnitude <=
-            0.001f
-        )
-        {
-            forwardDirection =
-                Vector3.forward;
-        }
-
-        forwardDirection.Normalize();
+            GetFlatForwardDirection();
 
         Vector3 intendedPosition =
             transform.position +
             forwardDirection *
             iceTornadoSpawnDistance;
 
-        Vector3 rayStart =
-            intendedPosition +
-            Vector3.up *
-            iceTornadoGroundCheckHeight;
-
-        float rayDistance =
-            iceTornadoGroundCheckHeight *
-            2f;
-
-        if (
-            Physics.Raycast(
-                rayStart,
-                Vector3.down,
-                out RaycastHit hit,
-                rayDistance,
-                groundLayer,
-                QueryTriggerInteraction.Ignore
-            )
-        )
-        {
-            return
-                hit.point +
-                Vector3.up *
-                iceTornadoGroundOffset;
-        }
-
-        return intendedPosition;
+        return GetGroundPosition(
+            intendedPosition,
+            iceTornadoGroundCheckHeight,
+            iceTornadoGroundOffset
+        );
     }
 
     private Vector3 CalculateIceTornadoDirection(
@@ -487,13 +558,8 @@ public class PlayerStaffCombat : MonoBehaviour
 
         if (usePlayerForwardWhenUnlocked)
         {
-            Vector3 forwardDirection =
-                transform.forward;
-
-            forwardDirection.y = 0f;
-
             return
-                forwardDirection.normalized;
+                GetFlatForwardDirection();
         }
 
         if (staffFirePoint != null)
@@ -514,8 +580,164 @@ public class PlayerStaffCombat : MonoBehaviour
         }
 
         return
-            transform.forward.normalized;
+            GetFlatForwardDirection();
     }
+
+    // =========================================================
+    // LIGHTNING STRIKE
+    // =========================================================
+
+    private void TryBeginLightningStrike()
+    {
+        if (lightningStrikePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Cannot cast Lightning Strike because " +
+                "no Lightning Strike Prefab is assigned.",
+                this
+            );
+
+            return;
+        }
+
+        BeginStaffCast(
+            StaffSpell.LightningStrike
+        );
+    }
+
+    private bool ReleaseLightningStrike()
+    {
+        if (lightningStrikePrefab == null)
+        {
+            return false;
+        }
+
+        Vector3 strikePosition =
+            CalculateLightningStrikePosition();
+
+        LightningStrikeEffect strike =
+        Instantiate(
+        lightningStrikePrefab,
+        strikePosition,
+        lightningStrikePrefab.transform.rotation
+    );
+
+        strike.Initialize(
+            lightningStrikeDamage,
+            lightningStrikeDamageRadius,
+            enemyLayer
+        );
+
+        return true;
+    }
+
+    private Vector3 CalculateLightningStrikePosition()
+    {
+        /*
+         * Locked-on cast:
+         * place the Lightning Strike underneath the
+         * currently selected enemy.
+         */
+        if (
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn
+        )
+        {
+            Vector3 targetPosition =
+                playerLockOn.CurrentTargetPosition;
+
+            return GetGroundPosition(
+                targetPosition,
+                lightningGroundCheckHeight,
+                lightningGroundOffset
+            );
+        }
+
+        /*
+         * Unlocked cast:
+         * place the strike on the ground a fixed
+         * distance in front of the player.
+         */
+        Vector3 forwardDirection =
+            GetFlatForwardDirection();
+
+        Vector3 intendedPosition =
+            transform.position +
+            forwardDirection *
+            lightningStrikeRange;
+
+        return GetGroundPosition(
+            intendedPosition,
+            lightningGroundCheckHeight,
+            lightningGroundOffset
+        );
+    }
+
+    // =========================================================
+    // GROUND HELPERS
+    // =========================================================
+
+    private Vector3 GetGroundPosition(
+        Vector3 intendedPosition,
+        float groundCheckHeight,
+        float groundOffset
+    )
+    {
+        Vector3 rayStart =
+            intendedPosition +
+            Vector3.up *
+            groundCheckHeight;
+
+        float rayDistance =
+            groundCheckHeight *
+            2f;
+
+        if (
+            Physics.Raycast(
+                rayStart,
+                Vector3.down,
+                out RaycastHit hit,
+                rayDistance,
+                groundLayer,
+                QueryTriggerInteraction.Ignore
+            )
+        )
+        {
+            return
+                hit.point +
+                Vector3.up *
+                groundOffset;
+        }
+
+        /*
+         * Fallback if valid ground is not detected.
+         */
+        return intendedPosition;
+    }
+
+    private Vector3 GetFlatForwardDirection()
+    {
+        Vector3 forwardDirection =
+            transform.forward;
+
+        forwardDirection.y = 0f;
+
+        if (
+            forwardDirection.sqrMagnitude <=
+            0.001f
+        )
+        {
+            return
+                Vector3.forward;
+        }
+
+        return
+            forwardDirection.normalized;
+    }
+
+    // =========================================================
+    // COOLDOWNS
+    // =========================================================
 
     public bool IsSpellReady(
         StaffSpell spell
@@ -621,25 +843,9 @@ public class PlayerStaffCombat : MonoBehaviour
         }
     }
 
-    /*
-     * Animation Event on Magic Summon.
-     */
-    public void EndStaffCast()
-    {
-        isCasting = false;
-    }
-
-    public void CancelStaffCast()
-    {
-        isCasting = false;
-
-        if (animator != null)
-        {
-            animator.ResetTrigger(
-                MagicSummonTrigger
-            );
-        }
-    }
+    // =========================================================
+    // GENERAL HELPERS
+    // =========================================================
 
     private bool IsPlayerActionLocked()
     {
@@ -715,6 +921,36 @@ public class PlayerStaffCombat : MonoBehaviour
             Mathf.Max(
                 0f,
                 iceTornadoGroundOffset
+            );
+
+        lightningStrikeDamage =
+            Mathf.Max(
+                1,
+                lightningStrikeDamage
+            );
+
+        lightningStrikeDamageRadius =
+            Mathf.Max(
+                0.01f,
+                lightningStrikeDamageRadius
+            );
+
+        lightningStrikeRange =
+            Mathf.Max(
+                0f,
+                lightningStrikeRange
+            );
+
+        lightningGroundCheckHeight =
+            Mathf.Max(
+                0.1f,
+                lightningGroundCheckHeight
+            );
+
+        lightningGroundOffset =
+            Mathf.Max(
+                0f,
+                lightningGroundOffset
             );
     }
 }
