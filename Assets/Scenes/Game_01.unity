@@ -1645,7 +1645,7 @@ PrefabInstance:
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: iceTornadoPrefab
       value: 
-      objectReference: {fileID: 4247989493703643989, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
+      objectReference: {fileID: 3246411546289460215, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 64

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,10 +14,10 @@ public class PlayerWeaponManager : MonoBehaviour
     [SerializeField] private PlayerCombatNew playerCombat;
 
     [Header("Weapon Models")]
-    [Tooltip("The Wand object already attached to the player's hand.")]
+    [Tooltip("The Wand object attached to the player's hand.")]
     [SerializeField] private GameObject wandObject;
 
-    [Tooltip("The Staff object already attached to the player's hand.")]
+    [Tooltip("The Staff object attached to the player's hand.")]
     [SerializeField] private GameObject staffObject;
 
     [Header("Starting Weapon")]
@@ -38,23 +39,21 @@ public class PlayerWeaponManager : MonoBehaviour
     public bool HasStaff =>
         hasStaff;
 
+    /*
+     * UI and other systems can listen for weapon swaps later.
+     */
+    public event Action<WeaponType> OnWeaponChanged;
+
     private void Awake()
     {
         FindReferences();
         ValidateReferences();
 
-        currentWeapon =
-            startingWeapon;
-
-        /*
-         * The player begins with the Wand.
-         * The Staff cannot be equipped until picked up.
-         */
         hasWand = true;
         hasStaff = false;
 
         EquipWeapon(
-            currentWeapon
+            startingWeapon
         );
     }
 
@@ -97,7 +96,8 @@ public class PlayerWeaponManager : MonoBehaviour
         if (wandObject == null)
         {
             Debug.LogError(
-                $"{name}: PlayerWeaponManager is missing the Wand object.",
+                $"{name}: PlayerWeaponManager is missing " +
+                "the Wand object.",
                 this
             );
         }
@@ -105,7 +105,8 @@ public class PlayerWeaponManager : MonoBehaviour
         if (staffObject == null)
         {
             Debug.LogError(
-                $"{name}: PlayerWeaponManager is missing the Staff object.",
+                $"{name}: PlayerWeaponManager is missing " +
+                "the Staff object.",
                 this
             );
         }
@@ -125,9 +126,6 @@ public class PlayerWeaponManager : MonoBehaviour
             this
         );
 
-        /*
-         * Picking up the Staff immediately equips it.
-         */
         EquipWeapon(
             WeaponType.Staff
         );
@@ -135,9 +133,6 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void TrySwapWeapon()
     {
-        /*
-         * Prevent swapping during an active combat animation.
-         */
         if (
             playerCombat != null &&
             playerCombat.IsCombatBusy
@@ -146,10 +141,6 @@ public class PlayerWeaponManager : MonoBehaviour
             return;
         }
 
-        /*
-         * There is nothing to swap to until
-         * the Staff has been collected.
-         */
         if (
             !hasWand ||
             !hasStaff
@@ -158,20 +149,14 @@ public class PlayerWeaponManager : MonoBehaviour
             return;
         }
 
-        if (
+        WeaponType nextWeapon =
             currentWeapon ==
             WeaponType.Wand
-        )
-        {
-            EquipWeapon(
-                WeaponType.Staff
-            );
-
-            return;
-        }
+                ? WeaponType.Staff
+                : WeaponType.Wand;
 
         EquipWeapon(
-            WeaponType.Wand
+            nextWeapon
         );
     }
 
@@ -179,10 +164,6 @@ public class PlayerWeaponManager : MonoBehaviour
         WeaponType weapon
     )
     {
-        /*
-         * Prevent equipping a weapon that
-         * has not been unlocked.
-         */
         if (
             weapon == WeaponType.Staff &&
             !hasStaff
@@ -191,6 +172,9 @@ public class PlayerWeaponManager : MonoBehaviour
             weapon =
                 WeaponType.Wand;
         }
+
+        bool weaponChanged =
+            currentWeapon != weapon;
 
         currentWeapon =
             weapon;
@@ -208,6 +192,13 @@ public class PlayerWeaponManager : MonoBehaviour
             staffObject.SetActive(
                 currentWeapon ==
                 WeaponType.Staff
+            );
+        }
+
+        if (weaponChanged)
+        {
+            OnWeaponChanged?.Invoke(
+                currentWeapon
             );
         }
 

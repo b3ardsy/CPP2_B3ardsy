@@ -18,7 +18,7 @@ public class PlayerStaffCombat : MonoBehaviour
     [Header("Staff")]
     [Tooltip(
         "Spawn point used by Staff spells that originate " +
-        "from the Staff, such as Flamethrower."
+        "directly from the Staff, such as Flamethrower."
     )]
     [SerializeField] private Transform staffFirePoint;
 
@@ -27,9 +27,15 @@ public class PlayerStaffCombat : MonoBehaviour
     private StaffSpell selectedSpell =
         StaffSpell.IceTornado;
 
+    [Header("Spell Cooldowns")]
+    [SerializeField] private float flamethrowerCooldown = 5f;
+    [SerializeField] private float iceTornadoCooldown = 5f;
+    [SerializeField] private float lightningStrikeCooldown = 5f;
+    [SerializeField] private float shieldCooldown = 5f;
+
     [Header("Ice Tornado")]
     [SerializeField]
-    private PlayerSpellProjectile iceTornadoPrefab;
+    private IceTornadoProjectile iceTornadoPrefab;
 
     [SerializeField]
     private int iceTornadoDamage = 1;
@@ -52,8 +58,7 @@ public class PlayerStaffCombat : MonoBehaviour
     private float iceTornadoGroundCheckHeight = 3f;
 
     [Tooltip(
-        "Small vertical offset above the detected ground " +
-        "to prevent the Tornado from spawning inside it."
+        "Small vertical offset above the detected ground."
     )]
     [SerializeField]
     private float iceTornadoGroundOffset = 0.05f;
@@ -65,8 +70,7 @@ public class PlayerStaffCombat : MonoBehaviour
     private LayerMask groundLayer;
 
     [Tooltip(
-        "Rotation correction applied after aiming the Ice Tornado. " +
-        "The current prefab looks correct at X = -90."
+        "Visual rotation correction for the Ice Tornado prefab."
     )]
     [SerializeField]
     private Vector3 iceTornadoRotationOffset =
@@ -82,12 +86,15 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private bool isCasting;
 
-    /*
-     * Stores the spell that actually began the cast.
-     * This prevents changing spell selection halfway
-     * through an animation and changing what gets released.
-     */
     private StaffSpell activeSpell;
+
+    /*
+     * Each Staff spell owns its own cooldown timer.
+     */
+    private float nextFlamethrowerTime;
+    private float nextIceTornadoTime;
+    private float nextLightningStrikeTime;
+    private float nextShieldTime;
 
     public StaffSpell SelectedSpell =>
         selectedSpell;
@@ -220,14 +227,25 @@ public class PlayerStaffCombat : MonoBehaviour
             return;
         }
 
+        if (!IsSpellReady(selectedSpell))
+        {
+            Debug.Log(
+                $"{name}: {selectedSpell} is on cooldown for " +
+                $"{GetRemainingCooldown(selectedSpell):0.0} more seconds.",
+                this
+            );
+
+            return;
+        }
+
         switch (selectedSpell)
         {
-            case StaffSpell.IceTornado:
-                TryBeginIceTornado();
-                break;
-
             case StaffSpell.Flamethrower:
                 LogSpellNotImplemented();
+                break;
+
+            case StaffSpell.IceTornado:
+                TryBeginIceTornado();
                 break;
 
             case StaffSpell.LightningStrike:
@@ -282,9 +300,7 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     /*
-     * Animation Event.
-     * Place this on the Magic Summon animation at
-     * the exact frame where the spell should activate.
+     * Animation Event on Magic Summon.
      */
     public void StaffSpellActivate()
     {
@@ -301,11 +317,17 @@ public class PlayerStaffCombat : MonoBehaviour
 
         switch (activeSpell)
         {
-            case StaffSpell.IceTornado:
-                ReleaseIceTornado();
+            case StaffSpell.Flamethrower:
                 break;
 
-            case StaffSpell.Flamethrower:
+            case StaffSpell.IceTornado:
+                if (ReleaseIceTornado())
+                {
+                    StartCooldown(
+                        StaffSpell.IceTornado
+                    );
+                }
+
                 break;
 
             case StaffSpell.LightningStrike:
@@ -316,11 +338,11 @@ public class PlayerStaffCombat : MonoBehaviour
         }
     }
 
-    private void ReleaseIceTornado()
+    private bool ReleaseIceTornado()
     {
         if (iceTornadoPrefab == null)
         {
-            return;
+            return false;
         }
 
         Vector3 spawnPosition =
@@ -331,19 +353,6 @@ public class PlayerStaffCombat : MonoBehaviour
                 spawnPosition
             );
 
-        if (
-            fireDirection.sqrMagnitude <=
-            0.001f
-        )
-        {
-            fireDirection =
-                transform.forward;
-        }
-
-        /*
-         * Ice Tornado is intended to travel along the ground,
-         * so remove vertical aiming from its travel direction.
-         */
         fireDirection.y = 0f;
 
         if (
@@ -353,6 +362,16 @@ public class PlayerStaffCombat : MonoBehaviour
         {
             fireDirection =
                 transform.forward;
+
+            fireDirection.y = 0f;
+        }
+
+        if (
+            fireDirection.sqrMagnitude <=
+            0.001f
+        )
+        {
+            return false;
         }
 
         fireDirection.Normalize();
@@ -372,7 +391,7 @@ public class PlayerStaffCombat : MonoBehaviour
             directionRotation *
             rotationOffset;
 
-        PlayerSpellProjectile tornado =
+        IceTornadoProjectile tornado =
             Instantiate(
                 iceTornadoPrefab,
                 spawnPosition,
@@ -383,9 +402,10 @@ public class PlayerStaffCombat : MonoBehaviour
             gameObject,
             fireDirection,
             iceTornadoDamage,
-            iceTornadoSpeed,
-            true
+            iceTornadoSpeed
         );
+
+        return true;
     }
 
     private Vector3 CalculateIceTornadoSpawnPosition()
@@ -417,7 +437,8 @@ public class PlayerStaffCombat : MonoBehaviour
             iceTornadoGroundCheckHeight;
 
         float rayDistance =
-            iceTornadoGroundCheckHeight * 2f;
+            iceTornadoGroundCheckHeight *
+            2f;
 
         if (
             Physics.Raycast(
@@ -436,9 +457,6 @@ public class PlayerStaffCombat : MonoBehaviour
                 iceTornadoGroundOffset;
         }
 
-        /*
-         * Fallback if no valid ground is detected.
-         */
         return intendedPosition;
     }
 
@@ -455,11 +473,6 @@ public class PlayerStaffCombat : MonoBehaviour
                 playerLockOn.CurrentTargetPosition -
                 spawnPosition;
 
-            /*
-             * Keep the Tornado travelling across the ground
-             * rather than aiming upward toward the enemy's
-             * lock-on point.
-             */
             directionToTarget.y = 0f;
 
             if (
@@ -504,10 +517,112 @@ public class PlayerStaffCombat : MonoBehaviour
             transform.forward.normalized;
     }
 
+    public bool IsSpellReady(
+        StaffSpell spell
+    )
+    {
+        return
+            GetRemainingCooldown(spell) <= 0f;
+    }
+
+    public float GetRemainingCooldown(
+        StaffSpell spell
+    )
+    {
+        float readyTime =
+            GetNextReadyTime(
+                spell
+            );
+
+        return
+            Mathf.Max(
+                0f,
+                readyTime - Time.time
+            );
+    }
+
+    private float GetNextReadyTime(
+        StaffSpell spell
+    )
+    {
+        switch (spell)
+        {
+            case StaffSpell.Flamethrower:
+                return nextFlamethrowerTime;
+
+            case StaffSpell.IceTornado:
+                return nextIceTornadoTime;
+
+            case StaffSpell.LightningStrike:
+                return nextLightningStrikeTime;
+
+            case StaffSpell.Shield:
+                return nextShieldTime;
+
+            default:
+                return 0f;
+        }
+    }
+
+    private float GetCooldownDuration(
+        StaffSpell spell
+    )
+    {
+        switch (spell)
+        {
+            case StaffSpell.Flamethrower:
+                return flamethrowerCooldown;
+
+            case StaffSpell.IceTornado:
+                return iceTornadoCooldown;
+
+            case StaffSpell.LightningStrike:
+                return lightningStrikeCooldown;
+
+            case StaffSpell.Shield:
+                return shieldCooldown;
+
+            default:
+                return 0f;
+        }
+    }
+
+    private void StartCooldown(
+        StaffSpell spell
+    )
+    {
+        float readyTime =
+            Time.time +
+            GetCooldownDuration(
+                spell
+            );
+
+        switch (spell)
+        {
+            case StaffSpell.Flamethrower:
+                nextFlamethrowerTime =
+                    readyTime;
+                break;
+
+            case StaffSpell.IceTornado:
+                nextIceTornadoTime =
+                    readyTime;
+                break;
+
+            case StaffSpell.LightningStrike:
+                nextLightningStrikeTime =
+                    readyTime;
+                break;
+
+            case StaffSpell.Shield:
+                nextShieldTime =
+                    readyTime;
+                break;
+        }
+    }
+
     /*
-     * Animation Event.
-     * Place this before the Magic Summon animation
-     * begins transitioning back to locomotion.
+     * Animation Event on Magic Summon.
      */
     public void EndStaffCast()
     {
@@ -548,6 +663,30 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private void OnValidate()
     {
+        flamethrowerCooldown =
+            Mathf.Max(
+                0f,
+                flamethrowerCooldown
+            );
+
+        iceTornadoCooldown =
+            Mathf.Max(
+                0f,
+                iceTornadoCooldown
+            );
+
+        lightningStrikeCooldown =
+            Mathf.Max(
+                0f,
+                lightningStrikeCooldown
+            );
+
+        shieldCooldown =
+            Mathf.Max(
+                0f,
+                shieldCooldown
+            );
+
         iceTornadoDamage =
             Mathf.Max(
                 1,
