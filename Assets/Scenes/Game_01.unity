@@ -619,6 +619,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Golem
       objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: chaseSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: attackRange
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: patrolSpeed
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: returnSpeed
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: patrolRadius
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: detectionRange
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: loseTargetRange
+      value: 30
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1361,6 +1389,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Rogue
       objectReference: {fileID: 0}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: patrolSpeed
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: returnSpeed
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1697,6 +1733,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 3.3368018
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -13.1253605
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -90.38399
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_Name
       value: Druid 1
@@ -1740,6 +1788,18 @@ PrefabInstance:
     - target: {fileID: 5520820917836687221, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0.81787264
+      objectReference: {fileID: 0}
+    - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 14.622358
+      objectReference: {fileID: 0}
+    - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 90.10494
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
