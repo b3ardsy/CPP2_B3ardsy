@@ -9,6 +9,7 @@ public class PlayerCombatNew : MonoBehaviour
     [SerializeField] private PlayerLockOn playerLockOn;
     [SerializeField] private PlayerWeaponManager playerWeaponManager;
     [SerializeField] private PlayerStaffCombat playerStaffCombat;
+    [SerializeField] private PlayerShieldController playerShieldController;
 
     [Header("Wand")]
     [Tooltip("Projectile used by the Wand.")]
@@ -32,15 +33,17 @@ public class PlayerCombatNew : MonoBehaviour
 
     /*
      * Staff casts currently block movement and dodge.
-     * Wand attacks do not.
+     * Wand attacks and Shield activation do not.
      */
     public bool IsAttacking =>
         playerStaffCombat != null &&
         playerStaffCombat.IsCasting;
 
     /*
-     * Prevent weapon swapping during either weapon's
-     * active attack animation.
+     * Shield does not count as combat busy.
+     *
+     * This allows the player to attack and eventually
+     * swap weapons while the Shield is active.
      */
     public bool IsCombatBusy =>
         isWandAttackInProgress ||
@@ -89,6 +92,12 @@ public class PlayerCombatNew : MonoBehaviour
             playerStaffCombat =
                 GetComponent<PlayerStaffCombat>();
         }
+
+        if (playerShieldController == null)
+        {
+            playerShieldController =
+                GetComponent<PlayerShieldController>();
+        }
     }
 
     private void ValidateReferences()
@@ -134,6 +143,15 @@ public class PlayerCombatNew : MonoBehaviour
             );
         }
 
+        if (playerShieldController == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerShieldController.",
+                this
+            );
+        }
+
         if (wandFirePoint == null)
         {
             Debug.LogWarning(
@@ -155,16 +173,26 @@ public class PlayerCombatNew : MonoBehaviour
     {
         HandleCombatCancellation();
 
-        if (Keyboard.current == null)
+        if (Keyboard.current != null)
         {
-            return;
+            HandleStaffSpellSelection();
         }
-
-        HandleStaffSpellSelection();
 
         if (Mouse.current == null)
         {
             return;
+        }
+
+        /*
+         * RMB activates Shield regardless of whether
+         * Wand or Staff is currently equipped.
+         */
+        if (
+            Mouse.current.rightButton
+                .wasPressedThisFrame
+        )
+        {
+            TryActivateShield();
         }
 
         if (
@@ -185,6 +213,21 @@ public class PlayerCombatNew : MonoBehaviour
         {
             CancelWandAttack();
         }
+    }
+
+    private void TryActivateShield()
+    {
+        if (IsPlayerActionLocked())
+        {
+            return;
+        }
+
+        if (playerShieldController == null)
+        {
+            return;
+        }
+
+        playerShieldController.TryActivateShield();
     }
 
     private void HandlePrimaryAttack()
@@ -219,6 +262,10 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
+        /*
+         * Slot 1 is still the temporary placeholder
+         * until Entangle is implemented next.
+         */
         if (
             Keyboard.current.digit1Key
                 .wasPressedThisFrame
@@ -251,18 +298,6 @@ public class PlayerCombatNew : MonoBehaviour
             playerStaffCombat.SelectSpell(
                 PlayerStaffCombat.StaffSpell.LightningStrike
             );
-
-            return;
-        }
-
-        if (
-            Keyboard.current.digit4Key
-                .wasPressedThisFrame
-        )
-        {
-            playerStaffCombat.SelectSpell(
-                PlayerStaffCombat.StaffSpell.Shield
-            );
         }
     }
 
@@ -290,7 +325,8 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
-        isWandAttackInProgress = true;
+        isWandAttackInProgress =
+            true;
 
         PlayWandAttackAnimation();
     }
@@ -391,7 +427,9 @@ public class PlayerCombatNew : MonoBehaviour
     {
         if (animator == null)
         {
-            isWandAttackInProgress = false;
+            isWandAttackInProgress =
+                false;
+
             return;
         }
 
@@ -409,12 +447,14 @@ public class PlayerCombatNew : MonoBehaviour
      */
     public void EndWandAttack()
     {
-        isWandAttackInProgress = false;
+        isWandAttackInProgress =
+            false;
     }
 
     public void CancelWandAttack()
     {
-        isWandAttackInProgress = false;
+        isWandAttackInProgress =
+            false;
 
         if (animator != null)
         {
@@ -439,6 +479,13 @@ public class PlayerCombatNew : MonoBehaviour
         {
             playerStaffCombat.CancelStaffCast();
         }
+
+        /*
+         * Do NOT destroy the Shield here.
+         *
+         * PlayerCombatNew can temporarily be disabled by
+         * hit reactions. The Shield is an independent system.
+         */
     }
 
     private void OnValidate()

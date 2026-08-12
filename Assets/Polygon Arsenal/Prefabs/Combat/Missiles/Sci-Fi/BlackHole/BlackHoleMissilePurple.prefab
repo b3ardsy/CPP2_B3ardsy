@@ -5010,7 +5010,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBlackHoleProjectile
   defaultSpeed: 15
   defaultDamage: 1
-  lifetime: 5
+  lifetime: 4
   homingTurnSpeed: 120
   homingTargetHeightOffset: 1
   visualRotationOffset: {x: -90, y: 0, z: 0}

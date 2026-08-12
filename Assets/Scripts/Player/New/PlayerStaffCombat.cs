@@ -6,20 +6,18 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         Flamethrower,
         IceTornado,
-        LightningStrike,
-        Shield
+        LightningStrike
     }
 
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement3DNew playerMovement;
     [SerializeField] private PlayerLockOn playerLockOn;
-    [SerializeField] private PlayerStatsNew playerStats;
 
     [Header("Staff")]
     [Tooltip(
         "Spawn point used by Staff spells that originate " +
-        "directly from the Staff, such as Flamethrower."
+        "directly from the Staff."
     )]
     [SerializeField] private Transform staffFirePoint;
 
@@ -32,7 +30,6 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField] private float flamethrowerCooldown = 5f;
     [SerializeField] private float iceTornadoCooldown = 5f;
     [SerializeField] private float lightningStrikeCooldown = 5f;
-    [SerializeField] private float shieldCooldown = 5f;
 
     // =========================================================
     // ICE TORNADO
@@ -88,25 +85,6 @@ public class PlayerStaffCombat : MonoBehaviour
     private LayerMask enemyLayer;
 
     // =========================================================
-    // SHIELD
-    // =========================================================
-
-    [Header("Shield")]
-    [Tooltip(
-        "Shield effect spawned around the player."
-    )]
-    [SerializeField]
-    private PlayerShieldEffect shieldPrefab;
-
-    [Tooltip(
-        "Local position offset used to center the Shield " +
-        "around the player's body."
-    )]
-    [SerializeField]
-    private Vector3 shieldLocalOffset =
-        new Vector3(0f, 0.8f, 0f);
-
-    // =========================================================
     // SHARED
     // =========================================================
 
@@ -124,7 +102,6 @@ public class PlayerStaffCombat : MonoBehaviour
     private float nextFlamethrowerTime;
     private float nextIceTornadoTime;
     private float nextLightningStrikeTime;
-    private float nextShieldTime;
 
     public StaffSpell SelectedSpell =>
         selectedSpell;
@@ -172,18 +149,6 @@ public class PlayerStaffCombat : MonoBehaviour
             playerLockOn =
                 GetComponentInParent<PlayerLockOn>();
         }
-
-        if (playerStats == null)
-        {
-            playerStats =
-                GetComponent<PlayerStatsNew>();
-        }
-
-        if (playerStats == null)
-        {
-            playerStats =
-                GetComponentInParent<PlayerStatsNew>();
-        }
     }
 
     private void ValidateReferences()
@@ -208,14 +173,6 @@ public class PlayerStaffCombat : MonoBehaviour
             return;
         }
 
-        if (playerStats == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerStaffCombat could not find PlayerStatsNew.",
-                this
-            );
-        }
-
         if (staffFirePoint == null)
         {
             Debug.LogWarning(
@@ -236,14 +193,6 @@ public class PlayerStaffCombat : MonoBehaviour
         {
             Debug.LogWarning(
                 $"{name}: Lightning Strike Prefab has not been assigned.",
-                this
-            );
-        }
-
-        if (shieldPrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Shield Prefab has not been assigned.",
                 this
             );
         }
@@ -330,10 +279,6 @@ public class PlayerStaffCombat : MonoBehaviour
             case StaffSpell.LightningStrike:
                 TryBeginLightningStrike();
                 break;
-
-            case StaffSpell.Shield:
-                TryBeginShield();
-                break;
         }
     }
 
@@ -349,7 +294,8 @@ public class PlayerStaffCombat : MonoBehaviour
         activeSpell =
             spell;
 
-        isCasting = true;
+        isCasting =
+            true;
 
         animator.ResetTrigger(
             MagicSummonTrigger
@@ -400,27 +346,19 @@ public class PlayerStaffCombat : MonoBehaviour
                 }
 
                 break;
-
-            case StaffSpell.Shield:
-                if (ReleaseShield())
-                {
-                    StartCooldown(
-                        StaffSpell.Shield
-                    );
-                }
-
-                break;
         }
     }
 
     public void EndStaffCast()
     {
-        isCasting = false;
+        isCasting =
+            false;
     }
 
     public void CancelStaffCast()
     {
-        isCasting = false;
+        isCasting =
+            false;
 
         if (animator != null)
         {
@@ -461,7 +399,8 @@ public class PlayerStaffCombat : MonoBehaviour
                 spawnPosition
             );
 
-        fireDirection.y = 0f;
+        fireDirection.y =
+            0f;
 
         if (
             fireDirection.sqrMagnitude <=
@@ -489,7 +428,8 @@ public class PlayerStaffCombat : MonoBehaviour
             Instantiate(
                 iceTornadoPrefab,
                 spawnPosition,
-                directionRotation * rotationOffset
+                directionRotation *
+                rotationOffset
             );
 
         tornado.Initialize(
@@ -529,7 +469,8 @@ public class PlayerStaffCombat : MonoBehaviour
                 playerLockOn.CurrentTargetPosition -
                 spawnPosition;
 
-            directionToTarget.y = 0f;
+            directionToTarget.y =
+                0f;
 
             if (
                 directionToTarget.sqrMagnitude >
@@ -552,7 +493,8 @@ public class PlayerStaffCombat : MonoBehaviour
             Vector3 staffDirection =
                 staffFirePoint.forward;
 
-            staffDirection.y = 0f;
+            staffDirection.y =
+                0f;
 
             if (
                 staffDirection.sqrMagnitude >
@@ -640,66 +582,6 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     // =========================================================
-    // SHIELD
-    // =========================================================
-
-    private void TryBeginShield()
-    {
-        if (
-            shieldPrefab == null ||
-            playerStats == null
-        )
-        {
-            return;
-        }
-
-        BeginStaffCast(
-            StaffSpell.Shield
-        );
-    }
-
-    private bool ReleaseShield()
-    {
-        if (
-            shieldPrefab == null ||
-            playerStats == null
-        )
-        {
-            return false;
-        }
-
-        /*
-         * Spawn the Shield as a child of the player so
-         * it follows the Druid while active.
-         */
-        Quaternion shieldRotation =
-            transform.rotation *
-            shieldPrefab.transform.rotation;
-
-        PlayerShieldEffect shield =
-            Instantiate(
-                shieldPrefab,
-                transform.position,
-                shieldRotation,
-                transform
-            );
-
-        /*
-         * Apply a local offset so the visual bubble
-         * can be centered around the player's body
-         * instead of the player's ground-level root.
-         */
-        shield.transform.localPosition =
-            shieldLocalOffset;
-
-        shield.Initialize(
-            playerStats
-        );
-
-        return true;
-    }
-
-    // =========================================================
     // GROUND HELPERS
     // =========================================================
 
@@ -743,7 +625,8 @@ public class PlayerStaffCombat : MonoBehaviour
         Vector3 forwardDirection =
             transform.forward;
 
-        forwardDirection.y = 0f;
+        forwardDirection.y =
+            0f;
 
         if (
             forwardDirection.sqrMagnitude <=
@@ -767,7 +650,8 @@ public class PlayerStaffCombat : MonoBehaviour
     )
     {
         return
-            GetRemainingCooldown(spell) <= 0f;
+            GetRemainingCooldown(spell) <=
+            0f;
     }
 
     public float GetRemainingCooldown(
@@ -782,7 +666,8 @@ public class PlayerStaffCombat : MonoBehaviour
         return
             Mathf.Max(
                 0f,
-                readyTime - Time.time
+                readyTime -
+                Time.time
             );
     }
 
@@ -793,19 +678,20 @@ public class PlayerStaffCombat : MonoBehaviour
         switch (spell)
         {
             case StaffSpell.Flamethrower:
-                return nextFlamethrowerTime;
+                return
+                    nextFlamethrowerTime;
 
             case StaffSpell.IceTornado:
-                return nextIceTornadoTime;
+                return
+                    nextIceTornadoTime;
 
             case StaffSpell.LightningStrike:
-                return nextLightningStrikeTime;
-
-            case StaffSpell.Shield:
-                return nextShieldTime;
+                return
+                    nextLightningStrikeTime;
 
             default:
-                return 0f;
+                return
+                    0f;
         }
     }
 
@@ -816,19 +702,20 @@ public class PlayerStaffCombat : MonoBehaviour
         switch (spell)
         {
             case StaffSpell.Flamethrower:
-                return flamethrowerCooldown;
+                return
+                    flamethrowerCooldown;
 
             case StaffSpell.IceTornado:
-                return iceTornadoCooldown;
+                return
+                    iceTornadoCooldown;
 
             case StaffSpell.LightningStrike:
-                return lightningStrikeCooldown;
-
-            case StaffSpell.Shield:
-                return shieldCooldown;
+                return
+                    lightningStrikeCooldown;
 
             default:
-                return 0f;
+                return
+                    0f;
         }
     }
 
@@ -856,11 +743,6 @@ public class PlayerStaffCombat : MonoBehaviour
 
             case StaffSpell.LightningStrike:
                 nextLightningStrikeTime =
-                    readyTime;
-                break;
-
-            case StaffSpell.Shield:
-                nextShieldTime =
                     readyTime;
                 break;
         }
@@ -908,12 +790,6 @@ public class PlayerStaffCombat : MonoBehaviour
             Mathf.Max(
                 0f,
                 lightningStrikeCooldown
-            );
-
-        shieldCooldown =
-            Mathf.Max(
-                0f,
-                shieldCooldown
             );
 
         iceTornadoDamage =
