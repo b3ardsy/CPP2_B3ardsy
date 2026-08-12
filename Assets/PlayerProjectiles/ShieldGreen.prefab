@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 198009558657258300}
   - component: {fileID: 199732231162588192}
   - component: {fileID: -6830071300236558234}
+  - component: {fileID: 1232505082546111864}
   m_Layer: 0
   m_Name: ShieldGreen
   m_TagString: Untagged
@@ -4931,7 +4932,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b353e453cc6945140911609b110564b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShieldEffect
-  duration: 3
+  reflectionCollider: {fileID: 1232505082546111864}
+  fullSizeDuration: 3
+  minimumScaleMultiplier: 0.1
+--- !u!135 &1232505082546111864
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1160982984580146}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1189856773640564
 GameObject:
   m_ObjectHideFlags: 0

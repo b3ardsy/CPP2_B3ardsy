@@ -2,7 +2,9 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class EnemyBlackHoleProjectile : MonoBehaviour
+public class EnemyBlackHoleProjectile :
+    MonoBehaviour,
+    IReflectableProjectile
 {
     [Header("Projectile")]
     [SerializeField] private float defaultSpeed = 12f;
@@ -42,6 +44,14 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
     private bool hasHit;
     private bool isHoming;
 
+    /*
+     * False when initially fired by an enemy.
+     *
+     * Becomes true when the player's Shield
+     * reflects this projectile.
+     */
+    private bool isPlayerOwned;
+
     private void Awake()
     {
         rb =
@@ -50,10 +60,14 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         projectileCollider =
             GetComponent<Collider>();
 
-        rb.useGravity = false;
-        rb.isKinematic = false;
+        rb.useGravity =
+            false;
 
-        projectileCollider.isTrigger = true;
+        rb.isKinematic =
+            false;
+
+        projectileCollider.isTrigger =
+            true;
 
         speed =
             defaultSpeed;
@@ -101,18 +115,25 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             enableHoming &&
             homingTarget != null;
 
+        isPlayerOwned =
+            false;
+
         Vector3 normalizedDirection =
-            direction.sqrMagnitude > 0.001f
+            direction.sqrMagnitude >
+            0.001f
                 ? direction.normalized
                 : transform.forward;
 
-        IgnoreOwnerCollisions();
+        IgnoreOwnerCollisions(
+            true
+        );
 
         SetProjectileDirection(
             normalizedDirection
         );
 
-        initialized = true;
+        initialized =
+            true;
     }
 
     private void FixedUpdate()
@@ -137,14 +158,6 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
 
     private void UpdateHomingDirection()
     {
-        /*
-         * Aim above the target's root position.
-         *
-         * The player Transform is located close to the
-         * ground, so aiming directly at transform.position
-         * causes the missile to curve downward and hit
-         * the terrain before reaching the player.
-         */
         Vector3 targetPosition =
             homingTarget.position +
             Vector3.up *
@@ -181,10 +194,6 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
                 directionToTarget;
         }
 
-        /*
-         * Gradually curve toward the player rather
-         * than snapping directly toward them.
-         */
         Vector3 newDirection =
             Vector3.RotateTowards(
                 currentDirection,
@@ -242,6 +251,89 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             rotationOffset;
     }
 
+    // =========================================================
+    // REFLECTION
+    // =========================================================
+
+    public void Reflect(
+        GameObject newOwner
+    )
+    {
+        if (
+            !initialized ||
+            hasHit ||
+            newOwner == null
+        )
+        {
+            return;
+        }
+
+        /*
+         * Don't reflect the same projectile repeatedly
+         * from the player's own Shield.
+         */
+        if (isPlayerOwned)
+        {
+            return;
+        }
+
+        Vector3 incomingDirection =
+            rb.linearVelocity.sqrMagnitude >
+            0.001f
+                ? rb.linearVelocity.normalized
+                : transform.forward;
+
+        Vector3 reflectedDirection =
+            -incomingDirection;
+
+        /*
+         * The projectile must be allowed to collide with
+         * its original enemy owner again.
+         */
+        IgnoreOwnerCollisions(
+            false
+        );
+
+        owner =
+            newOwner;
+
+        /*
+         * The reflected projectile must ignore the
+         * player who now owns it.
+         */
+        IgnoreOwnerCollisions(
+            true
+        );
+
+        /*
+         * Reflected missiles no longer home.
+         *
+         * Otherwise the original homing missile would
+         * immediately try turning back toward the player.
+         */
+        isHoming =
+            false;
+
+        homingTarget =
+            null;
+
+        isPlayerOwned =
+            true;
+
+        SetProjectileDirection(
+            reflectedDirection
+        );
+
+        Debug.Log(
+            $"{name}: Black Hole reflected by Shield.",
+            this
+        );
+    }
+
+    // =========================================================
+    // COLLISION
+    // =========================================================
+
     private void OnTriggerEnter(
         Collider other
     )
@@ -255,7 +347,7 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         /*
-         * Ignore the Boo that fired the projectile.
+         * Never collide with the current owner.
          */
         if (IsOwnerCollider(other))
         {
@@ -263,8 +355,7 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         /*
-         * Black Hole projectiles spawn from the same
-         * FirePoint and must never destroy each other.
+         * Other Black Hole projectiles are ignored.
          */
         if (
             other.GetComponentInParent
@@ -274,6 +365,47 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             return;
         }
 
+        /*
+         * IMPORTANT:
+         *
+         * The Shield is parented underneath the player.
+         * Without this check, GetComponentInParent
+         * <PlayerStatsNew>() could interpret the Shield
+         * collider as the Player collider.
+         *
+         * PlayerShieldEffect owns the actual reflection.
+         */
+        PlayerShieldEffect shield =
+            other.GetComponentInParent
+                <PlayerShieldEffect>();
+
+        if (shield != null)
+        {
+            return;
+        }
+
+        if (isPlayerOwned)
+        {
+            HandlePlayerOwnedCollision(
+                other
+            );
+
+            return;
+        }
+
+        HandleEnemyOwnedCollision(
+            other
+        );
+    }
+
+    private void HandleEnemyOwnedCollision(
+        Collider other
+    )
+    {
+        /*
+         * Enemy-owned projectile:
+         * damage the Player.
+         */
         PlayerStatsNew playerStats =
             other.GetComponentInParent
                 <PlayerStatsNew>();
@@ -292,7 +424,7 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         /*
-         * Ignore other enemies.
+         * Ignore enemies while enemy-owned.
          */
         if (
             other.GetComponentInParent
@@ -303,8 +435,55 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         /*
-         * Ignore unrelated trigger volumes such as
-         * interaction zones, hitboxes, and pickups.
+         * Ignore unrelated trigger volumes.
+         */
+        if (other.isTrigger)
+        {
+            return;
+        }
+
+        HandleImpact();
+    }
+
+    private void HandlePlayerOwnedCollision(
+        Collider other
+    )
+    {
+        /*
+         * Reflected projectile:
+         * ignore the Player entirely.
+         */
+        PlayerStatsNew playerStats =
+            other.GetComponentInParent
+                <PlayerStatsNew>();
+
+        if (playerStats != null)
+        {
+            return;
+        }
+
+        /*
+         * Reflected projectiles may damage enemies.
+         */
+        Enemy enemy =
+            other.GetComponentInParent
+                <Enemy>();
+
+        if (enemy != null)
+        {
+            if (!enemy.IsDead)
+            {
+                enemy.TakeDamage(
+                    damage
+                );
+            }
+
+            HandleImpact();
+            return;
+        }
+
+        /*
+         * Ignore unrelated trigger volumes.
          */
         if (other.isTrigger)
         {
@@ -312,8 +491,8 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         /*
-         * Solid terrain or scenery destroys
-         * the projectile.
+         * Solid scenery destroys the reflected
+         * projectile normally.
          */
         HandleImpact();
     }
@@ -328,13 +507,16 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
         }
 
         return
-            other.gameObject == owner ||
+            other.gameObject ==
+            owner ||
             other.transform.IsChildOf(
                 owner.transform
             );
     }
 
-    private void IgnoreOwnerCollisions()
+    private void IgnoreOwnerCollisions(
+        bool shouldIgnore
+    )
     {
         if (
             owner == null ||
@@ -353,7 +535,11 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             in ownerColliders
         )
         {
-            if (ownerCollider == null)
+            if (
+                ownerCollider == null ||
+                ownerCollider ==
+                projectileCollider
+            )
             {
                 continue;
             }
@@ -361,7 +547,7 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             Physics.IgnoreCollision(
                 projectileCollider,
                 ownerCollider,
-                true
+                shouldIgnore
             );
         }
     }
@@ -373,7 +559,8 @@ public class EnemyBlackHoleProjectile : MonoBehaviour
             return;
         }
 
-        hasHit = true;
+        hasHit =
+            true;
 
         rb.linearVelocity =
             Vector3.zero;

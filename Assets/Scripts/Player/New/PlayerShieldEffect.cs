@@ -3,6 +3,12 @@ using UnityEngine;
 
 public class PlayerShieldEffect : MonoBehaviour
 {
+    [Header("Reflection")]
+    [Tooltip(
+        "Trigger collider covering the Shield bubble."
+    )]
+    [SerializeField] private Collider reflectionCollider;
+
     [Header("Shrinking")]
     [Tooltip(
         "How long the Shield remains at full size " +
@@ -32,6 +38,31 @@ public class PlayerShieldEffect : MonoBehaviour
     private bool protectionApplied;
     private bool hasEnded;
 
+    public bool IsActive =>
+        initialized &&
+        !hasEnded;
+
+    private void Awake()
+    {
+        if (reflectionCollider == null)
+        {
+            reflectionCollider =
+                GetComponent<Collider>();
+        }
+
+        if (reflectionCollider == null)
+        {
+            reflectionCollider =
+                GetComponentInChildren<Collider>();
+        }
+
+        if (reflectionCollider != null)
+        {
+            reflectionCollider.isTrigger =
+                true;
+        }
+    }
+
     public void Initialize(
         PlayerStatsNew stats,
         float activeDuration,
@@ -60,10 +91,6 @@ public class PlayerShieldEffect : MonoBehaviour
         startingScale =
             transform.localScale;
 
-        /*
-         * Prevent the full-size phase from lasting
-         * longer than the complete Shield duration.
-         */
         fullSizeDuration =
             Mathf.Clamp(
                 fullSizeDuration,
@@ -85,7 +112,8 @@ public class PlayerShieldEffect : MonoBehaviour
 
         playerStats.AddShieldProtection();
 
-        protectionApplied = true;
+        protectionApplied =
+            true;
     }
 
     private void Update()
@@ -116,7 +144,7 @@ public class PlayerShieldEffect : MonoBehaviour
     {
         /*
          * Phase 1:
-         * Keep the Shield completely full-sized.
+         * Keep the Shield at full size.
          */
         if (
             elapsedTime <=
@@ -171,6 +199,39 @@ public class PlayerShieldEffect : MonoBehaviour
             scaleMultiplier;
     }
 
+    private void OnTriggerEnter(
+        Collider other
+    )
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        /*
+         * Look for any projectile that supports
+         * the common reflection interface.
+         */
+        IReflectableProjectile reflectableProjectile =
+            other.GetComponentInParent
+                <IReflectableProjectile>();
+
+        if (reflectableProjectile == null)
+        {
+            return;
+        }
+
+        /*
+         * Ownership is transferred to the player.
+         *
+         * The projectile itself is responsible for
+         * reversing its current travel direction.
+         */
+        reflectableProjectile.Reflect(
+            playerStats.gameObject
+        );
+    }
+
     public void EndShield()
     {
         if (hasEnded)
@@ -178,7 +239,8 @@ public class PlayerShieldEffect : MonoBehaviour
             return;
         }
 
-        hasEnded = true;
+        hasEnded =
+            true;
 
         RemoveProtection();
 
@@ -213,12 +275,13 @@ public class PlayerShieldEffect : MonoBehaviour
     private void OnDestroy()
     {
         /*
-         * Safety cleanup in case the Shield is destroyed
-         * externally before its timer finishes.
+         * Safety cleanup in case the Shield is
+         * externally destroyed.
          */
         if (!hasEnded)
         {
-            hasEnded = true;
+            hasEnded =
+                true;
 
             RemoveProtection();
 
@@ -245,5 +308,11 @@ public class PlayerShieldEffect : MonoBehaviour
                 0.01f,
                 1f
             );
+
+        if (reflectionCollider != null)
+        {
+            reflectionCollider.isTrigger =
+                true;
+        }
     }
 }
