@@ -4,31 +4,97 @@ using UnityEngine;
 
 public abstract class Enemy : MonoBehaviour
 {
+    // =========================================================
+    // ENEMY STATS
+    // =========================================================
+
     [Header("Enemy Stats")]
     [SerializeField] protected int maxHealth = 3;
 
+    // =========================================================
+    // DEATH
+    // =========================================================
+
     [Header("Death")]
-    [SerializeField] protected float destroyDelay = 2f;
+    [Tooltip(
+        "How long the death animation plays before " +
+        "the enemy is destroyed."
+    )]
+    [SerializeField]
+    protected float destroyDelay = 2f;
+
+    [Tooltip(
+        "Particle effect spawned when the enemy disappears " +
+        "at the end of its death animation."
+    )]
+    [SerializeField]
+    private GameObject deathEffectPrefab;
+
+    [Tooltip(
+        "Offset from the enemy's visual body centre where " +
+        "the death effect is spawned."
+    )]
+    [SerializeField]
+    private Vector3 deathEffectSpawnOffset =
+        Vector3.zero;
+
+    [Tooltip(
+        "How long the spawned death effect remains before " +
+        "being destroyed."
+    )]
+    [SerializeField]
+    private float deathEffectLifetime = 3f;
+
+    // =========================================================
+    // PICKUP DROP
+    // =========================================================
 
     [Header("Pickup Drop")]
-    [SerializeField] private PickupType pickupToDrop = PickupType.Health;
-    [SerializeField] private GameObject healthPickupPrefab;
-    [SerializeField] private GameObject ammoPickupPrefab;
-    [SerializeField] private GameObject specialPickupPrefab;
+    [SerializeField]
+    private PickupType pickupToDrop =
+        PickupType.Health;
 
-    [Tooltip("Height above the enemy where the pickup spawns.")]
-    [SerializeField] private float pickupSpawnHeight = 0.5f;
+    [SerializeField]
+    private GameObject healthPickupPrefab;
+
+    [SerializeField]
+    private GameObject ammoPickupPrefab;
+
+    [SerializeField]
+    private GameObject specialPickupPrefab;
+
+    [Tooltip(
+        "Height above the enemy where the pickup spawns."
+    )]
+    [SerializeField]
+    private float pickupSpawnHeight = 0.5f;
+
+    // =========================================================
+    // SHARED REFERENCES
+    // =========================================================
 
     protected Animator animator;
     protected CapsuleCollider capsuleCollider;
     protected Transform player;
 
+    // =========================================================
+    // HEALTH
+    // =========================================================
+
     protected int currentHealth;
     protected bool isDead;
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
 
     private bool isEntangled;
     private Coroutine entangleRoutine;
     private GameObject activeEntangleEffect;
+
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
 
     public bool IsDead =>
         isDead;
@@ -42,17 +108,21 @@ public abstract class Enemy : MonoBehaviour
     public int MaxHealth =>
         maxHealth;
 
-    // Fired whenever the enemy's health changes.
+    // =========================================================
+    // EVENTS
+    // =========================================================
+
     public event Action<int, int> OnHealthChanged;
 
-    // Fired immediately when the enemy dies.
     public event Action OnDied;
 
-    // Fired when Entangle begins.
     public event Action OnEntangled;
 
-    // Fired when Entangle ends.
     public event Action OnEntangleEnded;
+
+    // =========================================================
+    // PICKUP TYPES
+    // =========================================================
 
     public enum PickupType
     {
@@ -61,6 +131,10 @@ public abstract class Enemy : MonoBehaviour
         Ammo,
         Special
     }
+
+    // =========================================================
+    // LOCK-ON
+    // =========================================================
 
     public Vector3 LockOnPoint
     {
@@ -71,11 +145,16 @@ public abstract class Enemy : MonoBehaviour
                 return transform.position;
             }
 
-            return capsuleCollider.transform.TransformPoint(
-                capsuleCollider.center
-            );
+            return
+                capsuleCollider.transform.TransformPoint(
+                    capsuleCollider.center
+                );
         }
     }
+
+    // =========================================================
+    // ANIMATOR PARAMETERS
+    // =========================================================
 
     protected static readonly int HitTrigger =
         Animator.StringToHash("Hit");
@@ -85,6 +164,10 @@ public abstract class Enemy : MonoBehaviour
 
     protected static readonly int EntangleTrigger =
         Animator.StringToHash("Entangle");
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     protected virtual void Awake()
     {
@@ -202,11 +285,6 @@ public abstract class Enemy : MonoBehaviour
                 duration
             );
 
-        /*
-         * If the enemy is already Entangled,
-         * restart the duration rather than creating
-         * multiple overlapping status effects.
-         */
         if (entangleRoutine != null)
         {
             StopCoroutine(
@@ -281,12 +359,6 @@ public abstract class Enemy : MonoBehaviour
             return;
         }
 
-        /*
-         * Parent the visual to the enemy so it remains
-         * aligned with the target while Entangled.
-         *
-         * The prefab's own rotation is preserved.
-         */
         activeEntangleEffect =
             Instantiate(
                 entangleEffectPrefab,
@@ -356,9 +428,6 @@ public abstract class Enemy : MonoBehaviour
             return;
         }
 
-        /*
-         * Death immediately overrides Entangle.
-         */
         if (entangleRoutine != null)
         {
             StopCoroutine(
@@ -394,6 +463,186 @@ public abstract class Enemy : MonoBehaviour
 
         StartCoroutine(
             DestroyAfterDelay()
+        );
+    }
+
+    // =========================================================
+    // DEATH EFFECT
+    // =========================================================
+
+    private Vector3 GetVisualBodyCentre()
+    {
+        Renderer[] renderers =
+            GetComponentsInChildren<Renderer>();
+
+        if (
+            renderers == null ||
+            renderers.Length == 0
+        )
+        {
+            /*
+             * Fallback if this enemy somehow has
+             * no visible Renderer.
+             */
+            return LockOnPoint;
+        }
+
+        bool foundRenderer =
+            false;
+
+        Bounds combinedBounds =
+            new Bounds(
+                transform.position,
+                Vector3.zero
+            );
+
+        foreach (Renderer enemyRenderer in renderers)
+        {
+            if (
+                enemyRenderer == null ||
+                !enemyRenderer.enabled ||
+                !enemyRenderer.gameObject.activeInHierarchy
+            )
+            {
+                continue;
+            }
+
+            /*
+             * Don't allow an active Entangle visual
+             * to affect the calculated enemy centre.
+             */
+            if (
+                activeEntangleEffect != null &&
+                enemyRenderer.transform.IsChildOf(
+                    activeEntangleEffect.transform
+                )
+            )
+            {
+                continue;
+            }
+
+            if (!foundRenderer)
+            {
+                combinedBounds =
+                    enemyRenderer.bounds;
+
+                foundRenderer =
+                    true;
+
+                continue;
+            }
+
+            combinedBounds.Encapsulate(
+                enemyRenderer.bounds
+            );
+        }
+
+        if (!foundRenderer)
+        {
+            return LockOnPoint;
+        }
+
+        return combinedBounds.center;
+    }
+
+    private void DisableEnemyColliders()
+    {
+        Collider[] enemyColliders =
+            GetComponentsInChildren<Collider>();
+
+        foreach (Collider enemyCollider in enemyColliders)
+        {
+            if (enemyCollider == null)
+            {
+                continue;
+            }
+
+            enemyCollider.enabled =
+                false;
+        }
+    }
+
+    private void SpawnDeathEffect(
+        Vector3 spawnPosition
+    )
+    {
+        if (deathEffectPrefab == null)
+        {
+            return;
+        }
+
+        GameObject deathEffect =
+            Instantiate(
+                deathEffectPrefab,
+                spawnPosition,
+                deathEffectPrefab.transform.rotation
+            );
+
+        /*
+         * Explicitly start all Particle Systems in case
+         * Play On Awake is disabled.
+         */
+        ParticleSystem[] particleSystems =
+            deathEffect.GetComponentsInChildren
+                <ParticleSystem>();
+
+        foreach (
+            ParticleSystem particleSystem
+            in particleSystems
+        )
+        {
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            particleSystem.Play();
+        }
+
+        Destroy(
+            deathEffect,
+            deathEffectLifetime
+        );
+
+        Debug.Log(
+            $"{name}: Spawned death effect at visual body centre.",
+            deathEffect
+        );
+    }
+
+    private IEnumerator DestroyAfterDelay()
+    {
+        yield return new WaitForSeconds(
+            destroyDelay
+        );
+
+        /*
+         * Calculate the centre BEFORE disabling anything.
+         *
+         * Renderer bounds are based on the visible model,
+         * so this works better for differently shaped
+         * enemies than the CapsuleCollider centre.
+         */
+        Vector3 deathEffectPosition =
+            GetVisualBodyCentre() +
+            deathEffectSpawnOffset;
+
+        /*
+         * Remove all enemy collision before creating
+         * the particle burst.
+         *
+         * This prevents large enemy colliders, such as
+         * the Tank's, from deflecting or disturbing
+         * newly spawned particles.
+         */
+        DisableEnemyColliders();
+
+        SpawnDeathEffect(
+            deathEffectPosition
+        );
+
+        Destroy(
+            gameObject
         );
     }
 
@@ -445,29 +694,30 @@ public abstract class Enemy : MonoBehaviour
         switch (pickupToDrop)
         {
             case PickupType.Health:
-                return healthPickupPrefab;
+
+                return
+                    healthPickupPrefab;
 
             case PickupType.Ammo:
-                return ammoPickupPrefab;
+
+                return
+                    ammoPickupPrefab;
 
             case PickupType.Special:
-                return specialPickupPrefab;
+
+                return
+                    specialPickupPrefab;
 
             default:
-                return null;
+
+                return
+                    null;
         }
     }
 
-    private IEnumerator DestroyAfterDelay()
-    {
-        yield return new WaitForSeconds(
-            destroyDelay
-        );
-
-        Destroy(
-            gameObject
-        );
-    }
+    // =========================================================
+    // CLEANUP
+    // =========================================================
 
     protected virtual void OnDestroy()
     {
@@ -482,5 +732,36 @@ public abstract class Enemy : MonoBehaviour
         }
 
         DestroyEntangleEffect();
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
+    protected virtual void OnValidate()
+    {
+        maxHealth =
+            Mathf.Max(
+                1,
+                maxHealth
+            );
+
+        destroyDelay =
+            Mathf.Max(
+                0f,
+                destroyDelay
+            );
+
+        deathEffectLifetime =
+            Mathf.Max(
+                0.1f,
+                deathEffectLifetime
+            );
+
+        pickupSpawnHeight =
+            Mathf.Max(
+                0f,
+                pickupSpawnHeight
+            );
     }
 }

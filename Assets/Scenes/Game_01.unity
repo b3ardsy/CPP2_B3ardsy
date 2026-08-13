@@ -652,6 +652,22 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: deathEffectPrefab
+      value: 
+      objectReference: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: deathEffectSpawnOffset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: deathEffectSpawnOffset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: deathEffectSpawnOffset.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
       propertyPath: locomotionRecoveryStateName
       value: Melee_2H_Idle
       objectReference: {fileID: 0}
@@ -1360,15 +1376,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 21.015316
+      value: 30.530275
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 13.276464
+      value: 46.988483
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -56.220695
+      value: -0.7007012
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_Name
@@ -1395,6 +1411,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
     - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: deathEffectPrefab
+      value: 
+      objectReference: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 64
       objectReference: {fileID: 0}
@@ -1402,17 +1422,29 @@ PrefabInstance:
       propertyPath: skullProjectilePrefab
       value: 
       objectReference: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: deathEffectSpawnOffset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: deathEffectSpawnOffset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: deathEffectSpawnOffset.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 6.5698566
+      value: 16.4214
       objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -9.718698
+      value: -24.81061
       objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 47.398315
+      value: 26.70924
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8102211318610968479, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
@@ -2133,6 +2165,22 @@ PrefabInstance:
     - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
       propertyPath: projectileCount
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: deathEffectPrefab
+      value: 
+      objectReference: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+    - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: deathEffectSpawnOffset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: deathEffectSpawnOffset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: deathEffectSpawnOffset.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3351296584005733219, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
       propertyPath: blackHoleProjectilePrefab
