@@ -1830,6 +1830,14 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: zoomSpeed
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6209135657088217799, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: shoulderOffset
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0.00000027235552

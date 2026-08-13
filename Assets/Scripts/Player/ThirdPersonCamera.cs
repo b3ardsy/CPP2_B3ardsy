@@ -13,13 +13,23 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float mouseSensitivityY = 0.35f;
 
     [Header("Pitch Limits")]
-    [SerializeField] private float minPitch = -20f;
-    [SerializeField] private float maxPitch = 45f;
+    [SerializeField] private float minPitch = -30f;
+    [SerializeField] private float maxPitch = 55f;
 
     [Header("Starting View")]
-    [SerializeField] private float startingPitch = 10f;
+    [SerializeField] private float startingPitch = 12f;
     [SerializeField] private float startingYawOffset = 0f;
-    [SerializeField] private float heightOffset = 1.5f;
+
+    [Tooltip(
+        "Height of the free-look camera pivot above " +
+        "the player's root position."
+    )]
+    [SerializeField] private float heightOffset = 1.8f;
+
+    [Tooltip(
+        "Initial distance of the camera from the player."
+    )]
+    [SerializeField] private float startingZoomDistance = 6f;
 
     [Header("Lock-On Camera")]
     [SerializeField] private float lockOnHeightOffset = 2.5f;
@@ -33,8 +43,9 @@ public class ThirdPersonCamera : MonoBehaviour
     [Header("Zoom")]
     [SerializeField] private float zoomSpeed = 0.02f;
     [SerializeField] private float zoomSmoothSpeed = 10f;
-    [SerializeField] private float minZoomDistance = 2f;
-    [SerializeField] private float maxZoomDistance = 8f;
+
+    [SerializeField] private float minZoomDistance = 3.5f;
+    [SerializeField] private float maxZoomDistance = 9f;
 
     [Header("Camera Collision")]
     [SerializeField] private LayerMask collisionLayers;
@@ -58,53 +69,41 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private bool isRightShoulder;
 
-    // Ignore the first few frames to prevent an initial mouse jump.
+    /*
+     * Ignore the first few frames to prevent
+     * an initial mouse jump.
+     */
     private int framesToIgnore = 5;
 
     private void Awake()
     {
-        if (player == null)
-        {
-            Debug.LogError(
-                "ThirdPersonCamera: Player reference is missing."
-            );
+        ValidateReferences();
 
-            enabled = false;
+        if (!enabled)
+        {
             return;
         }
 
-        if (cameraTransform == null)
-        {
-            Debug.LogError(
-                "ThirdPersonCamera: Camera Transform reference is missing."
-            );
-
-            enabled = false;
-            return;
-        }
-
-        if (playerLockOn == null)
-        {
-            playerLockOn =
-                player.GetComponent<PlayerLockOn>();
-        }
-
-        if (playerLockOn == null)
-        {
-            Debug.LogWarning(
-                "ThirdPersonCamera: PlayerLockOn was not found. " +
-                "The camera will continue to use free-look only."
-            );
-        }
-
+        /*
+         * Preserve the Main Camera's existing local Y position,
+         * but explicitly control horizontal shoulder offset
+         * and Z distance from this script.
+         */
         defaultCameraLocalPosition =
             cameraTransform.localPosition;
 
+        startingZoomDistance =
+            Mathf.Clamp(
+                startingZoomDistance,
+                minZoomDistance,
+                maxZoomDistance
+            );
+
         currentZoomDistance =
-            Mathf.Abs(defaultCameraLocalPosition.z);
+            startingZoomDistance;
 
         targetZoomDistance =
-            currentZoomDistance;
+            startingZoomDistance;
 
         isRightShoulder =
             startOnRightShoulder;
@@ -120,7 +119,15 @@ public class ThirdPersonCamera : MonoBehaviour
         defaultCameraLocalPosition.x =
             currentShoulderOffset;
 
-        pitch = startingPitch;
+        defaultCameraLocalPosition.z =
+            -currentZoomDistance;
+
+        pitch =
+            Mathf.Clamp(
+                startingPitch,
+                minPitch,
+                maxPitch
+            );
 
         yaw =
             player.eulerAngles.y +
@@ -150,6 +157,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
             UpdateShoulderPosition();
             ApplyCameraPosition();
+
             return;
         }
 
@@ -171,6 +179,10 @@ public class ThirdPersonCamera : MonoBehaviour
         ApplyCameraPosition();
     }
 
+    // =========================================================
+    // FREE LOOK
+    // =========================================================
+
     private void UpdateFreeLookRotation()
     {
         Vector2 mouseDelta =
@@ -184,16 +196,27 @@ public class ThirdPersonCamera : MonoBehaviour
             mouseDelta.y *
             mouseSensitivityY;
 
-        pitch = Mathf.Clamp(
-            pitch,
-            minPitch,
-            maxPitch
-        );
+        pitch =
+            Mathf.Clamp(
+                pitch,
+                minPitch,
+                maxPitch
+            );
 
-        // Clear lock-on smoothing so free-look resumes immediately.
-        yawSmoothVelocity = 0f;
-        pitchSmoothVelocity = 0f;
+        /*
+         * Clear lock-on smoothing so free-look
+         * resumes immediately.
+         */
+        yawSmoothVelocity =
+            0f;
+
+        pitchSmoothVelocity =
+            0f;
     }
+
+    // =========================================================
+    // LOCK-ON
+    // =========================================================
 
     private void UpdateLockOnRotation()
     {
@@ -207,7 +230,8 @@ public class ThirdPersonCamera : MonoBehaviour
 
         Vector3 pivotPosition =
             player.position +
-            Vector3.up * lockOnHeightOffset;
+            Vector3.up *
+            lockOnHeightOffset;
 
         Vector3 targetPosition =
             playerLockOn.CurrentTargetPosition;
@@ -228,7 +252,8 @@ public class ThirdPersonCamera : MonoBehaviour
             Mathf.Atan2(
                 directionToTarget.x,
                 directionToTarget.z
-            ) * Mathf.Rad2Deg;
+            ) *
+            Mathf.Rad2Deg;
 
         float horizontalDistance =
             new Vector2(
@@ -240,28 +265,36 @@ public class ThirdPersonCamera : MonoBehaviour
             -Mathf.Atan2(
                 directionToTarget.y,
                 horizontalDistance
-            ) * Mathf.Rad2Deg;
+            ) *
+            Mathf.Rad2Deg;
 
-        targetPitch = Mathf.Clamp(
-            targetPitch,
-            minPitch,
-            maxPitch
-        );
+        targetPitch =
+            Mathf.Clamp(
+                targetPitch,
+                minPitch,
+                maxPitch
+            );
 
-        yaw = Mathf.SmoothDampAngle(
-            yaw,
-            targetYaw,
-            ref yawSmoothVelocity,
-            lockOnRotationSmoothTime
-        );
+        yaw =
+            Mathf.SmoothDampAngle(
+                yaw,
+                targetYaw,
+                ref yawSmoothVelocity,
+                lockOnRotationSmoothTime
+            );
 
-        pitch = Mathf.SmoothDampAngle(
-            pitch,
-            targetPitch,
-            ref pitchSmoothVelocity,
-            lockOnRotationSmoothTime
-        );
+        pitch =
+            Mathf.SmoothDampAngle(
+                pitch,
+                targetPitch,
+                ref pitchSmoothVelocity,
+                lockOnRotationSmoothTime
+            );
     }
+
+    // =========================================================
+    // SHOULDER
+    // =========================================================
 
     private void HandleShoulderSwitch()
     {
@@ -270,7 +303,10 @@ public class ThirdPersonCamera : MonoBehaviour
             return;
         }
 
-        if (!Keyboard.current.rKey.wasPressedThisFrame)
+        if (
+            !Keyboard.current.rKey
+                .wasPressedThisFrame
+        )
         {
             return;
         }
@@ -298,21 +334,30 @@ public class ThirdPersonCamera : MonoBehaviour
             currentShoulderOffset;
     }
 
+    // =========================================================
+    // ZOOM
+    // =========================================================
+
     private void UpdateZoom()
     {
         float scroll =
             Mouse.current.scroll.ReadValue().y;
 
-        if (Mathf.Abs(scroll) > 0.01f)
+        if (
+            Mathf.Abs(scroll) >
+            0.01f
+        )
         {
             targetZoomDistance -=
-                scroll * zoomSpeed;
+                scroll *
+                zoomSpeed;
 
-            targetZoomDistance = Mathf.Clamp(
-                targetZoomDistance,
-                minZoomDistance,
-                maxZoomDistance
-            );
+            targetZoomDistance =
+                Mathf.Clamp(
+                    targetZoomDistance,
+                    minZoomDistance,
+                    maxZoomDistance
+                );
         }
 
         currentZoomDistance =
@@ -326,6 +371,10 @@ public class ThirdPersonCamera : MonoBehaviour
         defaultCameraLocalPosition.z =
             -currentZoomDistance;
     }
+
+    // =========================================================
+    // CAMERA POSITION
+    // =========================================================
 
     private void ApplyCameraPosition()
     {
@@ -353,6 +402,10 @@ public class ThirdPersonCamera : MonoBehaviour
         HandleCameraCollision();
     }
 
+    // =========================================================
+    // COLLISION
+    // =========================================================
+
     private void HandleCameraCollision()
     {
         Vector3 pivotPosition =
@@ -370,7 +423,10 @@ public class ThirdPersonCamera : MonoBehaviour
         float desiredDistance =
             direction.magnitude;
 
-        if (desiredDistance <= 0.01f)
+        if (
+            desiredDistance <=
+            0.01f
+        )
         {
             return;
         }
@@ -397,11 +453,12 @@ public class ThirdPersonCamera : MonoBehaviour
                 hit.distance -
                 collisionBuffer;
 
-            correctedDistance = Mathf.Clamp(
-                correctedDistance,
-                minimumCameraDistance,
-                desiredDistance
-            );
+            correctedDistance =
+                Mathf.Clamp(
+                    correctedDistance,
+                    minimumCameraDistance,
+                    desiredDistance
+                );
         }
 
         cameraTransform.position =
@@ -413,18 +470,24 @@ public class ThirdPersonCamera : MonoBehaviour
             transform.rotation;
     }
 
+    // =========================================================
+    // CURSOR
+    // =========================================================
+
     private void HandleCursor()
     {
         if (
             Keyboard.current != null &&
-            Keyboard.current.escapeKey.wasPressedThisFrame
+            Keyboard.current.escapeKey
+                .wasPressedThisFrame
         )
         {
             UnlockCursor();
         }
 
         if (
-            Mouse.current.leftButton.wasPressedThisFrame
+            Mouse.current.leftButton
+                .wasPressedThisFrame
         )
         {
             LockCursor();
@@ -436,7 +499,8 @@ public class ThirdPersonCamera : MonoBehaviour
         Cursor.lockState =
             CursorLockMode.Locked;
 
-        Cursor.visible = false;
+        Cursor.visible =
+            false;
     }
 
     private void UnlockCursor()
@@ -444,6 +508,158 @@ public class ThirdPersonCamera : MonoBehaviour
         Cursor.lockState =
             CursorLockMode.None;
 
-        Cursor.visible = true;
+        Cursor.visible =
+            true;
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
+    private void ValidateReferences()
+    {
+        if (player == null)
+        {
+            Debug.LogError(
+                "ThirdPersonCamera: Player reference is missing.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (cameraTransform == null)
+        {
+            Debug.LogError(
+                "ThirdPersonCamera: Camera Transform reference is missing.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                player.GetComponent<PlayerLockOn>();
+        }
+
+        if (playerLockOn == null)
+        {
+            Debug.LogWarning(
+                "ThirdPersonCamera: PlayerLockOn was not found. " +
+                "The camera will continue to use free-look only.",
+                this
+            );
+        }
+    }
+
+    private void OnValidate()
+    {
+        mouseSensitivityX =
+            Mathf.Max(
+                0f,
+                mouseSensitivityX
+            );
+
+        mouseSensitivityY =
+            Mathf.Max(
+                0f,
+                mouseSensitivityY
+            );
+
+        maxPitch =
+            Mathf.Max(
+                minPitch,
+                maxPitch
+            );
+
+        startingPitch =
+            Mathf.Clamp(
+                startingPitch,
+                minPitch,
+                maxPitch
+            );
+
+        heightOffset =
+            Mathf.Max(
+                0f,
+                heightOffset
+            );
+
+        lockOnHeightOffset =
+            Mathf.Max(
+                0f,
+                lockOnHeightOffset
+            );
+
+        lockOnRotationSmoothTime =
+            Mathf.Max(
+                0.01f,
+                lockOnRotationSmoothTime
+            );
+
+        shoulderOffset =
+            Mathf.Max(
+                0f,
+                shoulderOffset
+            );
+
+        shoulderSwitchSpeed =
+            Mathf.Max(
+                0f,
+                shoulderSwitchSpeed
+            );
+
+        zoomSpeed =
+            Mathf.Max(
+                0f,
+                zoomSpeed
+            );
+
+        zoomSmoothSpeed =
+            Mathf.Max(
+                0f,
+                zoomSmoothSpeed
+            );
+
+        minZoomDistance =
+            Mathf.Max(
+                0.1f,
+                minZoomDistance
+            );
+
+        maxZoomDistance =
+            Mathf.Max(
+                minZoomDistance,
+                maxZoomDistance
+            );
+
+        startingZoomDistance =
+            Mathf.Clamp(
+                startingZoomDistance,
+                minZoomDistance,
+                maxZoomDistance
+            );
+
+        collisionRadius =
+            Mathf.Max(
+                0f,
+                collisionRadius
+            );
+
+        collisionBuffer =
+            Mathf.Max(
+                0f,
+                collisionBuffer
+            );
+
+        minimumCameraDistance =
+            Mathf.Max(
+                0.1f,
+                minimumCameraDistance
+            );
     }
 }
