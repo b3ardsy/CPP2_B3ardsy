@@ -41,9 +41,6 @@ public class PlayerCombatNew : MonoBehaviour
 
     /*
      * Shield does not count as combat busy.
-     *
-     * This allows the player to attack and eventually
-     * swap weapons while the Shield is active.
      */
     public bool IsCombatBusy =>
         isWandAttackInProgress ||
@@ -184,8 +181,7 @@ public class PlayerCombatNew : MonoBehaviour
         }
 
         /*
-         * RMB activates Shield regardless of whether
-         * Wand or Staff is currently equipped.
+         * RMB activates Shield with either weapon.
          */
         if (
             Mouse.current.rightButton
@@ -215,6 +211,10 @@ public class PlayerCombatNew : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // SHIELD
+    // =========================================================
+
     private void TryActivateShield()
     {
         if (IsPlayerActionLocked())
@@ -230,6 +230,10 @@ public class PlayerCombatNew : MonoBehaviour
         playerShieldController.TryActivateShield();
     }
 
+    // =========================================================
+    // PRIMARY ATTACK
+    // =========================================================
+
     private void HandlePrimaryAttack()
     {
         if (IsPlayerActionLocked())
@@ -242,14 +246,22 @@ public class PlayerCombatNew : MonoBehaviour
         )
         {
             case PlayerWeaponManager.WeaponType.Wand:
+
                 TryFireWand();
                 break;
 
             case PlayerWeaponManager.WeaponType.Staff:
-                playerStaffCombat?.TryCastSelectedSpell();
+
+                playerStaffCombat?.
+                    TryCastSelectedSpell();
+
                 break;
         }
     }
+
+    // =========================================================
+    // STAFF SPELL SLOTS
+    // =========================================================
 
     private void HandleStaffSpellSelection()
     {
@@ -263,16 +275,19 @@ public class PlayerCombatNew : MonoBehaviour
         }
 
         /*
-         * Slot 1 is still the temporary placeholder
-         * until Entangle is implemented next.
+         * PlayerCombatNew only knows which NUMBER
+         * was pressed.
+         *
+         * PlayerStaffCombat decides which spell
+         * is currently mapped to that slot.
          */
         if (
             Keyboard.current.digit1Key
                 .wasPressedThisFrame
         )
         {
-            playerStaffCombat.SelectSpell(
-                PlayerStaffCombat.StaffSpell.Flamethrower
+            playerStaffCombat.SelectSpellSlot(
+                1
             );
 
             return;
@@ -283,8 +298,8 @@ public class PlayerCombatNew : MonoBehaviour
                 .wasPressedThisFrame
         )
         {
-            playerStaffCombat.SelectSpell(
-                PlayerStaffCombat.StaffSpell.IceTornado
+            playerStaffCombat.SelectSpellSlot(
+                2
             );
 
             return;
@@ -295,11 +310,15 @@ public class PlayerCombatNew : MonoBehaviour
                 .wasPressedThisFrame
         )
         {
-            playerStaffCombat.SelectSpell(
-                PlayerStaffCombat.StaffSpell.LightningStrike
+            playerStaffCombat.SelectSpellSlot(
+                3
             );
         }
     }
+
+    // =========================================================
+    // WAND
+    // =========================================================
 
     private void TryFireWand()
     {
@@ -464,6 +483,10 @@ public class PlayerCombatNew : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // GENERAL
+    // =========================================================
+
     private bool IsPlayerActionLocked()
     {
         return
@@ -481,10 +504,7 @@ public class PlayerCombatNew : MonoBehaviour
         }
 
         /*
-         * Do NOT destroy the Shield here.
-         *
-         * PlayerCombatNew can temporarily be disabled by
-         * hit reactions. The Shield is an independent system.
+         * Shield remains independent.
          */
     }
 

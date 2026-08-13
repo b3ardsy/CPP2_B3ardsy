@@ -4,20 +4,30 @@ using UnityEngine;
 public class BonePrison : MonoBehaviour
 {
     [Header("Capture Timing")]
-    [Tooltip("Delay before the prison attempts to capture the player.")]
+    [Tooltip(
+        "Delay before the prison attempts to capture the player."
+    )]
     [SerializeField] private float activationDelay = 0.1f;
 
-    [Tooltip("Brief window during which the prison can capture the player.")]
+    [Tooltip(
+        "Brief window during which the prison can capture the player."
+    )]
     [SerializeField] private float captureWindow = 0.15f;
 
-    [Tooltip("How long a captured player remains unable to move.")]
+    [Tooltip(
+        "How long a captured player remains unable to move."
+    )]
     [SerializeField] private float trapDuration = 1.75f;
 
     [Header("References")]
-    [Tooltip("Trigger collider covering the inside of the prison.")]
+    [Tooltip(
+        "Trigger collider covering the inside of the prison."
+    )]
     [SerializeField] private Collider captureTrigger;
 
-    [Tooltip("Particle system responsible for the prison effect.")]
+    [Tooltip(
+        "Particle system responsible for the prison effect."
+    )]
     [SerializeField] private ParticleSystem prisonParticles;
 
     [Header("Damage")]
@@ -30,6 +40,9 @@ public class BonePrison : MonoBehaviour
     private bool canCapture;
     private bool hasDamagedPlayer;
     private bool isEnding;
+    private bool visualLifetimeFinished;
+
+    private Coroutine releaseCoroutine;
 
     private void Awake()
     {
@@ -42,7 +55,9 @@ public class BonePrison : MonoBehaviour
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
@@ -53,12 +68,17 @@ public class BonePrison : MonoBehaviour
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
-        captureTrigger.isTrigger = true;
-        captureTrigger.enabled = false;
+        captureTrigger.isTrigger =
+            true;
+
+        captureTrigger.enabled =
+            false;
     }
 
     private void Start()
@@ -95,6 +115,10 @@ public class BonePrison : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // PRISON LIFETIME
+    // =========================================================
+
     private IEnumerator PrisonRoutine()
     {
         if (!prisonParticles.isPlaying)
@@ -109,15 +133,38 @@ public class BonePrison : MonoBehaviour
             );
         }
 
-        canCapture = true;
-        captureTrigger.enabled = true;
+        canCapture =
+            true;
+
+        captureTrigger.enabled =
+            true;
+
+        /*
+         * Make Unity acknowledge the newly enabled
+         * trigger before checking its bounds.
+         */
+        Physics.SyncTransforms();
+
+        /*
+         * IMPORTANT:
+         *
+         * Bone Prison normally spawns around the player,
+         * meaning the player may already be inside the
+         * collider when it becomes active.
+         *
+         * Don't rely only on OnTriggerEnter.
+         */
+        CheckForPlayerImmediately();
 
         yield return new WaitForSeconds(
             captureWindow
         );
 
-        canCapture = false;
-        captureTrigger.enabled = false;
+        canCapture =
+            false;
+
+        captureTrigger.enabled =
+            false;
 
         ParticleSystem.MainModule main =
             prisonParticles.main;
@@ -130,25 +177,92 @@ public class BonePrison : MonoBehaviour
                 captureWindow
             );
 
-        yield return new WaitForSeconds(
-            remainingParticleTime
-        );
+        if (remainingParticleTime > 0f)
+        {
+            yield return new WaitForSeconds(
+                remainingParticleTime
+            );
+        }
 
-        EndPrison();
+        visualLifetimeFinished =
+            true;
+
+        /*
+         * If nobody was captured, we're done.
+         *
+         * If somebody IS trapped, wait until their full
+         * trap duration finishes before destroying this
+         * object.
+         */
+        if (trappedPlayer == null)
+        {
+            EndPrison();
+        }
     }
+
+    // =========================================================
+    // IMMEDIATE OVERLAP CHECK
+    // =========================================================
+
+    private void CheckForPlayerImmediately()
+    {
+        if (
+            !canCapture ||
+            captureTrigger == null ||
+            trappedPlayer != null
+        )
+        {
+            return;
+        }
+
+        Bounds triggerBounds =
+            captureTrigger.bounds;
+
+        Collider[] overlappingColliders =
+            Physics.OverlapBox(
+                triggerBounds.center,
+                triggerBounds.extents,
+                Quaternion.identity,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Collide
+            );
+
+        foreach (
+            Collider overlappingCollider
+            in overlappingColliders
+        )
+        {
+            TryCapturePlayer(
+                overlappingCollider
+            );
+
+            if (trappedPlayer != null)
+            {
+                return;
+            }
+        }
+    }
+
+    // =========================================================
+    // TRIGGER CAPTURE
+    // =========================================================
 
     private void OnTriggerEnter(
         Collider other
     )
     {
-        TryCapturePlayer(other);
+        TryCapturePlayer(
+            other
+        );
     }
 
     private void OnTriggerStay(
         Collider other
     )
     {
-        TryCapturePlayer(other);
+        TryCapturePlayer(
+            other
+        );
     }
 
     private void TryCapturePlayer(
@@ -185,43 +299,57 @@ public class BonePrison : MonoBehaviour
         }
 
         /*
-         * Stop the player immediately and apply a movement lock
-         * owned by this Bone Prison instance.
+         * Stop the Player immediately.
          */
         trappedPlayer.StopMovementImmediately();
-        trappedPlayer.AddMovementLock(this);
 
         /*
-         * Apply optional capture damage first.
-         * This allows the regular Hit animation to process before
-         * switching the player into the persistent trapped state.
+         * Bone Prison owns this movement lock.
          */
+        trappedPlayer.AddMovementLock(
+            this
+        );
+
         if (
             dealDamageOnCapture &&
             !hasDamagedPlayer &&
             trappedPlayerStats != null
         )
         {
-            hasDamagedPlayer = true;
+            hasDamagedPlayer =
+                true;
 
             trappedPlayerStats.TakeDamage(
                 captureDamage
             );
         }
 
-        /*
-         * Enter the Bone Prison animation state after any capture
-         * damage has been processed.
-         */
         if (trappedPlayerStats != null)
         {
             trappedPlayerStats.StartBonePrisonReaction();
         }
 
-        StartCoroutine(
-            ReleasePlayerAfterDelay()
+        if (releaseCoroutine != null)
+        {
+            StopCoroutine(
+                releaseCoroutine
+            );
+        }
+
+        releaseCoroutine =
+            StartCoroutine(
+                ReleasePlayerAfterDelay()
+            );
+
+        Debug.Log(
+            $"{name}: Player captured by Bone Prison.",
+            this
         );
     }
+
+    // =========================================================
+    // RELEASE
+    // =========================================================
 
     private IEnumerator ReleasePlayerAfterDelay()
     {
@@ -229,7 +357,19 @@ public class BonePrison : MonoBehaviour
             trapDuration
         );
 
+        releaseCoroutine =
+            null;
+
         ReleasePlayer();
+
+        /*
+         * If the visual portion has already finished,
+         * the Prison can now clean itself up.
+         */
+        if (visualLifetimeFinished)
+        {
+            EndPrison();
+        }
     }
 
     private void ReleasePlayer()
@@ -239,9 +379,6 @@ public class BonePrison : MonoBehaviour
             return;
         }
 
-        /*
-         * Leave the trapped animation before restoring movement.
-         */
         if (trappedPlayerStats != null)
         {
             trappedPlayerStats.EndBonePrisonReaction();
@@ -251,9 +388,21 @@ public class BonePrison : MonoBehaviour
             this
         );
 
-        trappedPlayerStats = null;
-        trappedPlayer = null;
+        Debug.Log(
+            $"{name}: Player released from Bone Prison.",
+            this
+        );
+
+        trappedPlayerStats =
+            null;
+
+        trappedPlayer =
+            null;
     }
+
+    // =========================================================
+    // CLEANUP
+    // =========================================================
 
     private void EndPrison()
     {
@@ -262,19 +411,23 @@ public class BonePrison : MonoBehaviour
             return;
         }
 
-        isEnding = true;
-        canCapture = false;
+        isEnding =
+            true;
 
-        StopAllCoroutines();
+        canCapture =
+            false;
 
         if (captureTrigger != null)
         {
-            captureTrigger.enabled = false;
+            captureTrigger.enabled =
+                false;
         }
 
         /*
-         * Always release the player before destroying the prison.
-         * This also clears the trapped animation state.
+         * Safety cleanup.
+         *
+         * Under normal circumstances the trapped player
+         * has already completed their trap duration.
          */
         ReleasePlayer();
 
@@ -286,11 +439,15 @@ public class BonePrison : MonoBehaviour
     private void OnDestroy()
     {
         /*
-         * Safety cleanup in case the prison is destroyed
-         * unexpectedly while holding the player.
+         * Never allow a destroyed Prison object to leave
+         * its movement lock behind.
          */
         ReleasePlayer();
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

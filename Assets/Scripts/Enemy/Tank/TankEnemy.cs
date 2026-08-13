@@ -137,6 +137,41 @@ public class TankEnemy : Enemy
     private bool hasPatrolDestination;
     private bool isPerformingAttack;
 
+    /*
+     * Tracks whether the Tank was Entangled on the
+     * previous frame.
+     *
+     * Once Entangle ends, this allows us to restore
+     * the AI according to the player's current position.
+     */
+    private bool wasEntangledLastFrame;
+
+    /*
+     * For a few frames after Entangle ends, drive the Animator
+     * from the AI state rather than NavMeshAgent.velocity.
+     * The agent can report zero velocity briefly after being restarted.
+     */
+    private int movementAnimationRecoveryFrames;
+
+    [Header("Entangle Recovery")]
+    [Tooltip(
+        "Animator state used as a safe locomotion re-entry point " +
+        "after Entangle ends. Leave blank to skip the forced crossfade."
+    )]
+    [SerializeField] private string locomotionRecoveryStateName = "Idle";
+
+    [Tooltip(
+        "How quickly the Animator crossfades out of Entangle and " +
+        "back into locomotion."
+    )]
+    [SerializeField] private float entangleRecoveryTransitionDuration = 0.05f;
+
+    [Tooltip(
+        "How many frames movement animation is driven from AI state " +
+        "after Entangle ends, while the NavMeshAgent regains velocity."
+    )]
+    [SerializeField] private int entangleRecoveryAnimationFrames = 3;
+
     private static readonly int SpeedHash =
         Animator.StringToHash("Speed");
 
@@ -265,6 +300,46 @@ public class TankEnemy : Enemy
             FindPlayerStats();
         }
 
+        // =====================================================
+        // ENTANGLE
+        // =====================================================
+
+        /*
+         * Entangle completely suspends Tank AI.
+         *
+         * Nothing below this point runs while the
+         * Tank is trapped.
+         */
+        if (IsEntangled)
+        {
+            HandleEntangledState();
+
+            wasEntangledLastFrame =
+                true;
+
+            UpdateMovementAnimation();
+
+            return;
+        }
+
+        /*
+         * Entangle just ended.
+         *
+         * Work out what the Tank should do now based
+         * on the player's CURRENT position.
+         */
+        if (wasEntangledLastFrame)
+        {
+            wasEntangledLastFrame =
+                false;
+
+            ResumeAfterEntangle();
+        }
+
+        /*
+         * Cooldown intentionally pauses during Entangle
+         * because this code is below the Entangle return.
+         */
         if (attackCooldownTimer > 0f)
         {
             attackCooldownTimer -=
@@ -294,6 +369,167 @@ public class TankEnemy : Enemy
         );
 
         UpdateMovementAnimation();
+    }
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
+
+    private void HandleEntangledState()
+    {
+        /*
+         * Completely halt NavMesh movement.
+         */
+        StopAgent();
+
+        /*
+         * If the Tank was caught during an attack,
+         * cancel that attack immediately.
+         */
+        if (isPerformingAttack)
+        {
+            isPerformingAttack =
+                false;
+
+            if (animator != null)
+            {
+                animator.ResetTrigger(
+                    AttackHash
+                );
+            }
+        }
+
+        /*
+         * The axe can never remain dangerous while
+         * the Tank is trapped.
+         */
+        DisableAxeHitbox();
+    }
+
+    private void ResumeAfterEntangle()
+    {
+        if (
+            isDead ||
+            player == null
+        )
+        {
+            return;
+        }
+
+        if (IsPlayerDead())
+        {
+            ReturnHome();
+
+            RecoverAnimatorAfterEntangle();
+
+            return;
+        }
+
+        float distanceToPlayer =
+            GetFlatDistance(
+                transform.position,
+                player.position
+            );
+
+        /*
+         * Player is still within immediate attack range.
+         */
+        if (
+            distanceToPlayer <=
+            attackRange
+        )
+        {
+            BeginAttacking();
+
+            RecoverAnimatorAfterEntangle();
+
+            return;
+        }
+
+        /*
+         * Player is still close enough to remain engaged.
+         */
+        if (
+            distanceToPlayer <=
+            detectionRange
+        )
+        {
+            BeginChasing();
+
+            RecoverAnimatorAfterEntangle();
+
+            return;
+        }
+
+        /*
+         * Otherwise return to the patrol area.
+         */
+        ReturnHome();
+
+        RecoverAnimatorAfterEntangle();
+    }
+
+    private void RecoverAnimatorAfterEntangle()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        /*
+         * Force an immediate locomotion value so the Animator does
+         * not wait for NavMeshAgent.velocity to wake back up.
+         */
+        animator.SetFloat(
+            SpeedHash,
+            GetAnimationSpeedForCurrentState()
+        );
+
+        movementAnimationRecoveryFrames =
+            entangleRecoveryAnimationFrames;
+
+        /*
+         * Entangle is entered through an Any State transition.
+         * Crossfade back to a known locomotion state so a looping
+         * Entangle clip cannot trap the Animator after the status ends.
+         */
+        if (
+            string.IsNullOrWhiteSpace(
+                locomotionRecoveryStateName
+            )
+        )
+        {
+            return;
+        }
+
+        int recoveryStateHash =
+            Animator.StringToHash(
+                locomotionRecoveryStateName
+            );
+
+        if (
+            !animator.HasState(
+                0,
+                recoveryStateHash
+            )
+        )
+        {
+            Debug.LogWarning(
+                $"{name}: Animator does not contain the " +
+                $"Entangle recovery state " +
+                $"'{locomotionRecoveryStateName}'.",
+                this
+            );
+
+            return;
+        }
+
+        animator.CrossFadeInFixedTime(
+            recoveryStateHash,
+            entangleRecoveryTransitionDuration,
+            0,
+            0f
+        );
     }
 
     // =========================================================
@@ -383,20 +619,25 @@ public class TankEnemy : Enemy
         switch (currentState)
         {
             case TankState.Patrolling:
+
                 Patrol();
                 break;
 
             case TankState.Chasing:
+
                 ChasePlayer();
                 break;
 
             case TankState.Attacking:
+
                 AttackPlayer(
                     distanceToPlayer
                 );
+
                 break;
 
             case TankState.ReturningHome:
+
                 ReturnToPatrolZone();
                 break;
         }
@@ -561,6 +802,11 @@ public class TankEnemy : Enemy
 
     private void BeginChasing()
     {
+        if (IsEntangled)
+        {
+            return;
+        }
+
         currentState =
             TankState.Chasing;
 
@@ -596,6 +842,7 @@ public class TankEnemy : Enemy
     private void ChasePlayer()
     {
         if (
+            IsEntangled ||
             agent == null ||
             !agent.isOnNavMesh ||
             player == null
@@ -624,6 +871,11 @@ public class TankEnemy : Enemy
 
     private void BeginAttacking()
     {
+        if (IsEntangled)
+        {
+            return;
+        }
+
         currentState =
             TankState.Attacking;
 
@@ -634,6 +886,11 @@ public class TankEnemy : Enemy
         float distanceToPlayer
     )
     {
+        if (IsEntangled)
+        {
+            return;
+        }
+
         StopAgent();
 
         FacePlayer();
@@ -660,14 +917,10 @@ public class TankEnemy : Enemy
         }
 
         /*
-         * IMPORTANT:
-         *
          * Attack Exit Range is only a state buffer.
-         * It does NOT grant permission to start another attack.
          *
-         * If the player is outside the real Attack Range,
-         * the Tank remains stationary and faces the player
-         * without swinging.
+         * A new attack may only begin inside the
+         * actual Attack Range.
          */
         if (
             distanceToPlayer >
@@ -718,7 +971,15 @@ public class TankEnemy : Enemy
         PlayerStatsNew targetPlayer
     )
     {
-        if (isDead)
+        /*
+         * Safety:
+         * even if an old axe Animation Event somehow
+         * fires during Entangle, no damage is permitted.
+         */
+        if (
+            isDead ||
+            IsEntangled
+        )
         {
             return;
         }
@@ -761,6 +1022,7 @@ public class TankEnemy : Enemy
     {
         if (
             isDead ||
+            IsEntangled ||
             !isPerformingAttack ||
             currentState !=
             TankState.Attacking
@@ -789,6 +1051,15 @@ public class TankEnemy : Enemy
 
         isPerformingAttack =
             false;
+
+        /*
+         * If Entangle interrupted this animation,
+         * don't let the old EndAttack event restart AI.
+         */
+        if (IsEntangled)
+        {
+            return;
+        }
 
         if (
             isDead ||
@@ -823,17 +1094,19 @@ public class TankEnemy : Enemy
         /*
          * Inside Attack Exit Range:
          *
-         * Stay in Attacking state.
+         * stay in Attacking state.
          *
          * AttackPlayer() will only permit another
-         * swing once the player is also inside
-         * the actual Attack Range.
+         * swing inside the actual Attack Range.
          */
     }
 
     private void FacePlayer()
     {
-        if (player == null)
+        if (
+            player == null ||
+            IsEntangled
+        )
         {
             return;
         }
@@ -874,6 +1147,11 @@ public class TankEnemy : Enemy
 
     private void ReturnHome()
     {
+        if (IsEntangled)
+        {
+            return;
+        }
+
         if (
             currentState ==
             TankState.ReturningHome
@@ -919,6 +1197,7 @@ public class TankEnemy : Enemy
     private void ReturnToPatrolZone()
     {
         if (
+            IsEntangled ||
             agent == null ||
             !agent.isOnNavMesh
         )
@@ -969,6 +1248,7 @@ public class TankEnemy : Enemy
     private void SetHomeDestination()
     {
         if (
+            IsEntangled ||
             agent == null ||
             !agent.isOnNavMesh
         )
@@ -1019,6 +1299,46 @@ public class TankEnemy : Enemy
             return;
         }
 
+        /*
+         * While Entangled, explicitly report zero
+         * locomotion speed to the Animator.
+         */
+        if (IsEntangled)
+        {
+            movementAnimationRecoveryFrames =
+                0;
+
+            animator.SetFloat(
+                SpeedHash,
+                0f,
+                0.08f,
+                Time.deltaTime
+            );
+
+            return;
+        }
+
+        /*
+         * NavMeshAgent.velocity may remain zero for a few frames
+         * after StopAgent() / ResetPath(). During that short window,
+         * use the AI state itself to restore the correct locomotion
+         * animation immediately.
+         */
+        if (
+            movementAnimationRecoveryFrames > 0 &&
+            !isPerformingAttack
+        )
+        {
+            movementAnimationRecoveryFrames--;
+
+            animator.SetFloat(
+                SpeedHash,
+                GetAnimationSpeedForCurrentState()
+            );
+
+            return;
+        }
+
         float animationSpeed =
             0f;
 
@@ -1038,23 +1358,8 @@ public class TankEnemy : Enemy
             !isPerformingAttack
         )
         {
-            switch (currentState)
-            {
-                case TankState.Patrolling:
-                case TankState.ReturningHome:
-
-                    animationSpeed =
-                        0.5f;
-
-                    break;
-
-                case TankState.Chasing:
-
-                    animationSpeed =
-                        1f;
-
-                    break;
-            }
+            animationSpeed =
+                GetAnimationSpeedForCurrentState();
         }
 
         animator.SetFloat(
@@ -1063,6 +1368,26 @@ public class TankEnemy : Enemy
             0.08f,
             Time.deltaTime
         );
+    }
+
+    private float GetAnimationSpeedForCurrentState()
+    {
+        switch (currentState)
+        {
+            case TankState.Patrolling:
+            case TankState.ReturningHome:
+
+                return 0.5f;
+
+            case TankState.Chasing:
+
+                return 1f;
+
+            case TankState.Attacking:
+            default:
+
+                return 0f;
+        }
     }
 
     // =========================================================
@@ -1168,6 +1493,9 @@ public class TankEnemy : Enemy
             return;
         }
 
+        /*
+         * A hit may interrupt an existing attack.
+         */
         if (isPerformingAttack)
         {
             isPerformingAttack =
@@ -1192,6 +1520,12 @@ public class TankEnemy : Enemy
     {
         isPerformingAttack =
             false;
+
+        wasEntangledLastFrame =
+            false;
+
+        movementAnimationRecoveryFrames =
+            0;
 
         DisableAxeHitbox();
 
@@ -1325,6 +1659,18 @@ public class TankEnemy : Enemy
             Mathf.Max(
                 0f,
                 returnSpeed
+            );
+
+        entangleRecoveryTransitionDuration =
+            Mathf.Max(
+                0f,
+                entangleRecoveryTransitionDuration
+            );
+
+        entangleRecoveryAnimationFrames =
+            Mathf.Max(
+                1,
+                entangleRecoveryAnimationFrames
             );
     }
 

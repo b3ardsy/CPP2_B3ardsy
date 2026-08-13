@@ -244,7 +244,7 @@ Transform:
   m_Children:
   - {fileID: 6256410046460404839}
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 30.986769, y: 40.995934, z: -10.032228}
+  m_LocalEulerAnglesHint: {x: -0.0000013607008, y: 0.0000074438385, z: -90.00001}
 --- !u!1 &-6415790494268509736
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 14.672551, y: -20.819765, z: 31.944405}
+  m_LocalEulerAnglesHint: {x: -2.5404007, y: -1.3901252, z: 60.152878}
 --- !u!1 &-638838958707032469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,7 +1047,6 @@ GameObject:
   - component: {fileID: 7512961557025003098}
   - component: {fileID: 4906132506217826178}
   - component: {fileID: 3826238084626665851}
-  - component: {fileID: 8102211318610968479}
   m_Layer: 8
   m_Name: Skeleton_Rogue
   m_TagString: Untagged
@@ -1200,33 +1199,17 @@ MonoBehaviour:
   patrolSearchAttempts: 10
   detectionRange: 12
   loseTargetRange: 17
-  attackRange: 12
-  minimumAttackCooldown: 2
-  maximumAttackCooldown: 3
-  attackRotationSpeed: 8
-  bonePrisonChance: 0.4
-  bonePrisonPrefab: {fileID: 3707785849623107936, guid: 63db9f6aaa147c54489b93972f6de6ae, type: 3}
-  boneFieldPrefab: {fileID: 7471805100603596015, guid: 0c83d7acf6b402f4a96864f5ae610f1a, type: 3}
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  groundCheckHeight: 5
-  groundCheckDistance: 15
   patrolSpeed: 10
   returnSpeed: 3.5
---- !u!114 &8102211318610968479
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16cbb5be666a66b4fa501b70e73df85a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RogueAnimationEventRelay
-  rogueEnemy: {fileID: 3826238084626665851}
+  engagedRotationSpeed: 8
+  skullProjectilePrefab: {fileID: 0}
+  firePoint: {fileID: 0}
+  skullDamage: 1
+  skullSpeed: 10
+  aimHeightOffset: 1
+  minimumAttackCooldown: 2
+  maximumAttackCooldown: 3
+  attackRecoveryDuration: 0.6
 --- !u!1 &1549165989305881335
 GameObject:
   m_ObjectHideFlags: 0

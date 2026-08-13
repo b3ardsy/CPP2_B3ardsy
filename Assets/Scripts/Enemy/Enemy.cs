@@ -26,15 +26,33 @@ public abstract class Enemy : MonoBehaviour
     protected int currentHealth;
     protected bool isDead;
 
-    public bool IsDead => isDead;
-    public int CurrentHealth => currentHealth;
-    public int MaxHealth => maxHealth;
+    private bool isEntangled;
+    private Coroutine entangleRoutine;
+    private GameObject activeEntangleEffect;
+
+    public bool IsDead =>
+        isDead;
+
+    public bool IsEntangled =>
+        isEntangled;
+
+    public int CurrentHealth =>
+        currentHealth;
+
+    public int MaxHealth =>
+        maxHealth;
 
     // Fired whenever the enemy's health changes.
     public event Action<int, int> OnHealthChanged;
 
     // Fired immediately when the enemy dies.
     public event Action OnDied;
+
+    // Fired when Entangle begins.
+    public event Action OnEntangled;
+
+    // Fired when Entangle ends.
+    public event Action OnEntangleEnded;
 
     public enum PickupType
     {
@@ -65,16 +83,22 @@ public abstract class Enemy : MonoBehaviour
     protected static readonly int DeathTrigger =
         Animator.StringToHash("Death");
 
+    protected static readonly int EntangleTrigger =
+        Animator.StringToHash("Entangle");
+
     protected virtual void Awake()
     {
-        currentHealth = maxHealth;
+        currentHealth =
+            maxHealth;
 
-        animator = GetComponentInChildren<Animator>();
+        animator =
+            GetComponentInChildren<Animator>();
 
         if (animator == null)
         {
             Debug.LogError(
-                $"{name}: No Animator component was found."
+                $"{name}: No Animator component was found.",
+                this
             );
         }
 
@@ -86,26 +110,37 @@ public abstract class Enemy : MonoBehaviour
             Debug.LogWarning(
                 $"{name}: No CapsuleCollider was found. " +
                 "The enemy's transform position will be used " +
-                "as the lock-on point."
+                "as the lock-on point.",
+                this
             );
         }
 
         GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
+            GameObject.FindGameObjectWithTag(
+                "Player"
+            );
 
         if (playerObject != null)
         {
-            player = playerObject.transform;
+            player =
+                playerObject.transform;
         }
         else
         {
             Debug.LogError(
-                $"{name}: No GameObject with the Player tag was found."
+                $"{name}: No GameObject with the Player tag was found.",
+                this
             );
         }
     }
 
-    public virtual void TakeDamage(int damage)
+    // =========================================================
+    // DAMAGE
+    // =========================================================
+
+    public virtual void TakeDamage(
+        int damage
+    )
     {
         if (isDead)
         {
@@ -117,16 +152,16 @@ public abstract class Enemy : MonoBehaviour
             return;
         }
 
-        currentHealth -= damage;
+        currentHealth -=
+            damage;
 
-        currentHealth = Mathf.Clamp(
-            currentHealth,
-            0,
-            maxHealth
-        );
+        currentHealth =
+            Mathf.Clamp(
+                currentHealth,
+                0,
+                maxHealth
+            );
 
-        // Update anything listening to this enemy's health,
-        // such as the enemy health bar.
         OnHealthChanged?.Invoke(
             currentHealth,
             maxHealth
@@ -140,9 +175,179 @@ public abstract class Enemy : MonoBehaviour
 
         if (animator != null)
         {
-            animator.SetTrigger(HitTrigger);
+            animator.SetTrigger(
+                HitTrigger
+            );
         }
     }
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
+
+    public void ApplyEntangle(
+        float duration,
+        GameObject entangleEffectPrefab,
+        Vector3 localOffset
+    )
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        duration =
+            Mathf.Max(
+                0.1f,
+                duration
+            );
+
+        /*
+         * If the enemy is already Entangled,
+         * restart the duration rather than creating
+         * multiple overlapping status effects.
+         */
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        DestroyEntangleEffect();
+
+        isEntangled =
+            true;
+
+        SpawnEntangleEffect(
+            entangleEffectPrefab,
+            localOffset
+        );
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                HitTrigger
+            );
+
+            animator.ResetTrigger(
+                EntangleTrigger
+            );
+
+            animator.SetTrigger(
+                EntangleTrigger
+            );
+        }
+
+        OnEntangled?.Invoke();
+
+        entangleRoutine =
+            StartCoroutine(
+                EntangleRoutine(
+                    duration
+                )
+            );
+
+        Debug.Log(
+            $"{name}: Entangled for {duration:0.0} seconds.",
+            this
+        );
+    }
+
+    private IEnumerator EntangleRoutine(
+        float duration
+    )
+    {
+        yield return new WaitForSeconds(
+            duration
+        );
+
+        entangleRoutine =
+            null;
+
+        EndEntangle();
+    }
+
+    private void SpawnEntangleEffect(
+        GameObject entangleEffectPrefab,
+        Vector3 localOffset
+    )
+    {
+        if (entangleEffectPrefab == null)
+        {
+            return;
+        }
+
+        /*
+         * Parent the visual to the enemy so it remains
+         * aligned with the target while Entangled.
+         *
+         * The prefab's own rotation is preserved.
+         */
+        activeEntangleEffect =
+            Instantiate(
+                entangleEffectPrefab,
+                transform
+            );
+
+        activeEntangleEffect.transform.localPosition =
+            localOffset;
+
+        activeEntangleEffect.transform.localRotation =
+            entangleEffectPrefab.transform.localRotation;
+    }
+
+    public void EndEntangle()
+    {
+        if (!isEntangled)
+        {
+            return;
+        }
+
+        isEntangled =
+            false;
+
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        DestroyEntangleEffect();
+
+        OnEntangleEnded?.Invoke();
+
+        Debug.Log(
+            $"{name}: Entangle ended.",
+            this
+        );
+    }
+
+    private void DestroyEntangleEffect()
+    {
+        if (activeEntangleEffect == null)
+        {
+            return;
+        }
+
+        Destroy(
+            activeEntangleEffect
+        );
+
+        activeEntangleEffect =
+            null;
+    }
+
+    // =========================================================
+    // DEATH
+    // =========================================================
 
     protected virtual void Die()
     {
@@ -151,33 +356,67 @@ public abstract class Enemy : MonoBehaviour
             return;
         }
 
-        isDead = true;
+        /*
+         * Death immediately overrides Entangle.
+         */
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
 
-        // Hide/update anything listening for enemy death.
+            entangleRoutine =
+                null;
+        }
+
+        isEntangled =
+            false;
+
+        DestroyEntangleEffect();
+
+        isDead =
+            true;
+
         OnDied?.Invoke();
 
         if (animator != null)
         {
-            animator.SetTrigger(DeathTrigger);
+            animator.ResetTrigger(
+                EntangleTrigger
+            );
+
+            animator.SetTrigger(
+                DeathTrigger
+            );
         }
 
-        // Spawn the configured pickup.
         DropPickup();
 
-        StartCoroutine(DestroyAfterDelay());
+        StartCoroutine(
+            DestroyAfterDelay()
+        );
     }
+
+    // =========================================================
+    // PICKUPS
+    // =========================================================
 
     private void DropPickup()
     {
-        GameObject pickupPrefab = GetPickupPrefab();
+        GameObject pickupPrefab =
+            GetPickupPrefab();
 
         if (pickupPrefab == null)
         {
-            if (pickupToDrop != PickupType.None)
+            if (
+                pickupToDrop !=
+                PickupType.None
+            )
             {
                 Debug.LogWarning(
                     $"{name}: No prefab assigned for " +
-                    $"{pickupToDrop} pickup."
+                    $"{pickupToDrop} pickup.",
+                    this
                 );
             }
 
@@ -186,7 +425,8 @@ public abstract class Enemy : MonoBehaviour
 
         Vector3 spawnPosition =
             transform.position +
-            Vector3.up * pickupSpawnHeight;
+            Vector3.up *
+            pickupSpawnHeight;
 
         Instantiate(
             pickupPrefab,
@@ -195,7 +435,8 @@ public abstract class Enemy : MonoBehaviour
         );
 
         Debug.Log(
-            $"{name}: Dropped {pickupToDrop} pickup."
+            $"{name}: Dropped {pickupToDrop} pickup.",
+            this
         );
     }
 
@@ -223,6 +464,23 @@ public abstract class Enemy : MonoBehaviour
             destroyDelay
         );
 
-        Destroy(gameObject);
+        Destroy(
+            gameObject
+        );
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        DestroyEntangleEffect();
     }
 }

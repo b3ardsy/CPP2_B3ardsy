@@ -4,6 +4,7 @@ public class PlayerStaffCombat : MonoBehaviour
 {
     public enum StaffSpell
     {
+        Entangle,
         Flamethrower,
         IceTornado,
         LightningStrike
@@ -21,15 +22,65 @@ public class PlayerStaffCombat : MonoBehaviour
     )]
     [SerializeField] private Transform staffFirePoint;
 
+    // =========================================================
+    // SPELL SLOTS
+    // =========================================================
+
+    [Header("Spell Slots")]
+    [Tooltip("Spell selected when the player presses 1.")]
+    [SerializeField]
+    private StaffSpell slot1Spell =
+        StaffSpell.Entangle;
+
+    [Tooltip("Spell selected when the player presses 2.")]
+    [SerializeField]
+    private StaffSpell slot2Spell =
+        StaffSpell.IceTornado;
+
+    [Tooltip("Spell selected when the player presses 3.")]
+    [SerializeField]
+    private StaffSpell slot3Spell =
+        StaffSpell.LightningStrike;
+
     [Header("Selected Spell")]
     [SerializeField]
     private StaffSpell selectedSpell =
-        StaffSpell.IceTornado;
+        StaffSpell.Entangle;
+
+    // =========================================================
+    // COOLDOWNS
+    // =========================================================
 
     [Header("Spell Cooldowns")]
+    [SerializeField] private float entangleCooldown = 8f;
     [SerializeField] private float flamethrowerCooldown = 5f;
     [SerializeField] private float iceTornadoCooldown = 5f;
     [SerializeField] private float lightningStrikeCooldown = 5f;
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
+
+    [Header("Entangle")]
+    [Tooltip(
+        "Vine visual spawned on the target while Entangled."
+    )]
+    [SerializeField]
+    private GameObject entanglePrefab;
+
+    [Tooltip(
+        "How long the enemy remains immobilized."
+    )]
+    [SerializeField]
+    private float entangleDuration = 5f;
+
+    [Tooltip(
+        "Local position adjustment for the vine effect " +
+        "after it is parented to the enemy."
+    )]
+    [SerializeField]
+    private Vector3 entangleLocalOffset =
+        Vector3.zero;
 
     // =========================================================
     // ICE TORNADO
@@ -97,8 +148,24 @@ public class PlayerStaffCombat : MonoBehaviour
     private bool usePlayerForwardWhenUnlocked = true;
 
     private bool isCasting;
+
+    /*
+     * Spell that actually began the current cast.
+     *
+     * This prevents slot changes during an animation
+     * from changing which spell gets released.
+     */
     private StaffSpell activeSpell;
 
+    /*
+     * Entangle captures its target when casting begins.
+     *
+     * That means losing lock-on during the Magic Summon
+     * animation does not redirect the spell.
+     */
+    private Enemy pendingEntangleTarget;
+
+    private float nextEntangleTime;
     private float nextFlamethrowerTime;
     private float nextIceTornadoTime;
     private float nextLightningStrikeTime;
@@ -109,6 +176,15 @@ public class PlayerStaffCombat : MonoBehaviour
     public bool IsCasting =>
         isCasting;
 
+    public StaffSpell Slot1Spell =>
+        slot1Spell;
+
+    public StaffSpell Slot2Spell =>
+        slot2Spell;
+
+    public StaffSpell Slot3Spell =>
+        slot3Spell;
+
     private static readonly int MagicSummonTrigger =
         Animator.StringToHash("MagicSummon");
 
@@ -116,6 +192,13 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         FindReferences();
         ValidateReferences();
+
+        /*
+         * Begin with whatever spell is assigned
+         * to slot 1.
+         */
+        selectedSpell =
+            slot1Spell;
     }
 
     private void FindReferences()
@@ -173,10 +256,27 @@ public class PlayerStaffCombat : MonoBehaviour
             return;
         }
 
+        if (playerLockOn == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerStaffCombat could not find " +
+                "PlayerLockOn. Entangle requires lock-on.",
+                this
+            );
+        }
+
         if (staffFirePoint == null)
         {
             Debug.LogWarning(
                 $"{name}: Staff Fire Point has not been assigned.",
+                this
+            );
+        }
+
+        if (entanglePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Entangle Prefab has not been assigned.",
                 this
             );
         }
@@ -215,8 +315,71 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     // =========================================================
-    // SPELL SELECTION
+    // SPELL SLOTS
     // =========================================================
+
+    public void SelectSpellSlot(
+        int slotNumber
+    )
+    {
+        if (isCasting)
+        {
+            return;
+        }
+
+        StaffSpell spell;
+
+        switch (slotNumber)
+        {
+            case 1:
+                spell =
+                    slot1Spell;
+                break;
+
+            case 2:
+                spell =
+                    slot2Spell;
+                break;
+
+            case 3:
+                spell =
+                    slot3Spell;
+                break;
+
+            default:
+                Debug.LogWarning(
+                    $"{name}: Invalid Staff spell slot " +
+                    $"{slotNumber}.",
+                    this
+                );
+
+                return;
+        }
+
+        SelectSpell(
+            spell
+        );
+    }
+
+    public StaffSpell GetSpellForSlot(
+        int slotNumber
+    )
+    {
+        switch (slotNumber)
+        {
+            case 1:
+                return slot1Spell;
+
+            case 2:
+                return slot2Spell;
+
+            case 3:
+                return slot3Spell;
+
+            default:
+                return slot1Spell;
+        }
+    }
 
     public void SelectSpell(
         StaffSpell spell
@@ -268,6 +431,10 @@ public class PlayerStaffCombat : MonoBehaviour
 
         switch (selectedSpell)
         {
+            case StaffSpell.Entangle:
+                TryBeginEntangle();
+                break;
+
             case StaffSpell.Flamethrower:
                 LogSpellNotImplemented();
                 break;
@@ -307,7 +474,8 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     /*
-     * Animation Event on Magic Summon.
+     * Animation Event on the player's
+     * Magic Summon animation.
      */
     public void StaffSpellActivate()
     {
@@ -324,10 +492,22 @@ public class PlayerStaffCombat : MonoBehaviour
 
         switch (activeSpell)
         {
+            case StaffSpell.Entangle:
+
+                if (ReleaseEntangle())
+                {
+                    StartCooldown(
+                        StaffSpell.Entangle
+                    );
+                }
+
+                break;
+
             case StaffSpell.Flamethrower:
                 break;
 
             case StaffSpell.IceTornado:
+
                 if (ReleaseIceTornado())
                 {
                     StartCooldown(
@@ -338,6 +518,7 @@ public class PlayerStaffCombat : MonoBehaviour
                 break;
 
             case StaffSpell.LightningStrike:
+
                 if (ReleaseLightningStrike())
                 {
                     StartCooldown(
@@ -353,6 +534,9 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         isCasting =
             false;
+
+        pendingEntangleTarget =
+            null;
     }
 
     public void CancelStaffCast()
@@ -360,12 +544,96 @@ public class PlayerStaffCombat : MonoBehaviour
         isCasting =
             false;
 
+        pendingEntangleTarget =
+            null;
+
         if (animator != null)
         {
             animator.ResetTrigger(
                 MagicSummonTrigger
             );
         }
+    }
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
+
+    private void TryBeginEntangle()
+    {
+        if (entanglePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Entangle cannot cast because " +
+                "the Entangle Prefab is missing.",
+                this
+            );
+
+            return;
+        }
+
+        if (
+            playerLockOn == null ||
+            !playerLockOn.IsLockedOn
+        )
+        {
+            Debug.Log(
+                $"{name}: Entangle requires a locked-on enemy.",
+                this
+            );
+
+            return;
+        }
+
+        Enemy target =
+            playerLockOn.CurrentTarget;
+
+        if (
+            target == null ||
+            target.IsDead
+        )
+        {
+            return;
+        }
+
+        pendingEntangleTarget =
+            target;
+
+        BeginStaffCast(
+            StaffSpell.Entangle
+        );
+    }
+
+    private bool ReleaseEntangle()
+    {
+        if (
+            pendingEntangleTarget == null ||
+            pendingEntangleTarget.IsDead ||
+            entanglePrefab == null
+        )
+        {
+            pendingEntangleTarget =
+                null;
+
+            return false;
+        }
+
+        pendingEntangleTarget.ApplyEntangle(
+            entangleDuration,
+            entanglePrefab,
+            entangleLocalOffset
+        );
+
+        Debug.Log(
+            $"{name}: Entangle cast on " +
+            $"{pendingEntangleTarget.name}.",
+            this
+        );
+
+        pendingEntangleTarget =
+            null;
+
+        return true;
     }
 
     // =========================================================
@@ -677,21 +945,20 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         switch (spell)
         {
+            case StaffSpell.Entangle:
+                return nextEntangleTime;
+
             case StaffSpell.Flamethrower:
-                return
-                    nextFlamethrowerTime;
+                return nextFlamethrowerTime;
 
             case StaffSpell.IceTornado:
-                return
-                    nextIceTornadoTime;
+                return nextIceTornadoTime;
 
             case StaffSpell.LightningStrike:
-                return
-                    nextLightningStrikeTime;
+                return nextLightningStrikeTime;
 
             default:
-                return
-                    0f;
+                return 0f;
         }
     }
 
@@ -701,21 +968,20 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         switch (spell)
         {
+            case StaffSpell.Entangle:
+                return entangleCooldown;
+
             case StaffSpell.Flamethrower:
-                return
-                    flamethrowerCooldown;
+                return flamethrowerCooldown;
 
             case StaffSpell.IceTornado:
-                return
-                    iceTornadoCooldown;
+                return iceTornadoCooldown;
 
             case StaffSpell.LightningStrike:
-                return
-                    lightningStrikeCooldown;
+                return lightningStrikeCooldown;
 
             default:
-                return
-                    0f;
+                return 0f;
         }
     }
 
@@ -731,6 +997,11 @@ public class PlayerStaffCombat : MonoBehaviour
 
         switch (spell)
         {
+            case StaffSpell.Entangle:
+                nextEntangleTime =
+                    readyTime;
+                break;
+
             case StaffSpell.Flamethrower:
                 nextFlamethrowerTime =
                     readyTime;
@@ -774,6 +1045,18 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private void OnValidate()
     {
+        entangleDuration =
+            Mathf.Max(
+                0.1f,
+                entangleDuration
+            );
+
+        entangleCooldown =
+            Mathf.Max(
+                0f,
+                entangleCooldown
+            );
+
         flamethrowerCooldown =
             Mathf.Max(
                 0f,

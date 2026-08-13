@@ -651,6 +651,10 @@ PrefabInstance:
       propertyPath: loseTargetRange
       value: 30
       objectReference: {fileID: 0}
+    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
+      propertyPath: locomotionRecoveryStateName
+      value: Melee_2H_Idle
+      objectReference: {fileID: 0}
     - target: {fileID: 9120369343324474609, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
       propertyPath: visibleDistance
       value: 20
@@ -1354,6 +1358,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 21.015316
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 13.276464
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -56.220695
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_Name
       value: Skeleton_Rogue
@@ -1363,6 +1379,10 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: firePoint
+      value: 
+      objectReference: {fileID: 1926205519}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: patrolSpeed
       value: 15
       objectReference: {fileID: 0}
@@ -1370,9 +1390,37 @@ PrefabInstance:
       propertyPath: returnSpeed
       value: 10
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: deathEvilPrefab
+      value: 
+      objectReference: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: groundLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: skullProjectilePrefab
+      value: 
+      objectReference: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
+    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 6.5698566
+      objectReference: {fileID: 0}
+    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -9.718698
+      objectReference: {fileID: 0}
+    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 47.398315
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8102211318610968479, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1926205519}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
 --- !u!1 &1338727227
@@ -1791,9 +1839,21 @@ PrefabInstance:
       value: Druid 1
       objectReference: {fileID: 0}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: slot1Spell
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: slot3Spell
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: shieldPrefab
       value: 
       objectReference: {fileID: -6830071300236558234, guid: 7e9da8a58f11d5d4da8dd27eacab7372, type: 3}
+    - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: entanglePrefab
+      value: 
+      objectReference: {fileID: 3312029078939134375, guid: 47979636eddea1c45b4e0950f37b3cf6, type: 3}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: iceTornadoDamage
       value: 5
@@ -2152,6 +2212,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd04d2843abe25d4f8d33cb2a0a4f7b5, type: 3}
+--- !u!1 &1926205518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1926205519}
+  m_Layer: 8
+  m_Name: Firepoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1926205519
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1926205518}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.56, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 791437899}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1980499309
 PrefabInstance:
   m_ObjectHideFlags: 0
