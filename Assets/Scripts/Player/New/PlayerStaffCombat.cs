@@ -27,24 +27,19 @@ public class PlayerStaffCombat : MonoBehaviour
     // =========================================================
 
     [Header("Spell Slots")]
-    [Tooltip("Spell selected when the player presses 1.")]
+    [Tooltip("Spell cast immediately when the player presses 1.")]
     [SerializeField]
     private StaffSpell slot1Spell =
-        StaffSpell.Entangle;
+        StaffSpell.LightningStrike;
 
-    [Tooltip("Spell selected when the player presses 2.")]
+    [Tooltip("Spell cast immediately when the player presses 2.")]
     [SerializeField]
     private StaffSpell slot2Spell =
         StaffSpell.IceTornado;
 
-    [Tooltip("Spell selected when the player presses 3.")]
+    [Tooltip("Spell cast immediately when the player presses 3.")]
     [SerializeField]
     private StaffSpell slot3Spell =
-        StaffSpell.LightningStrike;
-
-    [Header("Selected Spell")]
-    [SerializeField]
-    private StaffSpell selectedSpell =
         StaffSpell.Entangle;
 
     // =========================================================
@@ -62,15 +57,11 @@ public class PlayerStaffCombat : MonoBehaviour
     // =========================================================
 
     [Header("Entangle")]
-    [Tooltip(
-        "Vine visual spawned on the target while Entangled."
-    )]
+    [Tooltip("Vine visual spawned on the target while Entangled.")]
     [SerializeField]
     private GameObject entanglePrefab;
 
-    [Tooltip(
-        "How long the enemy remains immobilized."
-    )]
+    [Tooltip("How long the enemy remains immobilized.")]
     [SerializeField]
     private float entangleDuration = 5f;
 
@@ -81,6 +72,18 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField]
     private Vector3 entangleLocalOffset =
         Vector3.zero;
+
+    [Tooltip("How far in front of the player a missed Entangle appears.")]
+    [SerializeField]
+    private float entangleMissDistance = 6f;
+
+    [Tooltip("Height used when checking the ground for a missed Entangle.")]
+    [SerializeField]
+    private float entangleGroundCheckHeight = 5f;
+
+    [Tooltip("Small vertical offset above the ground for a missed Entangle.")]
+    [SerializeField]
+    private float entangleGroundOffset = 0.05f;
 
     // =========================================================
     // ICE TORNADO
@@ -150,18 +153,15 @@ public class PlayerStaffCombat : MonoBehaviour
     private bool isCasting;
 
     /*
-     * Spell that actually began the current cast.
-     *
-     * This prevents slot changes during an animation
-     * from changing which spell gets released.
+     * The spell that began the current cast.
+     * This is captured before the animation plays.
      */
     private StaffSpell activeSpell;
 
     /*
-     * Entangle captures its target when casting begins.
-     *
-     * That means losing lock-on during the Magic Summon
-     * animation does not redirect the spell.
+     * Entangle captures its target when casting begins,
+     * preventing lock-on changes during the animation
+     * from redirecting the spell.
      */
     private Enemy pendingEntangleTarget;
 
@@ -169,9 +169,6 @@ public class PlayerStaffCombat : MonoBehaviour
     private float nextFlamethrowerTime;
     private float nextIceTornadoTime;
     private float nextLightningStrikeTime;
-
-    public StaffSpell SelectedSpell =>
-        selectedSpell;
 
     public bool IsCasting =>
         isCasting;
@@ -192,178 +189,43 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         FindReferences();
         ValidateReferences();
-
-        /*
-         * Begin with whatever spell is assigned
-         * to slot 1.
-         */
-        selectedSpell =
-            slot1Spell;
-    }
-
-    private void FindReferences()
-    {
-        if (animator == null)
-        {
-            animator =
-                GetComponentInChildren<Animator>();
-        }
-
-        if (playerMovement == null)
-        {
-            playerMovement =
-                GetComponent<PlayerMovement3DNew>();
-        }
-
-        if (playerMovement == null)
-        {
-            playerMovement =
-                GetComponentInParent<PlayerMovement3DNew>();
-        }
-
-        if (playerLockOn == null)
-        {
-            playerLockOn =
-                GetComponent<PlayerLockOn>();
-        }
-
-        if (playerLockOn == null)
-        {
-            playerLockOn =
-                GetComponentInParent<PlayerLockOn>();
-        }
-    }
-
-    private void ValidateReferences()
-    {
-        if (animator == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerStaffCombat could not find an Animator.",
-                this
-            );
-        }
-
-        if (playerMovement == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerStaffCombat could not find " +
-                "PlayerMovement3DNew.",
-                this
-            );
-
-            enabled = false;
-            return;
-        }
-
-        if (playerLockOn == null)
-        {
-            Debug.LogWarning(
-                $"{name}: PlayerStaffCombat could not find " +
-                "PlayerLockOn. Entangle requires lock-on.",
-                this
-            );
-        }
-
-        if (staffFirePoint == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Staff Fire Point has not been assigned.",
-                this
-            );
-        }
-
-        if (entanglePrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Entangle Prefab has not been assigned.",
-                this
-            );
-        }
-
-        if (iceTornadoPrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Ice Tornado Prefab has not been assigned.",
-                this
-            );
-        }
-
-        if (lightningStrikePrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Lightning Strike Prefab has not been assigned.",
-                this
-            );
-        }
-
-        if (groundLayer.value == 0)
-        {
-            Debug.LogWarning(
-                $"{name}: Ground Layer has not been assigned.",
-                this
-            );
-        }
-
-        if (enemyLayer.value == 0)
-        {
-            Debug.LogWarning(
-                $"{name}: Enemy Layer has not been assigned.",
-                this
-            );
-        }
     }
 
     // =========================================================
-    // SPELL SLOTS
+    // SPELL SLOT CASTING
     // =========================================================
 
-    public void SelectSpellSlot(
-        int slotNumber
-    )
+    public void TryCastSpellSlot(int slotNumber)
     {
-        if (isCasting)
-        {
-            return;
-        }
-
         StaffSpell spell;
 
         switch (slotNumber)
         {
             case 1:
-                spell =
-                    slot1Spell;
+                spell = slot1Spell;
                 break;
 
             case 2:
-                spell =
-                    slot2Spell;
+                spell = slot2Spell;
                 break;
 
             case 3:
-                spell =
-                    slot3Spell;
+                spell = slot3Spell;
                 break;
 
             default:
                 Debug.LogWarning(
-                    $"{name}: Invalid Staff spell slot " +
-                    $"{slotNumber}.",
+                    $"{name}: Invalid Staff spell slot {slotNumber}.",
                     this
                 );
 
                 return;
         }
 
-        SelectSpell(
-            spell
-        );
+        TryCastSpell(spell);
     }
 
-    public StaffSpell GetSpellForSlot(
-        int slotNumber
-    )
+    public StaffSpell GetSpellForSlot(int slotNumber)
     {
         switch (slotNumber)
         {
@@ -381,34 +243,7 @@ public class PlayerStaffCombat : MonoBehaviour
         }
     }
 
-    public void SelectSpell(
-        StaffSpell spell
-    )
-    {
-        if (isCasting)
-        {
-            return;
-        }
-
-        if (selectedSpell == spell)
-        {
-            return;
-        }
-
-        selectedSpell =
-            spell;
-
-        Debug.Log(
-            $"{name}: Selected Staff spell: {selectedSpell}.",
-            this
-        );
-    }
-
-    // =========================================================
-    // CASTING
-    // =========================================================
-
-    public void TryCastSelectedSpell()
+    private void TryCastSpell(StaffSpell spell)
     {
         if (
             IsPlayerActionLocked() ||
@@ -418,25 +253,25 @@ public class PlayerStaffCombat : MonoBehaviour
             return;
         }
 
-        if (!IsSpellReady(selectedSpell))
+        if (!IsSpellReady(spell))
         {
             Debug.Log(
-                $"{name}: {selectedSpell} is on cooldown for " +
-                $"{GetRemainingCooldown(selectedSpell):0.0} more seconds.",
+                $"{name}: {spell} is on cooldown for " +
+                $"{GetRemainingCooldown(spell):0.0} more seconds.",
                 this
             );
 
             return;
         }
 
-        switch (selectedSpell)
+        switch (spell)
         {
             case StaffSpell.Entangle:
                 TryBeginEntangle();
                 break;
 
             case StaffSpell.Flamethrower:
-                LogSpellNotImplemented();
+                LogSpellNotImplemented(spell);
                 break;
 
             case StaffSpell.IceTornado:
@@ -449,20 +284,19 @@ public class PlayerStaffCombat : MonoBehaviour
         }
     }
 
-    private void BeginStaffCast(
-        StaffSpell spell
-    )
+    // =========================================================
+    // CASTING
+    // =========================================================
+
+    private void BeginStaffCast(StaffSpell spell)
     {
         if (animator == null)
         {
             return;
         }
 
-        activeSpell =
-            spell;
-
-        isCasting =
-            true;
+        activeSpell = spell;
+        isCasting = true;
 
         animator.ResetTrigger(
             MagicSummonTrigger
@@ -474,8 +308,7 @@ public class PlayerStaffCombat : MonoBehaviour
     }
 
     /*
-     * Animation Event on the player's
-     * Magic Summon animation.
+     * Animation Event on the player's Magic Summon animation.
      */
     public void StaffSpellActivate()
     {
@@ -532,20 +365,14 @@ public class PlayerStaffCombat : MonoBehaviour
 
     public void EndStaffCast()
     {
-        isCasting =
-            false;
-
-        pendingEntangleTarget =
-            null;
+        isCasting = false;
+        pendingEntangleTarget = null;
     }
 
     public void CancelStaffCast()
     {
-        isCasting =
-            false;
-
-        pendingEntangleTarget =
-            null;
+        isCasting = false;
+        pendingEntangleTarget = null;
 
         if (animator != null)
         {
@@ -572,32 +399,35 @@ public class PlayerStaffCombat : MonoBehaviour
             return;
         }
 
+        /*
+         * Clear any previous target before beginning
+         * a new Entangle cast.
+         */
+        pendingEntangleTarget = null;
+
+        /*
+         * Capture the current locked target if one exists.
+         *
+         * Entangle will still cast without a target,
+         * but the spell will be wasted.
+         */
         if (
-            playerLockOn == null ||
-            !playerLockOn.IsLockedOn
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn
         )
         {
-            Debug.Log(
-                $"{name}: Entangle requires a locked-on enemy.",
-                this
-            );
+            Enemy target =
+                playerLockOn.CurrentTarget;
 
-            return;
+            if (
+                target != null &&
+                !target.IsDead
+            )
+            {
+                pendingEntangleTarget =
+                    target;
+            }
         }
-
-        Enemy target =
-            playerLockOn.CurrentTarget;
-
-        if (
-            target == null ||
-            target.IsDead
-        )
-        {
-            return;
-        }
-
-        pendingEntangleTarget =
-            target;
 
         BeginStaffCast(
             StaffSpell.Entangle
@@ -606,33 +436,79 @@ public class PlayerStaffCombat : MonoBehaviour
 
     private bool ReleaseEntangle()
     {
+        /*
+         * If a valid target was captured when casting began,
+         * apply the real Entangle effect to that enemy.
+         */
         if (
-            pendingEntangleTarget == null ||
-            pendingEntangleTarget.IsDead ||
-            entanglePrefab == null
+            pendingEntangleTarget != null &&
+            !pendingEntangleTarget.IsDead &&
+            entanglePrefab != null
         )
         {
-            pendingEntangleTarget =
-                null;
+            pendingEntangleTarget.ApplyEntangle(
+                entangleDuration,
+                entanglePrefab,
+                entangleLocalOffset
+            );
 
-            return false;
+            Debug.Log(
+                $"{name}: Entangle cast on " +
+                $"{pendingEntangleTarget.name}.",
+                this
+            );
+
+            pendingEntangleTarget = null;
+
+            return true;
         }
 
-        pendingEntangleTarget.ApplyEntangle(
-            entangleDuration,
-            entanglePrefab,
-            entangleLocalOffset
-        );
+        /*
+         * No valid locked target:
+         * spawn the Entangle visual on the ground in front
+         * of the player so the spell still visibly fires.
+         *
+         * This missed visual does not affect an enemy.
+         */
+        if (entanglePrefab != null)
+        {
+            Vector3 intendedPosition =
+                transform.position +
+                GetFlatForwardDirection() *
+                entangleMissDistance;
+
+            Vector3 spawnPosition =
+                GetGroundPosition(
+                    intendedPosition,
+                    entangleGroundCheckHeight,
+                    entangleGroundOffset
+                );
+
+            GameObject missedEntangle =
+                Instantiate(
+                    entanglePrefab,
+                    spawnPosition,
+                    entanglePrefab.transform.rotation
+                );
+
+            Destroy(
+                missedEntangle,
+                entangleDuration
+            );
+        }
+
+        pendingEntangleTarget = null;
 
         Debug.Log(
-            $"{name}: Entangle cast on " +
-            $"{pendingEntangleTarget.name}.",
+            $"{name}: Entangle missed because there was " +
+            "no valid locked target.",
             this
         );
 
-        pendingEntangleTarget =
-            null;
-
+        /*
+         * The spell was still used, so return true.
+         * StaffSpellActivate will consume the cooldown.
+         */
         return true;
     }
 
@@ -667,8 +543,7 @@ public class PlayerStaffCombat : MonoBehaviour
                 spawnPosition
             );
 
-        fireDirection.y =
-            0f;
+        fireDirection.y = 0f;
 
         if (
             fireDirection.sqrMagnitude <=
@@ -737,8 +612,7 @@ public class PlayerStaffCombat : MonoBehaviour
                 playerLockOn.CurrentTargetPosition -
                 spawnPosition;
 
-            directionToTarget.y =
-                0f;
+            directionToTarget.y = 0f;
 
             if (
                 directionToTarget.sqrMagnitude >
@@ -761,8 +635,7 @@ public class PlayerStaffCombat : MonoBehaviour
             Vector3 staffDirection =
                 staffFirePoint.forward;
 
-            staffDirection.y =
-                0f;
+            staffDirection.y = 0f;
 
             if (
                 staffDirection.sqrMagnitude >
@@ -893,8 +766,7 @@ public class PlayerStaffCombat : MonoBehaviour
         Vector3 forwardDirection =
             transform.forward;
 
-        forwardDirection.y =
-            0f;
+        forwardDirection.y = 0f;
 
         if (
             forwardDirection.sqrMagnitude <=
@@ -913,9 +785,7 @@ public class PlayerStaffCombat : MonoBehaviour
     // COOLDOWNS
     // =========================================================
 
-    public bool IsSpellReady(
-        StaffSpell spell
-    )
+    public bool IsSpellReady(StaffSpell spell)
     {
         return
             GetRemainingCooldown(spell) <=
@@ -939,6 +809,29 @@ public class PlayerStaffCombat : MonoBehaviour
             );
     }
 
+    public float GetCooldownDuration(
+        StaffSpell spell
+    )
+    {
+        switch (spell)
+        {
+            case StaffSpell.Entangle:
+                return entangleCooldown;
+
+            case StaffSpell.Flamethrower:
+                return flamethrowerCooldown;
+
+            case StaffSpell.IceTornado:
+                return iceTornadoCooldown;
+
+            case StaffSpell.LightningStrike:
+                return lightningStrikeCooldown;
+
+            default:
+                return 0f;
+        }
+    }
+
     private float GetNextReadyTime(
         StaffSpell spell
     )
@@ -956,29 +849,6 @@ public class PlayerStaffCombat : MonoBehaviour
 
             case StaffSpell.LightningStrike:
                 return nextLightningStrikeTime;
-
-            default:
-                return 0f;
-        }
-    }
-
-    private float GetCooldownDuration(
-        StaffSpell spell
-    )
-    {
-        switch (spell)
-        {
-            case StaffSpell.Entangle:
-                return entangleCooldown;
-
-            case StaffSpell.Flamethrower:
-                return flamethrowerCooldown;
-
-            case StaffSpell.IceTornado:
-                return iceTornadoCooldown;
-
-            case StaffSpell.LightningStrike:
-                return lightningStrikeCooldown;
 
             default:
                 return 0f;
@@ -1023,6 +893,119 @@ public class PlayerStaffCombat : MonoBehaviour
     // GENERAL
     // =========================================================
 
+    private void FindReferences()
+    {
+        if (animator == null)
+        {
+            animator =
+                GetComponentInChildren<Animator>();
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponent<PlayerMovement3DNew>();
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponentInParent<PlayerMovement3DNew>();
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                GetComponent<PlayerLockOn>();
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                GetComponentInParent<PlayerLockOn>();
+        }
+    }
+
+    private void ValidateReferences()
+    {
+        if (animator == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStaffCombat could not find an Animator.",
+                this
+            );
+        }
+
+        if (playerMovement == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStaffCombat could not find " +
+                "PlayerMovement3DNew.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (playerLockOn == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerStaffCombat could not find " +
+                "PlayerLockOn. Entangle requires lock-on.",
+                this
+            );
+        }
+
+        if (staffFirePoint == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Staff Fire Point has not been assigned.",
+                this
+            );
+        }
+
+        if (entanglePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Entangle Prefab has not been assigned.",
+                this
+            );
+        }
+
+        if (iceTornadoPrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Ice Tornado Prefab has not been assigned.",
+                this
+            );
+        }
+
+        if (lightningStrikePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Lightning Strike Prefab has not been assigned.",
+                this
+            );
+        }
+
+        if (groundLayer.value == 0)
+        {
+            Debug.LogWarning(
+                $"{name}: Ground Layer has not been assigned.",
+                this
+            );
+        }
+
+        if (enemyLayer.value == 0)
+        {
+            Debug.LogWarning(
+                $"{name}: Enemy Layer has not been assigned.",
+                this
+            );
+        }
+    }
+
     private bool IsPlayerActionLocked()
     {
         return
@@ -1030,10 +1013,12 @@ public class PlayerStaffCombat : MonoBehaviour
             playerMovement.IsMovementLocked;
     }
 
-    private void LogSpellNotImplemented()
+    private void LogSpellNotImplemented(
+        StaffSpell spell
+    )
     {
         Debug.Log(
-            $"{name}: {selectedSpell} is not implemented yet.",
+            $"{name}: {spell} is not implemented yet.",
             this
         );
     }
@@ -1049,6 +1034,24 @@ public class PlayerStaffCombat : MonoBehaviour
             Mathf.Max(
                 0.1f,
                 entangleDuration
+            );
+
+        entangleMissDistance =
+            Mathf.Max(
+                0f,
+                entangleMissDistance
+            );
+
+        entangleGroundCheckHeight =
+            Mathf.Max(
+                0.1f,
+                entangleGroundCheckHeight
+            );
+
+        entangleGroundOffset =
+            Mathf.Max(
+                0f,
+                entangleGroundOffset
             );
 
         entangleCooldown =

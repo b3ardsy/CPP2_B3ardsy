@@ -1,115 +1,33 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
-    public enum WeaponType
-    {
-        Wand,
-        Staff
-    }
-
-    [Header("References")]
-    [SerializeField] private PlayerCombatNew playerCombat;
-
     [Header("Weapon Models")]
     [Tooltip("The Wand object attached to the player's hand.")]
     [SerializeField] private GameObject wandObject;
 
-    [Tooltip("The Staff object attached to the player's hand.")]
+    [Tooltip("The Staff object attached to the player's other hand.")]
     [SerializeField] private GameObject staffObject;
-
-    [Header("Starting Weapon")]
-    [SerializeField]
-    private WeaponType startingWeapon =
-        WeaponType.Wand;
-
-    private WeaponType currentWeapon;
 
     private bool hasWand = true;
     private bool hasStaff;
 
-    public WeaponType CurrentWeapon =>
-        currentWeapon;
-
-    public bool HasWand =>
-        hasWand;
-
-    public bool HasStaff =>
-        hasStaff;
+    public bool HasWand => hasWand;
+    public bool HasStaff => hasStaff;
 
     /*
-     * UI and other systems can listen for weapon swaps later.
+     * Useful later for HUD updates when the Staff is collected.
      */
-    public event Action<WeaponType> OnWeaponChanged;
+    public event Action OnStaffUnlocked;
 
     private void Awake()
     {
-        FindReferences();
-        ValidateReferences();
-
         hasWand = true;
         hasStaff = false;
 
-        EquipWeapon(
-            startingWeapon
-        );
-    }
-
-    private void Update()
-    {
-        if (Keyboard.current == null)
-        {
-            return;
-        }
-
-        if (
-            Keyboard.current.xKey
-                .wasPressedThisFrame
-        )
-        {
-            TrySwapWeapon();
-        }
-    }
-
-    private void FindReferences()
-    {
-        if (playerCombat == null)
-        {
-            playerCombat =
-                GetComponent<PlayerCombatNew>();
-        }
-    }
-
-    private void ValidateReferences()
-    {
-        if (playerCombat == null)
-        {
-            Debug.LogWarning(
-                $"{name}: PlayerWeaponManager could not find " +
-                "PlayerCombatNew.",
-                this
-            );
-        }
-
-        if (wandObject == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerWeaponManager is missing " +
-                "the Wand object.",
-                this
-            );
-        }
-
-        if (staffObject == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerWeaponManager is missing " +
-                "the Staff object.",
-                this
-            );
-        }
+        ApplyWeaponVisibility();
+        ValidateReferences();
     }
 
     public void UnlockStaff()
@@ -121,90 +39,45 @@ public class PlayerWeaponManager : MonoBehaviour
 
         hasStaff = true;
 
+        ApplyWeaponVisibility();
+
+        OnStaffUnlocked?.Invoke();
+
         Debug.Log(
-            $"{name}: Staff unlocked.",
+            $"{name}: Staff unlocked. Wand and Staff are now available.",
             this
         );
-
-        EquipWeapon(
-            WeaponType.Staff
-        );
     }
 
-    private void TrySwapWeapon()
+    private void ApplyWeaponVisibility()
     {
-        if (
-            playerCombat != null &&
-            playerCombat.IsCombatBusy
-        )
-        {
-            return;
-        }
-
-        if (
-            !hasWand ||
-            !hasStaff
-        )
-        {
-            return;
-        }
-
-        WeaponType nextWeapon =
-            currentWeapon ==
-            WeaponType.Wand
-                ? WeaponType.Staff
-                : WeaponType.Wand;
-
-        EquipWeapon(
-            nextWeapon
-        );
-    }
-
-    private void EquipWeapon(
-        WeaponType weapon
-    )
-    {
-        if (
-            weapon == WeaponType.Staff &&
-            !hasStaff
-        )
-        {
-            weapon =
-                WeaponType.Wand;
-        }
-
-        bool weaponChanged =
-            currentWeapon != weapon;
-
-        currentWeapon =
-            weapon;
-
         if (wandObject != null)
         {
-            wandObject.SetActive(
-                currentWeapon ==
-                WeaponType.Wand
-            );
+            wandObject.SetActive(true);
         }
 
         if (staffObject != null)
         {
-            staffObject.SetActive(
-                currentWeapon ==
-                WeaponType.Staff
-            );
+            staffObject.SetActive(hasStaff);
         }
+    }
 
-        if (weaponChanged)
+    private void ValidateReferences()
+    {
+        if (wandObject == null)
         {
-            OnWeaponChanged?.Invoke(
-                currentWeapon
+            Debug.LogError(
+                $"{name}: PlayerWeaponManager is missing the Wand object.",
+                this
             );
         }
 
-        Debug.Log(
-            $"{name}: Equipped {currentWeapon}.",
-            this
-        );
+        if (staffObject == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerWeaponManager is missing the Staff object.",
+                this
+            );
+        }
     }
 }

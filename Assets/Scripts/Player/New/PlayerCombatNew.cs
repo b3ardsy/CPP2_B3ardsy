@@ -31,17 +31,10 @@ public class PlayerCombatNew : MonoBehaviour
 
     private bool isWandAttackInProgress;
 
-    /*
-     * Staff casts currently block movement and dodge.
-     * Wand attacks and Shield activation do not.
-     */
     public bool IsAttacking =>
         playerStaffCombat != null &&
         playerStaffCombat.IsCasting;
 
-    /*
-     * Shield does not count as combat busy.
-     */
     public bool IsCombatBusy =>
         isWandAttackInProgress ||
         (
@@ -58,130 +51,23 @@ public class PlayerCombatNew : MonoBehaviour
         ValidateReferences();
     }
 
-    private void FindReferences()
-    {
-        if (animator == null)
-        {
-            animator =
-                GetComponentInChildren<Animator>();
-        }
-
-        if (playerMovement == null)
-        {
-            playerMovement =
-                GetComponent<PlayerMovement3DNew>();
-        }
-
-        if (playerLockOn == null)
-        {
-            playerLockOn =
-                GetComponent<PlayerLockOn>();
-        }
-
-        if (playerWeaponManager == null)
-        {
-            playerWeaponManager =
-                GetComponent<PlayerWeaponManager>();
-        }
-
-        if (playerStaffCombat == null)
-        {
-            playerStaffCombat =
-                GetComponent<PlayerStaffCombat>();
-        }
-
-        if (playerShieldController == null)
-        {
-            playerShieldController =
-                GetComponent<PlayerShieldController>();
-        }
-    }
-
-    private void ValidateReferences()
-    {
-        if (animator == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerCombatNew could not find an Animator.",
-                this
-            );
-        }
-
-        if (playerMovement == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerCombatNew could not find " +
-                "PlayerMovement3DNew.",
-                this
-            );
-
-            enabled = false;
-            return;
-        }
-
-        if (playerWeaponManager == null)
-        {
-            Debug.LogError(
-                $"{name}: PlayerCombatNew could not find " +
-                "PlayerWeaponManager.",
-                this
-            );
-
-            enabled = false;
-            return;
-        }
-
-        if (playerStaffCombat == null)
-        {
-            Debug.LogWarning(
-                $"{name}: PlayerCombatNew could not find " +
-                "PlayerStaffCombat.",
-                this
-            );
-        }
-
-        if (playerShieldController == null)
-        {
-            Debug.LogWarning(
-                $"{name}: PlayerCombatNew could not find " +
-                "PlayerShieldController.",
-                this
-            );
-        }
-
-        if (wandFirePoint == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Wand Fire Point has not been assigned.",
-                this
-            );
-        }
-
-        if (wandProjectilePrefab == null)
-        {
-            Debug.LogWarning(
-                $"{name}: Wand Projectile Prefab has not been assigned.",
-                this
-            );
-        }
-    }
-
     private void Update()
     {
         HandleCombatCancellation();
 
-        if (Keyboard.current != null)
-        {
-            HandleStaffSpellSelection();
-        }
+        HandleStaffSpellInput();
+        HandleMouseInput();
+    }
 
+    private void HandleMouseInput()
+    {
         if (Mouse.current == null)
         {
             return;
         }
 
         /*
-         * RMB activates Shield with either weapon.
+         * RMB always activates Shield.
          */
         if (
             Mouse.current.rightButton
@@ -191,12 +77,72 @@ public class PlayerCombatNew : MonoBehaviour
             TryActivateShield();
         }
 
+        /*
+         * Holding LMB repeatedly fires the Wand whenever
+         * the previous Wand attack has finished.
+         */
         if (
-            Mouse.current.leftButton
+        Mouse.current.leftButton
+        .wasPressedThisFrame
+)
+        {
+            TryFireWand();
+        }
+    }
+
+    private void HandleStaffSpellInput()
+    {
+        if (
+            Keyboard.current == null ||
+            playerWeaponManager == null ||
+            playerStaffCombat == null
+        )
+        {
+            return;
+        }
+
+        /*
+         * Staff abilities do not become available until
+         * the Staff has actually been collected.
+         */
+        if (!playerWeaponManager.HasStaff)
+        {
+            return;
+        }
+
+        /*
+         * Do not begin a Staff cast while the Wand attack
+         * animation is currently in progress.
+         */
+        if (isWandAttackInProgress)
+        {
+            return;
+        }
+
+        if (
+            Keyboard.current.digit1Key
                 .wasPressedThisFrame
         )
         {
-            HandlePrimaryAttack();
+            playerStaffCombat.TryCastSpellSlot(1);
+            return;
+        }
+
+        if (
+            Keyboard.current.digit2Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.TryCastSpellSlot(2);
+            return;
+        }
+
+        if (
+            Keyboard.current.digit3Key
+                .wasPressedThisFrame
+        )
+        {
+            playerStaffCombat.TryCastSpellSlot(3);
         }
     }
 
@@ -231,92 +177,6 @@ public class PlayerCombatNew : MonoBehaviour
     }
 
     // =========================================================
-    // PRIMARY ATTACK
-    // =========================================================
-
-    private void HandlePrimaryAttack()
-    {
-        if (IsPlayerActionLocked())
-        {
-            return;
-        }
-
-        switch (
-            playerWeaponManager.CurrentWeapon
-        )
-        {
-            case PlayerWeaponManager.WeaponType.Wand:
-
-                TryFireWand();
-                break;
-
-            case PlayerWeaponManager.WeaponType.Staff:
-
-                playerStaffCombat?.
-                    TryCastSelectedSpell();
-
-                break;
-        }
-    }
-
-    // =========================================================
-    // STAFF SPELL SLOTS
-    // =========================================================
-
-    private void HandleStaffSpellSelection()
-    {
-        if (
-            playerStaffCombat == null ||
-            playerWeaponManager.CurrentWeapon !=
-            PlayerWeaponManager.WeaponType.Staff
-        )
-        {
-            return;
-        }
-
-        /*
-         * PlayerCombatNew only knows which NUMBER
-         * was pressed.
-         *
-         * PlayerStaffCombat decides which spell
-         * is currently mapped to that slot.
-         */
-        if (
-            Keyboard.current.digit1Key
-                .wasPressedThisFrame
-        )
-        {
-            playerStaffCombat.SelectSpellSlot(
-                1
-            );
-
-            return;
-        }
-
-        if (
-            Keyboard.current.digit2Key
-                .wasPressedThisFrame
-        )
-        {
-            playerStaffCombat.SelectSpellSlot(
-                2
-            );
-
-            return;
-        }
-
-        if (
-            Keyboard.current.digit3Key
-                .wasPressedThisFrame
-        )
-        {
-            playerStaffCombat.SelectSpellSlot(
-                3
-            );
-        }
-    }
-
-    // =========================================================
     // WAND
     // =========================================================
 
@@ -325,6 +185,25 @@ public class PlayerCombatNew : MonoBehaviour
         if (
             IsPlayerActionLocked() ||
             isWandAttackInProgress
+        )
+        {
+            return;
+        }
+
+        /*
+         * Wand cannot begin firing during a Staff cast.
+         */
+        if (
+            playerStaffCombat != null &&
+            playerStaffCombat.IsCasting
+        )
+        {
+            return;
+        }
+
+        if (
+            playerWeaponManager != null &&
+            !playerWeaponManager.HasWand
         )
         {
             return;
@@ -344,8 +223,7 @@ public class PlayerCombatNew : MonoBehaviour
             return;
         }
 
-        isWandAttackInProgress =
-            true;
+        isWandAttackInProgress = true;
 
         PlayWandAttackAnimation();
     }
@@ -487,6 +365,114 @@ public class PlayerCombatNew : MonoBehaviour
     // GENERAL
     // =========================================================
 
+    private void FindReferences()
+    {
+        if (animator == null)
+        {
+            animator =
+                GetComponentInChildren<Animator>();
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponent<PlayerMovement3DNew>();
+        }
+
+        if (playerLockOn == null)
+        {
+            playerLockOn =
+                GetComponent<PlayerLockOn>();
+        }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponent<PlayerWeaponManager>();
+        }
+
+        if (playerStaffCombat == null)
+        {
+            playerStaffCombat =
+                GetComponent<PlayerStaffCombat>();
+        }
+
+        if (playerShieldController == null)
+        {
+            playerShieldController =
+                GetComponent<PlayerShieldController>();
+        }
+    }
+
+    private void ValidateReferences()
+    {
+        if (animator == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerCombatNew could not find an Animator.",
+                this
+            );
+        }
+
+        if (playerMovement == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerMovement3DNew.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (playerWeaponManager == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerWeaponManager.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
+        if (playerStaffCombat == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerStaffCombat.",
+                this
+            );
+        }
+
+        if (playerShieldController == null)
+        {
+            Debug.LogWarning(
+                $"{name}: PlayerCombatNew could not find " +
+                "PlayerShieldController.",
+                this
+            );
+        }
+
+        if (wandFirePoint == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Wand Fire Point has not been assigned.",
+                this
+            );
+        }
+
+        if (wandProjectilePrefab == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Wand Projectile Prefab has not been assigned.",
+                this
+            );
+        }
+    }
+
     private bool IsPlayerActionLocked()
     {
         return
@@ -502,10 +488,6 @@ public class PlayerCombatNew : MonoBehaviour
         {
             playerStaffCombat.CancelStaffCast();
         }
-
-        /*
-         * Shield remains independent.
-         */
     }
 
     private void OnValidate()
