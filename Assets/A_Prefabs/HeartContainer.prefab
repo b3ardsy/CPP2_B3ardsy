@@ -9890,7 +9890,7 @@ GameObject:
   - component: {fileID: 161773968612410724}
   - component: {fileID: 1770732703051671814}
   m_Layer: 0
-  m_Name: PowerIconHeartv2
+  m_Name: HeartContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9904,7 +9904,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1550740732470890}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
@@ -14661,6 +14661,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartContainerPickup
   healthIncrease: 4
+  pickupEffectPrefab: {fileID: 5868650648049242934, guid: 527a4c35f07b5a343b68a84e6f238373, type: 3}
+  effectHeightOffset: 1
+  effectLifetime: 3
   destroyDelay: 0
 --- !u!199 &199386691563868012
 ParticleSystemRenderer:

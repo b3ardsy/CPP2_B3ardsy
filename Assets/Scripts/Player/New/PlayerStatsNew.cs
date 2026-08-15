@@ -5,7 +5,10 @@ using UnityEngine.SceneManagement;
 public class PlayerStatsNew : MonoBehaviour
 {
     [Header("Health")]
-    [SerializeField] private int maxHealth = 5;
+    [Tooltip("Maximum health in quarter-heart units. 4 health = 1 full heart.")]
+    [SerializeField] private int maxHealth = 12;
+
+    public const int HealthPerHeart = 4;
 
     [Header("Damage Protection")]
     [SerializeField] private float invulnerabilityDuration = 0.4f;
@@ -77,6 +80,12 @@ public class PlayerStatsNew : MonoBehaviour
 
     public int MaxHealth =>
         maxHealth;
+
+    /*
+     * Broadcast whenever current or maximum health changes.
+     * The HUD can subscribe to this instead of polling every frame.
+     */
+    public event System.Action<int, int> OnHealthChanged;
 
     public bool IsDead =>
         isDead;
@@ -152,7 +161,7 @@ public class PlayerStatsNew : MonoBehaviour
     {
         maxHealth =
             Mathf.Max(
-                1,
+                HealthPerHeart,
                 maxHealth
             );
 
@@ -172,6 +181,15 @@ public class PlayerStatsNew : MonoBehaviour
             Animator.StringToHash(
                 axeHitAnimationStateName
             );
+    }
+
+    private void Start()
+    {
+        /*
+         * Notify listeners once all scene objects have completed Awake().
+         * This gives the HUD an initial health value when the scene starts.
+         */
+        NotifyHealthChanged();
     }
 
     private void FindReferences()
@@ -269,6 +287,8 @@ public class PlayerStatsNew : MonoBehaviour
             this
         );
 
+        NotifyHealthChanged();
+
         if (currentHealth <= 0)
         {
             Die();
@@ -349,6 +369,8 @@ public class PlayerStatsNew : MonoBehaviour
             $"Health: {currentHealth}/{maxHealth}",
             this
         );
+
+        NotifyHealthChanged();
     }
 
     public void RestoreFullHealth()
@@ -365,6 +387,65 @@ public class PlayerStatsNew : MonoBehaviour
             $"{name} restored to full health. " +
             $"Health: {currentHealth}/{maxHealth}",
             this
+        );
+
+        NotifyHealthChanged();
+    }
+
+    /*
+     * Adds permanent maximum health.
+     *
+     * For a full new heart, pass HealthPerHeart (4).
+     * By default the new health capacity is also filled.
+     */
+    public void IncreaseMaxHealth(
+    int amount,
+    bool restoreFullHealth = true
+)
+    {
+        if (
+            isDead ||
+            amount <= 0
+        )
+        {
+            return;
+        }
+
+        maxHealth =
+            Mathf.Max(
+                1,
+                maxHealth + amount
+            );
+
+        if (restoreFullHealth)
+        {
+            currentHealth =
+                maxHealth;
+        }
+        else
+        {
+            currentHealth =
+                Mathf.Clamp(
+                    currentHealth,
+                    0,
+                    maxHealth
+                );
+        }
+
+        Debug.Log(
+            $"{name} maximum health increased by {amount}. " +
+            $"Health: {currentHealth}/{maxHealth}",
+            this
+        );
+
+        NotifyHealthChanged();
+    }
+
+    private void NotifyHealthChanged()
+    {
+        OnHealthChanged?.Invoke(
+            currentHealth,
+            maxHealth
         );
     }
 
@@ -896,7 +977,7 @@ public class PlayerStatsNew : MonoBehaviour
     {
         maxHealth =
             Mathf.Max(
-                1,
+                HealthPerHeart,
                 maxHealth
             );
 
