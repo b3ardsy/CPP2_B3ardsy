@@ -225,6 +225,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractPrompt
   promptCanvas: {fileID: 9210873269217675117}
+  hoverHeight: 0.1
+  hoverSpeed: 2
 --- !u!1 &8073087121795790574
 GameObject:
   m_ObjectHideFlags: 0
