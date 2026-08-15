@@ -24,12 +24,18 @@ public class PlayerShieldController : MonoBehaviour
     [SerializeField] private float shieldDuration = 4f;
 
     [Tooltip(
-        "Cooldown that begins once the Shield ends."
+        "Additional cooldown time after the Shield ends."
     )]
     [SerializeField] private float shieldCooldown = 5f;
 
     private PlayerShieldEffect activeShield;
 
+    /*
+     * Absolute time when the Shield can be used again.
+     *
+     * This now includes:
+     * Shield active duration + post-Shield cooldown.
+     */
     private float nextShieldReadyTime;
 
     public bool IsShieldActive =>
@@ -39,11 +45,28 @@ public class PlayerShieldController : MonoBehaviour
         !IsShieldActive &&
         Time.time >= nextShieldReadyTime;
 
+    /*
+     * Total remaining time until the Shield can be used again.
+     *
+     * This includes the active Shield duration.
+     */
     public float RemainingCooldown =>
         Mathf.Max(
             0f,
             nextShieldReadyTime - Time.time
         );
+
+    /*
+     * Total duration represented by the HUD cooldown.
+     *
+     * Example:
+     * 4 second Shield
+     * + 5 second cooldown
+     * = 9 second total HUD sweep.
+     */
+    public float CooldownDuration =>
+        shieldDuration +
+        shieldCooldown;
 
     private void Awake()
     {
@@ -131,12 +154,12 @@ public class PlayerShieldController : MonoBehaviour
         }
 
         /*
-         * Shield is still cooling down.
+         * Shield is still within its active/cooldown cycle.
          */
         if (!IsShieldReady)
         {
             Debug.Log(
-                $"{name}: Shield is on cooldown for " +
+                $"{name}: Shield is unavailable for " +
                 $"{RemainingCooldown:0.0} more seconds.",
                 this
             );
@@ -162,6 +185,17 @@ public class PlayerShieldController : MonoBehaviour
 
     private void SpawnShield()
     {
+        /*
+         * Start the entire Shield availability timer
+         * immediately when the Shield is activated.
+         *
+         * The HUD can now begin its cooldown sweep right away.
+         */
+        nextShieldReadyTime =
+            Time.time +
+            shieldDuration +
+            shieldCooldown;
+
         Quaternion shieldRotation =
             transform.rotation *
             shieldPrefab.transform.rotation;
@@ -184,7 +218,8 @@ public class PlayerShieldController : MonoBehaviour
         );
 
         Debug.Log(
-            $"{name}: Shield activated.",
+            $"{name}: Shield activated. " +
+            $"Ready again in {CooldownDuration:0.0} seconds.",
             this
         );
     }
@@ -207,13 +242,15 @@ public class PlayerShieldController : MonoBehaviour
 
         activeShield = null;
 
-        nextShieldReadyTime =
-            Time.time +
-            shieldCooldown;
-
+        /*
+         * Do not start a new timer here.
+         *
+         * The full active-duration + cooldown timer was
+         * already started when the Shield was activated.
+         */
         Debug.Log(
             $"{name}: Shield ended. " +
-            $"Cooldown started for {shieldCooldown:0.0} seconds.",
+            $"Remaining cooldown: {RemainingCooldown:0.0} seconds.",
             this
         );
     }
