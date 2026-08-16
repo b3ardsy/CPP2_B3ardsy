@@ -2,7 +2,35 @@ using UnityEngine;
 
 public class StaffPickup : MonoBehaviour, IInteract
 {
+    [Header("Notification")]
+    [Tooltip(
+        "Optional HUD banner used to display the Staff unlock message. " +
+        "If left empty, it will be found automatically."
+    )]
+    [SerializeField]
+    private HUDNotificationBanner notificationBanner;
+
+    [TextArea]
+    [Tooltip("Message displayed when the Staff is collected.")]
+    [SerializeField]
+    private string unlockMessage =
+        "The ancient staff answers your call: Shield Unlocked";
+
     private bool hasBeenCollected;
+
+    private void Awake()
+    {
+        /*
+         * The Staff is a prefab, so a scene HUD reference
+         * usually cannot be assigned directly to the prefab asset.
+         * Find the notification banner automatically instead.
+         */
+        if (notificationBanner == null)
+        {
+            notificationBanner =
+                FindAnyObjectByType<HUDNotificationBanner>();
+        }
+    }
 
     public void Interact(PlayerInteraction interactor)
     {
@@ -31,9 +59,36 @@ public class StaffPickup : MonoBehaviour, IInteract
 
         hasBeenCollected = true;
 
+        /*
+         * Unlock the Staff first.
+         * PlayerWeaponManager will handle the Staff progression
+         * and Shield availability.
+         */
         weaponManager.UnlockStaff();
 
+        /*
+         * Remove this pickup from the player's current
+         * interaction target.
+         */
         interactor.ClearCurrentInteractable();
+
+        /*
+         * Display the acquisition message using the
+         * shared HUD notification system.
+         */
+        if (notificationBanner != null)
+        {
+            notificationBanner.ShowMessage(
+                unlockMessage
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"{name}: HUDNotificationBanner could not be found.",
+                this
+            );
+        }
 
         Debug.Log(
             $"{name}: Staff picked up.",

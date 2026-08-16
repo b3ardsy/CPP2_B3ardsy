@@ -19,6 +19,20 @@ public class HeartContainerPickup : MonoBehaviour
     [SerializeField]
     private PlayerHealthHUD playerHealthHUD;
 
+    [Header("Notification")]
+    [Tooltip(
+        "Optional HUD banner used to display the health upgrade message. " +
+        "If left empty, it will be found automatically."
+    )]
+    [SerializeField]
+    private HUDNotificationBanner notificationBanner;
+
+    [TextArea]
+    [Tooltip("Message displayed when the Heart Container is collected.")]
+    [SerializeField]
+    private string pickupMessage =
+        "Your vitality grows: Maximum Health Increased";
+
     [Header("Pickup Effect")]
     [Tooltip(
         "Particle effect spawned around the player " +
@@ -52,14 +66,19 @@ public class HeartContainerPickup : MonoBehaviour
     private void Awake()
     {
         /*
-         * A scene reference usually cannot be stored directly
-         * on a prefab asset, so automatically find the HUD
-         * if one was not manually assigned.
+         * Scene references usually cannot be stored directly
+         * on prefab assets, so find them automatically if needed.
          */
         if (playerHealthHUD == null)
         {
             playerHealthHUD =
                 FindAnyObjectByType<PlayerHealthHUD>();
+        }
+
+        if (notificationBanner == null)
+        {
+            notificationBanner =
+                FindAnyObjectByType<HUDNotificationBanner>();
         }
     }
 
@@ -131,6 +150,8 @@ public class HeartContainerPickup : MonoBehaviour
             effectDuration
         );
 
+        ShowPickupNotification();
+
         Debug.Log(
             $"{name}: Heart Container collected. " +
             $"Player maximum health is now " +
@@ -143,6 +164,23 @@ public class HeartContainerPickup : MonoBehaviour
         Destroy(
             gameObject,
             destroyDelay
+        );
+    }
+
+    private void ShowPickupNotification()
+    {
+        if (notificationBanner == null)
+        {
+            Debug.LogWarning(
+                $"{name}: HUDNotificationBanner could not be found.",
+                this
+            );
+
+            return;
+        }
+
+        notificationBanner.ShowMessage(
+            pickupMessage
         );
     }
 

@@ -19,6 +19,24 @@ public class PlayerAbilityHUD : MonoBehaviour
     [SerializeField] private AbilityCooldownUI entangleCooldownUI;
     [SerializeField] private AbilityCooldownUI shieldCooldownUI;
 
+    [Header("Unlock Notifications")]
+    [SerializeField] private HUDNotificationBanner notificationBanner;
+
+    [TextArea]
+    [SerializeField]
+    private string lightningUnlockMessage =
+        "The winds call to you: Lightning Strike Unlocked";
+
+    [TextArea]
+    [SerializeField]
+    private string tornadoUnlockMessage =
+        "The storms call to you: Ice Tornado Unlocked";
+
+    [TextArea]
+    [SerializeField]
+    private string entangleUnlockMessage =
+        "The earth calls to you: Entangle Unlocked";
+
     private void Awake()
     {
         FindReferences();
@@ -98,6 +116,49 @@ public class PlayerAbilityHUD : MonoBehaviour
     {
         UpdateSpellVisibility(spell);
         UpdateStaffCooldown(spell);
+
+        ShowSpellUnlockNotification(spell);
+    }
+
+    // =========================================================
+    // NOTIFICATIONS
+    // =========================================================
+
+    private void ShowSpellUnlockNotification(
+        PlayerStaffCombat.StaffSpell spell
+    )
+    {
+        if (notificationBanner == null)
+        {
+            return;
+        }
+
+        string message;
+
+        switch (spell)
+        {
+            case PlayerStaffCombat.StaffSpell.LightningStrike:
+                message =
+                    lightningUnlockMessage;
+                break;
+
+            case PlayerStaffCombat.StaffSpell.IceTornado:
+                message =
+                    tornadoUnlockMessage;
+                break;
+
+            case PlayerStaffCombat.StaffSpell.Entangle:
+                message =
+                    entangleUnlockMessage;
+                break;
+
+            default:
+                return;
+        }
+
+        notificationBanner.ShowMessage(
+            message
+        );
     }
 
     // =========================================================
@@ -326,6 +387,12 @@ public class PlayerAbilityHUD : MonoBehaviour
             shieldController =
                 FindAnyObjectByType<PlayerShieldController>();
         }
+
+        if (notificationBanner == null)
+        {
+            notificationBanner =
+                FindAnyObjectByType<HUDNotificationBanner>();
+        }
     }
 
     private void ValidateReferences()
@@ -361,6 +428,14 @@ public class PlayerAbilityHUD : MonoBehaviour
         {
             Debug.LogWarning(
                 $"{name}: Shield Slot Object has not been assigned.",
+                this
+            );
+        }
+
+        if (notificationBanner == null)
+        {
+            Debug.LogWarning(
+                $"{name}: HUD Notification Banner has not been assigned.",
                 this
             );
         }
