@@ -2,37 +2,9 @@ using UnityEngine;
 
 public class StaffPickup : MonoBehaviour, IInteract
 {
-    [Header("References")]
-    [SerializeField] private InteractPrompt interactPrompt;
-
     private bool hasBeenCollected;
 
-    private void Awake()
-    {
-        if (interactPrompt == null)
-        {
-            interactPrompt =
-                GetComponentInChildren<InteractPrompt>();
-        }
-
-        if (interactPrompt == null)
-        {
-            Debug.LogWarning(
-                $"{name}: StaffPickup could not find an InteractPrompt.",
-                this
-            );
-            return;
-        }
-
-        /*
-         * The prompt should always start hidden.
-         */
-        interactPrompt.Hide();
-    }
-
-    public void Interact(
-        PlayerInteraction interactor
-    )
+    public void Interact(PlayerInteraction interactor)
     {
         if (hasBeenCollected)
         {
@@ -61,11 +33,6 @@ public class StaffPickup : MonoBehaviour, IInteract
 
         weaponManager.UnlockStaff();
 
-        if (interactPrompt != null)
-        {
-            interactPrompt.Hide();
-        }
-
         interactor.ClearCurrentInteractable();
 
         Debug.Log(
@@ -74,45 +41,5 @@ public class StaffPickup : MonoBehaviour, IInteract
         );
 
         Destroy(gameObject);
-    }
-
-    private void OnTriggerEnter(
-        Collider other
-    )
-    {
-        if (hasBeenCollected)
-        {
-            return;
-        }
-
-        if (!other.CompareTag("Player"))
-        {
-            return;
-        }
-
-        if (interactPrompt != null)
-        {
-            interactPrompt.Show();
-        }
-    }
-
-    private void OnTriggerExit(
-        Collider other
-    )
-    {
-        if (hasBeenCollected)
-        {
-            return;
-        }
-
-        if (!other.CompareTag("Player"))
-        {
-            return;
-        }
-
-        if (interactPrompt != null)
-        {
-            interactPrompt.Hide();
-        }
     }
 }
