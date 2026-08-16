@@ -5,6 +5,7 @@ public class PlayerShieldController : MonoBehaviour
     [Header("References")]
     [SerializeField] private PlayerStatsNew playerStats;
     [SerializeField] private PlayerMovement3DNew playerMovement;
+    [SerializeField] private PlayerWeaponManager playerWeaponManager;
 
     [Header("Shield")]
     [Tooltip("Shield effect spawned around the player.")]
@@ -28,22 +29,35 @@ public class PlayerShieldController : MonoBehaviour
     )]
     [SerializeField] private float shieldCooldown = 5f;
 
+    [Header("Progression")]
+    [Tooltip(
+        "If true, the Shield starts unlocked immediately. " +
+        "Normally this should remain false."
+    )]
+    [SerializeField] private bool startShieldUnlocked;
+
     private PlayerShieldEffect activeShield;
 
     /*
      * Absolute time when the Shield can be used again.
      *
-     * This now includes:
+     * This includes:
      * Shield active duration + post-Shield cooldown.
      */
     private float nextShieldReadyTime;
+
+    private bool isShieldUnlocked;
 
     public bool IsShieldActive =>
         activeShield != null;
 
     public bool IsShieldReady =>
+        isShieldUnlocked &&
         !IsShieldActive &&
         Time.time >= nextShieldReadyTime;
+
+    public bool IsShieldUnlocked =>
+        isShieldUnlocked;
 
     /*
      * Total remaining time until the Shield can be used again.
@@ -72,6 +86,38 @@ public class PlayerShieldController : MonoBehaviour
     {
         FindReferences();
         ValidateReferences();
+
+        /*
+         * Shield can begin unlocked for testing, or if the
+         * player already has the Staff when this object starts.
+         */
+        isShieldUnlocked =
+            startShieldUnlocked ||
+            (
+                playerWeaponManager != null &&
+                playerWeaponManager.HasStaff
+            );
+    }
+
+    private void OnEnable()
+    {
+        SubscribeToWeaponEvents();
+    }
+
+    private void Start()
+    {
+        /*
+         * OnEnable can occur before all references have been
+         * established depending on object lifecycle/order.
+         *
+         * Calling this again is safe because we unsubscribe first.
+         */
+        SubscribeToWeaponEvents();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromWeaponEvents();
     }
 
     private void FindReferences()
@@ -99,6 +145,18 @@ public class PlayerShieldController : MonoBehaviour
             playerMovement =
                 GetComponentInParent<PlayerMovement3DNew>();
         }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponent<PlayerWeaponManager>();
+        }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponentInParent<PlayerWeaponManager>();
+        }
     }
 
     private void ValidateReferences()
@@ -115,6 +173,18 @@ public class PlayerShieldController : MonoBehaviour
             return;
         }
 
+        if (playerWeaponManager == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerShieldController could not find " +
+                "PlayerWeaponManager.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
         if (shieldPrefab == null)
         {
             Debug.LogWarning(
@@ -124,8 +194,61 @@ public class PlayerShieldController : MonoBehaviour
         }
     }
 
+    private void SubscribeToWeaponEvents()
+    {
+        if (playerWeaponManager == null)
+        {
+            return;
+        }
+
+        /*
+         * Prevent duplicate subscriptions.
+         */
+        playerWeaponManager.OnStaffUnlocked -=
+            UnlockShield;
+
+        playerWeaponManager.OnStaffUnlocked +=
+            UnlockShield;
+    }
+
+    private void UnsubscribeFromWeaponEvents()
+    {
+        if (playerWeaponManager == null)
+        {
+            return;
+        }
+
+        playerWeaponManager.OnStaffUnlocked -=
+            UnlockShield;
+    }
+
+    private void UnlockShield()
+    {
+        if (isShieldUnlocked)
+        {
+            return;
+        }
+
+        isShieldUnlocked = true;
+
+        Debug.Log(
+            $"{name}: Shield unlocked.",
+            this
+        );
+    }
+
     public bool TryActivateShield()
     {
+        if (!isShieldUnlocked)
+        {
+            Debug.Log(
+                $"{name}: Shield is locked. Collect the Staff first.",
+                this
+            );
+
+            return false;
+        }
+
         if (playerStats == null)
         {
             return false;

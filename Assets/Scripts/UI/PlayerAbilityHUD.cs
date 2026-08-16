@@ -7,7 +7,8 @@ public class PlayerAbilityHUD : MonoBehaviour
     [SerializeField] private PlayerStaffCombat staffCombat;
     [SerializeField] private PlayerShieldController shieldController;
 
-    [Header("Staff Slot Objects")]
+    [Header("Ability Slot Objects")]
+    [SerializeField] private GameObject shieldSlotObject;
     [SerializeField] private GameObject lightningSlotObject;
     [SerializeField] private GameObject tornadoSlotObject;
     [SerializeField] private GameObject entangleSlotObject;
@@ -27,13 +28,9 @@ public class PlayerAbilityHUD : MonoBehaviour
     {
         ValidateReferences();
 
-        if (weaponManager != null)
-        {
-            weaponManager.OnStaffUnlocked +=
-                HandleStaffUnlocked;
-        }
+        SubscribeToEvents();
 
-        UpdateStaffVisibility();
+        UpdateAllVisibility();
         UpdateAllCooldowns();
     }
 
@@ -41,90 +38,213 @@ public class PlayerAbilityHUD : MonoBehaviour
     {
         UpdateShieldCooldown();
 
-        if (
-            weaponManager != null &&
-            weaponManager.HasStaff
-        )
+        if (staffCombat == null)
         {
-            UpdateStaffCooldowns();
+            return;
+        }
+
+        UpdateUnlockedStaffCooldowns();
+    }
+
+    // =========================================================
+    // EVENTS
+    // =========================================================
+
+    private void SubscribeToEvents()
+    {
+        if (weaponManager != null)
+        {
+            weaponManager.OnStaffUnlocked +=
+                HandleStaffUnlocked;
+        }
+
+        if (staffCombat != null)
+        {
+            staffCombat.OnSpellUnlocked +=
+                HandleSpellUnlocked;
+        }
+    }
+
+    private void UnsubscribeFromEvents()
+    {
+        if (weaponManager != null)
+        {
+            weaponManager.OnStaffUnlocked -=
+                HandleStaffUnlocked;
+        }
+
+        if (staffCombat != null)
+        {
+            staffCombat.OnSpellUnlocked -=
+                HandleSpellUnlocked;
         }
     }
 
     private void HandleStaffUnlocked()
     {
-        UpdateStaffVisibility();
-        UpdateStaffCooldowns();
-    }
-
-    private void UpdateStaffVisibility()
-    {
-        bool showStaffSlots =
-            weaponManager != null &&
-            weaponManager.HasStaff;
-
-        if (lightningSlotObject != null)
-        {
-            lightningSlotObject.SetActive(
-                showStaffSlots
-            );
-        }
-
-        if (tornadoSlotObject != null)
-        {
-            tornadoSlotObject.SetActive(
-                showStaffSlots
-            );
-        }
-
-        if (entangleSlotObject != null)
-        {
-            entangleSlotObject.SetActive(
-                showStaffSlots
-            );
-        }
-    }
-
-    private void UpdateAllCooldowns()
-    {
+        /*
+         * Staff collection unlocks Shield.
+         *
+         * Refresh the full HUD because the Shield controller
+         * updates its progression state from the same event.
+         */
+        UpdateAllVisibility();
         UpdateShieldCooldown();
-
-        if (
-            weaponManager != null &&
-            weaponManager.HasStaff
-        )
-        {
-            UpdateStaffCooldowns();
-        }
     }
 
-    private void UpdateStaffCooldowns()
+    private void HandleSpellUnlocked(
+        PlayerStaffCombat.StaffSpell spell
+    )
+    {
+        UpdateSpellVisibility(spell);
+        UpdateStaffCooldown(spell);
+    }
+
+    // =========================================================
+    // VISIBILITY
+    // =========================================================
+
+    private void UpdateAllVisibility()
+    {
+        UpdateShieldVisibility();
+
+        UpdateSpellVisibility(
+            PlayerStaffCombat.StaffSpell.LightningStrike
+        );
+
+        UpdateSpellVisibility(
+            PlayerStaffCombat.StaffSpell.IceTornado
+        );
+
+        UpdateSpellVisibility(
+            PlayerStaffCombat.StaffSpell.Entangle
+        );
+    }
+
+    private void UpdateShieldVisibility()
+    {
+        if (shieldSlotObject == null)
+        {
+            return;
+        }
+
+        bool showShield =
+            shieldController != null &&
+            shieldController.IsShieldUnlocked;
+
+        shieldSlotObject.SetActive(
+            showShield
+        );
+    }
+
+    private void UpdateSpellVisibility(
+        PlayerStaffCombat.StaffSpell spell
+    )
     {
         if (staffCombat == null)
         {
             return;
         }
 
-        UpdateStaffCooldown(
-            lightningCooldownUI,
-            PlayerStaffCombat.StaffSpell.LightningStrike
-        );
+        bool unlocked =
+            staffCombat.IsSpellUnlocked(spell);
 
-        UpdateStaffCooldown(
-            tornadoCooldownUI,
-            PlayerStaffCombat.StaffSpell.IceTornado
-        );
+        GameObject slotObject =
+            GetSlotObject(spell);
 
-        UpdateStaffCooldown(
-            entangleCooldownUI,
-            PlayerStaffCombat.StaffSpell.Entangle
+        if (slotObject == null)
+        {
+            return;
+        }
+
+        slotObject.SetActive(
+            unlocked
         );
     }
 
-    private void UpdateStaffCooldown(
-        AbilityCooldownUI cooldownUI,
+    private GameObject GetSlotObject(
         PlayerStaffCombat.StaffSpell spell
     )
     {
+        switch (spell)
+        {
+            case PlayerStaffCombat.StaffSpell.LightningStrike:
+                return lightningSlotObject;
+
+            case PlayerStaffCombat.StaffSpell.IceTornado:
+                return tornadoSlotObject;
+
+            case PlayerStaffCombat.StaffSpell.Entangle:
+                return entangleSlotObject;
+
+            default:
+                return null;
+        }
+    }
+
+    // =========================================================
+    // COOLDOWNS
+    // =========================================================
+
+    private void UpdateAllCooldowns()
+    {
+        UpdateShieldCooldown();
+        UpdateUnlockedStaffCooldowns();
+    }
+
+    private void UpdateUnlockedStaffCooldowns()
+    {
+        if (staffCombat == null)
+        {
+            return;
+        }
+
+        if (
+            staffCombat.IsSpellUnlocked(
+                PlayerStaffCombat.StaffSpell.LightningStrike
+            )
+        )
+        {
+            UpdateStaffCooldown(
+                PlayerStaffCombat.StaffSpell.LightningStrike
+            );
+        }
+
+        if (
+            staffCombat.IsSpellUnlocked(
+                PlayerStaffCombat.StaffSpell.IceTornado
+            )
+        )
+        {
+            UpdateStaffCooldown(
+                PlayerStaffCombat.StaffSpell.IceTornado
+            );
+        }
+
+        if (
+            staffCombat.IsSpellUnlocked(
+                PlayerStaffCombat.StaffSpell.Entangle
+            )
+        )
+        {
+            UpdateStaffCooldown(
+                PlayerStaffCombat.StaffSpell.Entangle
+            );
+        }
+    }
+
+    private void UpdateStaffCooldown(
+        PlayerStaffCombat.StaffSpell spell
+    )
+    {
+        if (staffCombat == null)
+        {
+            return;
+        }
+
+        AbilityCooldownUI cooldownUI =
+            GetCooldownUI(spell);
+
         if (cooldownUI == null)
         {
             return;
@@ -146,11 +266,32 @@ public class PlayerAbilityHUD : MonoBehaviour
         );
     }
 
+    private AbilityCooldownUI GetCooldownUI(
+        PlayerStaffCombat.StaffSpell spell
+    )
+    {
+        switch (spell)
+        {
+            case PlayerStaffCombat.StaffSpell.LightningStrike:
+                return lightningCooldownUI;
+
+            case PlayerStaffCombat.StaffSpell.IceTornado:
+                return tornadoCooldownUI;
+
+            case PlayerStaffCombat.StaffSpell.Entangle:
+                return entangleCooldownUI;
+
+            default:
+                return null;
+        }
+    }
+
     private void UpdateShieldCooldown()
     {
         if (
             shieldController == null ||
-            shieldCooldownUI == null
+            shieldCooldownUI == null ||
+            !shieldController.IsShieldUnlocked
         )
         {
             return;
@@ -161,6 +302,10 @@ public class PlayerAbilityHUD : MonoBehaviour
             shieldController.CooldownDuration
         );
     }
+
+    // =========================================================
+    // REFERENCES
+    // =========================================================
 
     private void FindReferences()
     {
@@ -211,14 +356,18 @@ public class PlayerAbilityHUD : MonoBehaviour
                 this
             );
         }
+
+        if (shieldSlotObject == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Shield Slot Object has not been assigned.",
+                this
+            );
+        }
     }
 
     private void OnDestroy()
     {
-        if (weaponManager != null)
-        {
-            weaponManager.OnStaffUnlocked -=
-                HandleStaffUnlocked;
-        }
+        UnsubscribeFromEvents();
     }
 }

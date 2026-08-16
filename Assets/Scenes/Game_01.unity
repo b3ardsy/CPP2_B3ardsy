@@ -785,6 +785,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8630843031529343951, guid: cd415b11234794440b85688485b7825b, type: 3}
+      propertyPath: sinkDistance
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -8630843031529343951, guid: cd415b11234794440b85688485b7825b, type: 3}
+      propertyPath: sinkDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8630843031529343951, guid: cd415b11234794440b85688485b7825b, type: 3}
+      propertyPath: shakeDuration
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8220047279270846096, guid: cd415b11234794440b85688485b7825b, type: 3}
       propertyPath: m_Name
       value: RuneLightning
@@ -2008,13 +2020,25 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4728941598483674716, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
+      propertyPath: sinkDistance
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4728941598483674716, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
+      propertyPath: sinkDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4728941598483674716, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
+      propertyPath: shakeDuration
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8220047279270846096, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
       propertyPath: m_Name
       value: RuneEntangle
       objectReference: {fileID: 0}
     - target: {fileID: 8743925449625338922, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 87.04657
+      value: 93.43
       objectReference: {fileID: 0}
     - target: {fileID: 8743925449625338922, guid: 02c258f100701b1448bd3db0385aded5, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2223,10 +2247,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShieldController
   playerStats: {fileID: 0}
   playerMovement: {fileID: 0}
+  playerWeaponManager: {fileID: 0}
   shieldPrefab: {fileID: 7981973961279171691, guid: e51ec52db07c4dc46899db57f7c63f21, type: 3}
   shieldLocalOffset: {x: 0, y: 0.8, z: 0}
   shieldDuration: 4
   shieldCooldown: 5
+  startShieldUnlocked: 0
 --- !u!114 &966271264 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -3512,6 +3538,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -59211781496735296, guid: bbcdf1d02afed0340b60332e91039648, type: 3}
+      propertyPath: sinkDistance
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -59211781496735296, guid: bbcdf1d02afed0340b60332e91039648, type: 3}
+      propertyPath: sinkDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -59211781496735296, guid: bbcdf1d02afed0340b60332e91039648, type: 3}
+      propertyPath: shakeDuration
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8220047279270846096, guid: bbcdf1d02afed0340b60332e91039648, type: 3}
       propertyPath: m_Name
       value: RuneTornado
@@ -3673,6 +3711,7 @@ MonoBehaviour:
   weaponManager: {fileID: 0}
   staffCombat: {fileID: 0}
   shieldController: {fileID: 0}
+  shieldSlotObject: {fileID: 1834938049}
   lightningSlotObject: {fileID: 562300205}
   tornadoSlotObject: {fileID: 1860334051}
   entangleSlotObject: {fileID: 1055828154}

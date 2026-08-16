@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerStaffCombat : MonoBehaviour
@@ -9,6 +10,8 @@ public class PlayerStaffCombat : MonoBehaviour
         IceTornado,
         LightningStrike
     }
+
+    public event Action<StaffSpell> OnSpellUnlocked;
 
     [Header("References")]
     [SerializeField] private Animator animator;
@@ -41,6 +44,22 @@ public class PlayerStaffCombat : MonoBehaviour
     [SerializeField]
     private StaffSpell slot3Spell =
         StaffSpell.Entangle;
+
+    // =========================================================
+    // SPELL PROGRESSION
+    // =========================================================
+
+    [Header("Spell Progression")]
+    [Tooltip("Useful for testing. Normally leave these disabled.")]
+    [SerializeField] private bool startWithLightningUnlocked;
+
+    [SerializeField] private bool startWithIceTornadoUnlocked;
+
+    [SerializeField] private bool startWithEntangleUnlocked;
+
+    private bool lightningUnlocked;
+    private bool iceTornadoUnlocked;
+    private bool entangleUnlocked;
 
     // =========================================================
     // COOLDOWNS
@@ -189,6 +208,82 @@ public class PlayerStaffCombat : MonoBehaviour
     {
         FindReferences();
         ValidateReferences();
+
+        lightningUnlocked =
+            startWithLightningUnlocked;
+
+        iceTornadoUnlocked =
+            startWithIceTornadoUnlocked;
+
+        entangleUnlocked =
+            startWithEntangleUnlocked;
+    }
+
+    // =========================================================
+    // SPELL UNLOCKING
+    // =========================================================
+
+    public bool IsSpellUnlocked(StaffSpell spell)
+    {
+        switch (spell)
+        {
+            case StaffSpell.LightningStrike:
+                return lightningUnlocked;
+
+            case StaffSpell.IceTornado:
+                return iceTornadoUnlocked;
+
+            case StaffSpell.Entangle:
+                return entangleUnlocked;
+
+            case StaffSpell.Flamethrower:
+                return false;
+
+            default:
+                return false;
+        }
+    }
+
+    public void UnlockSpell(StaffSpell spell)
+    {
+        if (IsSpellUnlocked(spell))
+        {
+            return;
+        }
+
+        switch (spell)
+        {
+            case StaffSpell.LightningStrike:
+                lightningUnlocked = true;
+                break;
+
+            case StaffSpell.IceTornado:
+                iceTornadoUnlocked = true;
+                break;
+
+            case StaffSpell.Entangle:
+                entangleUnlocked = true;
+                break;
+
+            case StaffSpell.Flamethrower:
+                Debug.LogWarning(
+                    $"{name}: Flamethrower cannot be unlocked " +
+                    "because it is not currently implemented.",
+                    this
+                );
+
+                return;
+
+            default:
+                return;
+        }
+
+        OnSpellUnlocked?.Invoke(spell);
+
+        Debug.Log(
+            $"{name}: {spell} unlocked.",
+            this
+        );
     }
 
     // =========================================================
@@ -250,6 +345,16 @@ public class PlayerStaffCombat : MonoBehaviour
             isCasting
         )
         {
+            return;
+        }
+
+        if (!IsSpellUnlocked(spell))
+        {
+            Debug.Log(
+                $"{name}: {spell} has not been unlocked yet.",
+                this
+            );
+
             return;
         }
 
