@@ -35,12 +35,34 @@ public class PlayerStatsNew : MonoBehaviour
         "Player_AxeHit";
 
     [Header("Death")]
-    [SerializeField] private float deathRestartDelay = 2f;
+    [Tooltip(
+    "How long the death animation plays before the Game Over banner appears."
+)]
+    [SerializeField] private float deathAnimationDelay = 2f;
 
     [Tooltip(
-        "Reloads the active scene after the player dies."
+        "How long the Game Over banner remains before returning to the Main Menu."
     )]
-    [SerializeField] private bool restartSceneOnDeath = true;
+    [SerializeField] private float gameOverDelay = 3f;
+
+    [Tooltip(
+        "Scene loaded after the Game Over sequence."
+    )]
+    [SerializeField]
+    private string mainMenuSceneName =
+        "Game_Start";
+
+    [TextArea]
+    [Tooltip("Message displayed after the player dies.")]
+    [SerializeField]
+    private string gameOverMessage =
+        "GAME OVER";
+
+    [Header("Death UI")]
+    [Tooltip(
+        "Optional HUD notification banner. " +
+        "If left empty, it will be found automatically."
+    )]
 
     [Header("References")]
     [SerializeField] private Animator animator;
@@ -48,6 +70,7 @@ public class PlayerStatsNew : MonoBehaviour
     [SerializeField] private PlayerCombatNew playerCombat;
     [SerializeField] private PlayerDodgeNew playerDodge;
     [SerializeField] private PlayerLockOn playerLockOn;
+    [SerializeField] private HUDNotificationBanner notificationBanner;
 
     private int currentHealth;
 
@@ -222,6 +245,12 @@ public class PlayerStatsNew : MonoBehaviour
         {
             playerLockOn =
                 GetComponent<PlayerLockOn>();
+        }
+
+        if (notificationBanner == null)
+        {
+            notificationBanner =
+                FindAnyObjectByType<HUDNotificationBanner>();
         }
     }
 
@@ -934,21 +963,41 @@ public class PlayerStatsNew : MonoBehaviour
 
     private IEnumerator DeathCoroutine()
     {
+        /*
+         * Give the death animation time to play
+         * before displaying Game Over.
+         */
         yield return new WaitForSeconds(
-            deathRestartDelay
+            deathAnimationDelay
         );
 
-        if (!restartSceneOnDeath)
+        /*
+         * Display the shared HUD notification.
+         */
+        if (notificationBanner != null)
         {
-            deathCoroutine = null;
-            yield break;
+            notificationBanner.ShowMessage(
+                gameOverMessage
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"{name}: HUDNotificationBanner could not be found.",
+                this
+            );
         }
 
-        Scene activeScene =
-            SceneManager.GetActiveScene();
+        /*
+         * Leave Game Over on screen briefly before
+         * returning to the Main Menu.
+         */
+        yield return new WaitForSeconds(
+            gameOverDelay
+        );
 
         SceneManager.LoadScene(
-            activeScene.buildIndex
+            mainMenuSceneName
         );
     }
 
@@ -993,10 +1042,16 @@ public class PlayerStatsNew : MonoBehaviour
                 hitReactionDuration
             );
 
-        deathRestartDelay =
+        deathAnimationDelay =
+    Mathf.Max(
+        0f,
+        deathAnimationDelay
+    );
+
+        gameOverDelay =
             Mathf.Max(
                 0f,
-                deathRestartDelay
+                gameOverDelay
             );
 
         if (

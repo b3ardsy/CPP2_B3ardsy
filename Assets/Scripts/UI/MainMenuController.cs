@@ -15,21 +15,41 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        /*
+         * Always restore normal game time when entering
+         * the Main Menu.
+         */
         Time.timeScale = 1f;
+
+        /*
+         * Gameplay locks and hides the cursor.
+         * The Main Menu should always restore normal mouse control.
+         */
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
 
         ShowMainMenu();
     }
 
     public void StartGame()
     {
-        Debug.Log($"Main Menu: Loading {gameSceneName}.");
+        Debug.Log(
+            $"Main Menu: Loading {gameSceneName}."
+        );
 
-        SceneManager.LoadScene(gameSceneName);
+        SceneManager.LoadScene(
+            gameSceneName
+        );
     }
 
     public void OpenSettings()
     {
-        Debug.Log("Main Menu: Opening Settings.");
+        Debug.Log(
+            "Main Menu: Opening Settings."
+        );
 
         mainMenuPanel.SetActive(false);
         settingsPanel.SetActive(true);
@@ -39,14 +59,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CloseSettings()
     {
-        Debug.Log("Main Menu: Closing Settings.");
+        Debug.Log(
+            "Main Menu: Closing Settings."
+        );
 
         ShowMainMenu();
     }
 
     public void OpenCredits()
     {
-        Debug.Log("Main Menu: Opening Credits.");
+        Debug.Log(
+            "Main Menu: Opening Credits."
+        );
 
         mainMenuPanel.SetActive(false);
         settingsPanel.SetActive(false);
@@ -56,14 +80,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CloseCredits()
     {
-        Debug.Log("Main Menu: Closing Credits.");
+        Debug.Log(
+            "Main Menu: Closing Credits."
+        );
 
         ShowMainMenu();
     }
 
     public void OpenQuitConfirmation()
     {
-        Debug.Log("Main Menu: Opening Quit confirmation.");
+        Debug.Log(
+            "Main Menu: Opening Quit confirmation."
+        );
 
         mainMenuPanel.SetActive(false);
         settingsPanel.SetActive(false);
@@ -73,14 +101,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CancelQuit()
     {
-        Debug.Log("Main Menu: Quit cancelled.");
+        Debug.Log(
+            "Main Menu: Quit cancelled."
+        );
 
         ShowMainMenu();
     }
 
     public void QuitGame()
     {
-        Debug.Log("Main Menu: Quitting game.");
+        Debug.Log(
+            "Main Menu: Quitting game."
+        );
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
