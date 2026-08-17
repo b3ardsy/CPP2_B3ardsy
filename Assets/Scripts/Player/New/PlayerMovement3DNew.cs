@@ -87,6 +87,7 @@ public class PlayerMovement3DNew : MonoBehaviour
             ? characterController.velocity
             : Vector3.zero;
 
+    // Animator parameters.
     private static readonly int SpeedFloat =
         Animator.StringToHash("Speed");
 
@@ -95,6 +96,9 @@ public class PlayerMovement3DNew : MonoBehaviour
 
     private static readonly int IsGroundedBool =
         Animator.StringToHash("IsGrounded");
+
+    private static readonly int VerticalVelocityFloat =
+        Animator.StringToHash("VerticalVelocity");
 
     private static readonly int JumpTrigger =
         Animator.StringToHash("Jump");
@@ -111,18 +115,14 @@ public class PlayerMovement3DNew : MonoBehaviour
     private static readonly int LockOnVerticalFloat =
         Animator.StringToHash("LockOnVertical");
 
-    public void AddMovementLock(
-        Object lockSource
-    )
+    public void AddMovementLock(Object lockSource)
     {
         if (lockSource == null)
         {
             return;
         }
 
-        movementLocks.Add(
-            lockSource
-        );
+        movementLocks.Add(lockSource);
 
         movementInput = Vector2.zero;
         moveDirection = Vector3.zero;
@@ -130,18 +130,14 @@ public class PlayerMovement3DNew : MonoBehaviour
         isRunning = false;
     }
 
-    public void RemoveMovementLock(
-        Object lockSource
-    )
+    public void RemoveMovementLock(Object lockSource)
     {
         if (lockSource == null)
         {
             return;
         }
 
-        movementLocks.Remove(
-            lockSource
-        );
+        movementLocks.Remove(lockSource);
     }
 
     public void ClearMovementLocks()
@@ -384,6 +380,19 @@ public class PlayerMovement3DNew : MonoBehaviour
 
     private void CheckGrounded()
     {
+        /*
+         * While the player is actively travelling upward,
+         * they cannot be grounded.
+         *
+         * This prevents the ground-check sphere from detecting
+         * the terrain for a few frames immediately after jumping.
+         */
+        if (verticalVelocity > 0f)
+        {
+            isGrounded = false;
+            return;
+        }
+
         Vector3 spherePosition =
             transform.position +
             Vector3.up *
@@ -730,16 +739,41 @@ public class PlayerMovement3DNew : MonoBehaviour
                 !playerCombat.IsAttacking
             );
 
-        float speedValue =
-            canAnimateMovement
-                ? movementInput.magnitude
-                : 0f;
+        /*
+         * Normal locomotion Blend Tree:
+         *
+         * 0.0 = Idle
+         * 0.5 = Walk
+         * 1.0 = Run
+         */
+        float speedValue = 0f;
 
+        if (
+            canAnimateMovement &&
+            movementInput.sqrMagnitude > 0.01f
+        )
+        {
+            speedValue =
+                isRunning
+                    ? 1f
+                    : 0.5f;
+        }
+
+        /*
+         * Damp the Speed parameter slightly so transitions
+         * between Idle, Walk, and Run blend smoothly.
+         */
         animator.SetFloat(
             SpeedFloat,
-            speedValue
+            speedValue,
+            0.1f,
+            Time.deltaTime
         );
 
+        /*
+         * Retained for now because other Animator transitions
+         * may still reference this parameter.
+         */
         animator.SetBool(
             IsRunningBool,
             isRunning &&
@@ -749,6 +783,17 @@ public class PlayerMovement3DNew : MonoBehaviour
         animator.SetBool(
             IsGroundedBool,
             isGrounded
+        );
+
+        /*
+         * Expose the player's vertical motion to the Animator.
+         *
+         * Positive = moving upward.
+         * Negative = falling.
+         */
+        animator.SetFloat(
+            VerticalVelocityFloat,
+            verticalVelocity
         );
 
         animator.SetBool(
