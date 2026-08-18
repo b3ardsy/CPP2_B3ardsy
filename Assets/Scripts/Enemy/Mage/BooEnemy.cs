@@ -79,6 +79,19 @@ public class BooEnemy : Enemy
     [SerializeField]
     private float maximumAttackCooldown = 2.75f;
 
+    [Header("Entangle Recovery")]
+    [Tooltip(
+        "Animator state used as the safe re-entry point after Entangle ends."
+    )]
+    [SerializeField]
+    private string entangleRecoveryStateName = "Idle_B";
+
+    [Tooltip(
+        "How quickly the Animator blends out of Entangle and back to locomotion."
+    )]
+    [SerializeField]
+    private float entangleRecoveryTransitionDuration = 0.05f;
+
     private NavMeshAgent agent;
 
     private BooState currentState;
@@ -91,6 +104,12 @@ public class BooEnemy : Enemy
     private bool isWaitingAtPatrolPoint;
     private bool hasPatrolDestination;
     private bool isPerformingAttack;
+
+    /*
+     * Tracks whether Boo was Entangled on the previous frame.
+     * This lets the AI rebuild its state as soon as Entangle ends.
+     */
+    private bool wasEntangledLastFrame;
 
     private static readonly int IsMovingBool =
         Animator.StringToHash("IsMoving");
@@ -162,6 +181,40 @@ public class BooEnemy : Enemy
             return;
         }
 
+        // =====================================================
+        // ENTANGLE
+        // =====================================================
+
+        /*
+         * Entangle completely suspends Boo AI.
+         *
+         * If Entangle interrupts an attack animation, the normal
+         * EndAttack Animation Event may never fire. Cancel the
+         * attack here so isPerformingAttack cannot remain stuck true.
+         */
+        if (IsEntangled)
+        {
+            HandleEntangledState();
+
+            wasEntangledLastFrame =
+                true;
+
+            UpdateMovementAnimation();
+            return;
+        }
+
+        /*
+         * Entangle just ended. Rebuild Boo's state using the
+         * player's current position and restart the attack cooldown.
+         */
+        if (wasEntangledLastFrame)
+        {
+            wasEntangledLastFrame =
+                false;
+
+            ResumeAfterEntangle();
+        }
+
         if (attackCooldownTimer > 0f)
         {
             attackCooldownTimer -=
@@ -183,6 +236,125 @@ public class BooEnemy : Enemy
         );
 
         UpdateMovementAnimation();
+    }
+
+    // =========================================================
+    // ENTANGLE
+    // =========================================================
+
+    private void HandleEntangledState()
+    {
+        StopAgent();
+
+        /*
+         * Entangle may interrupt the attack animation before its
+         * EndAttack Animation Event fires. Clear the runtime attack
+         * state explicitly so Boo can attack again afterward.
+         */
+        if (isPerformingAttack)
+        {
+            isPerformingAttack =
+                false;
+
+            if (animator != null)
+            {
+                animator.ResetTrigger(
+                    AttackTrigger
+                );
+            }
+        }
+    }
+
+    private void ResumeAfterEntangle()
+    {
+        if (
+            isDead ||
+            player == null
+        )
+        {
+            return;
+        }
+
+        /*
+         * Entangle can interrupt the current attack state before
+         * its EndAttack Animation Event fires.
+         *
+         * Force the Animator back to the safe locomotion state so
+         * future Attack triggers can be received normally.
+         */
+        RecoverAnimatorAfterEntangle();
+
+        /*
+         * Give Boo a normal cooldown after being released rather
+         * than immediately firing on the very first free frame.
+         */
+        ResetAttackCooldown();
+
+        float distanceToPlayer =
+            GetFlatDistance(
+                transform.position,
+                player.position
+            );
+
+        if (
+            distanceToPlayer <=
+            detectionRange
+        )
+        {
+            BeginEngagement();
+            return;
+        }
+
+        ReturnHome();
+    }
+
+    private void RecoverAnimatorAfterEntangle()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.ResetTrigger(
+            EntangleTrigger
+        );
+
+        animator.ResetTrigger(
+            AttackTrigger
+        );
+
+        animator.SetBool(
+            IsMovingBool,
+            false
+        );
+
+        int recoveryStateHash =
+            Animator.StringToHash(
+                entangleRecoveryStateName
+            );
+
+        if (
+            !animator.HasState(
+                0,
+                recoveryStateHash
+            )
+        )
+        {
+            Debug.LogWarning(
+                $"{name}: Animator does not contain Entangle " +
+                $"recovery state '{entangleRecoveryStateName}'.",
+                this
+            );
+
+            return;
+        }
+
+        animator.CrossFadeInFixedTime(
+            recoveryStateHash,
+            entangleRecoveryTransitionDuration,
+            0,
+            0f
+        );
     }
 
     // =========================================================
@@ -430,6 +602,11 @@ public class BooEnemy : Enemy
 
     private void BeginEngagement()
     {
+        if (IsEntangled)
+        {
+            return;
+        }
+
         currentState =
             BooState.Engaged;
 
@@ -476,6 +653,7 @@ public class BooEnemy : Enemy
     private void BeginAttack()
     {
         if (
+            IsEntangled ||
             isPerformingAttack ||
             player == null ||
             blackHoleProjectilePrefab == null ||
@@ -739,7 +917,10 @@ public class BooEnemy : Enemy
 
     private void FacePlayer()
     {
-        if (player == null)
+        if (
+            player == null ||
+            IsEntangled
+        )
         {
             return;
         }
@@ -1117,6 +1298,12 @@ public class BooEnemy : Enemy
             Mathf.Max(
                 minimumAttackCooldown,
                 maximumAttackCooldown
+            );
+
+        entangleRecoveryTransitionDuration =
+            Mathf.Max(
+                0f,
+                entangleRecoveryTransitionDuration
             );
     }
 
