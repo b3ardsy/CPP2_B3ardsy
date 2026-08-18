@@ -19,20 +19,7 @@ public class PlayerStatsNew : MonoBehaviour
         "after a non-lethal hit."
     )]
     [SerializeField] private float hitReactionDuration = 0.4f;
-
-    [Tooltip(
-        "Exact Animator state name used for the normal hit animation."
-    )]
-    [SerializeField]
-    private string hitAnimationStateName =
-        "Player_Hit";
-
-    [Tooltip(
-        "Exact Animator state name used for the axe hit animation."
-    )]
-    [SerializeField]
-    private string axeHitAnimationStateName =
-        "Player_AxeHit";
+    [SerializeField] private float axeHitReactionDuration = 0.65f;
 
     [Header("Death")]
     [Tooltip(
@@ -95,9 +82,6 @@ public class PlayerStatsNew : MonoBehaviour
     private Coroutine hitReactionCoroutine;
     private Coroutine deathCoroutine;
 
-    private int hitAnimationStateHash;
-    private int axeHitAnimationStateHash;
-
     public int CurrentHealth =>
         currentHealth;
 
@@ -135,12 +119,6 @@ public class PlayerStatsNew : MonoBehaviour
     private static readonly int DeathTrigger =
         Animator.StringToHash("Death");
 
-    private static readonly int PunchTrigger =
-        Animator.StringToHash("Punch");
-
-    private static readonly int KickTrigger =
-        Animator.StringToHash("Kick");
-
     private static readonly int DodgeForwardTrigger =
         Animator.StringToHash("DodgeForward");
 
@@ -168,9 +146,6 @@ public class PlayerStatsNew : MonoBehaviour
     private static readonly int IsLockedOnBool =
         Animator.StringToHash("IsLockedOn");
 
-    private static readonly int IsTrappedBool =
-        Animator.StringToHash("IsTrapped");
-
     private static readonly int SpeedFloat =
         Animator.StringToHash("Speed");
 
@@ -194,16 +169,6 @@ public class PlayerStatsNew : MonoBehaviour
         shieldProtectionSources = 0;
 
         FindReferences();
-
-        hitAnimationStateHash =
-            Animator.StringToHash(
-                hitAnimationStateName
-            );
-
-        axeHitAnimationStateHash =
-            Animator.StringToHash(
-                axeHitAnimationStateName
-            );
     }
 
     private void Start()
@@ -533,43 +498,16 @@ public class PlayerStatsNew : MonoBehaviour
         );
 
         animator.ResetTrigger(
-            HitTrigger
-        );
-
-        animator.ResetTrigger(
             AxeHitTrigger
         );
 
-        if (
-            animator.HasState(
-                0,
-                hitAnimationStateHash
-            )
-        )
-        {
-            animator.Play(
-                hitAnimationStateHash,
-                0,
-                0f
-            );
+        animator.ResetTrigger(
+            HitTrigger
+        );
 
-            animator.Update(
-                0f
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                $"Animator state '{hitAnimationStateName}' " +
-                "was not found on layer 0. " +
-                "Falling back to the Hit trigger.",
-                this
-            );
-
-            animator.SetTrigger(
-                HitTrigger
-            );
-        }
+        animator.SetTrigger(
+            HitTrigger
+        );
     }
 
     // =========================================================
@@ -601,7 +539,7 @@ public class PlayerStatsNew : MonoBehaviour
         PlayAxeHitAnimationImmediately();
 
         yield return new WaitForSeconds(
-            hitReactionDuration
+            axeHitReactionDuration
         );
 
         if (!isDead)
@@ -634,71 +572,8 @@ public class PlayerStatsNew : MonoBehaviour
             AxeHitTrigger
         );
 
-        if (
-            animator.HasState(
-                0,
-                axeHitAnimationStateHash
-            )
-        )
-        {
-            animator.Play(
-                axeHitAnimationStateHash,
-                0,
-                0f
-            );
-
-            animator.Update(
-                0f
-            );
-        }
-        else
-        {
-            animator.SetTrigger(
-                AxeHitTrigger
-            );
-        }
-    }
-
-    // =========================================================
-    // BONE PRISON REACTION
-    // =========================================================
-
-    public void StartBonePrisonReaction()
-    {
-        if (
-            isDead ||
-            animator == null
-        )
-        {
-            return;
-        }
-
-        ClearActionTriggers();
-
-        animator.ResetTrigger(
-            HitTrigger
-        );
-
-        animator.ResetTrigger(
+        animator.SetTrigger(
             AxeHitTrigger
-        );
-
-        animator.SetBool(
-            IsTrappedBool,
-            true
-        );
-    }
-
-    public void EndBonePrisonReaction()
-    {
-        if (animator == null)
-        {
-            return;
-        }
-
-        animator.SetBool(
-            IsTrappedBool,
-            false
         );
     }
 
@@ -778,11 +653,6 @@ public class PlayerStatsNew : MonoBehaviour
                 DeathTrigger
             );
 
-            animator.SetBool(
-                IsTrappedBool,
-                false
-            );
-
             animator.SetFloat(
                 SpeedFloat,
                 0f
@@ -860,14 +730,6 @@ public class PlayerStatsNew : MonoBehaviour
         {
             return;
         }
-
-        animator.ResetTrigger(
-            PunchTrigger
-        );
-
-        animator.ResetTrigger(
-            KickTrigger
-        );
 
         animator.ResetTrigger(
             DodgeForwardTrigger
@@ -1012,14 +874,6 @@ public class PlayerStatsNew : MonoBehaviour
                 this
             );
         }
-
-        if (animator != null)
-        {
-            animator.SetBool(
-                IsTrappedBool,
-                false
-            );
-        }
     }
 
     private void OnValidate()
@@ -1042,6 +896,12 @@ public class PlayerStatsNew : MonoBehaviour
                 hitReactionDuration
             );
 
+        axeHitReactionDuration =
+            Mathf.Max(
+                0f,
+                axeHitReactionDuration
+            );
+
         deathAnimationDelay =
     Mathf.Max(
         0f,
@@ -1052,36 +912,6 @@ public class PlayerStatsNew : MonoBehaviour
             Mathf.Max(
                 0f,
                 gameOverDelay
-            );
-
-        if (
-            string.IsNullOrWhiteSpace(
-                hitAnimationStateName
-            )
-        )
-        {
-            hitAnimationStateName =
-                "Player_Hit";
-        }
-
-        if (
-            string.IsNullOrWhiteSpace(
-                axeHitAnimationStateName
-            )
-        )
-        {
-            axeHitAnimationStateName =
-                "Player_AxeHit";
-        }
-
-        hitAnimationStateHash =
-            Animator.StringToHash(
-                hitAnimationStateName
-            );
-
-        axeHitAnimationStateHash =
-            Animator.StringToHash(
-                axeHitAnimationStateName
             );
     }
 }

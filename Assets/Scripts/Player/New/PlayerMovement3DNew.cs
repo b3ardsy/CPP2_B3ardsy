@@ -222,10 +222,7 @@ public class PlayerMovement3DNew : MonoBehaviour
 
         UpdateGravity();
 
-        if (
-            IsMovementLocked ||
-            isAttacking
-        )
+        if (IsMovementLocked)
         {
             moveDirection =
                 Vector3.zero;
@@ -555,10 +552,6 @@ public class PlayerMovement3DNew : MonoBehaviour
         bool canUseNormalMovement =
             !IsMovementLocked &&
             !isDodging &&
-            (
-                playerCombat == null ||
-                !playerCombat.IsAttacking
-            ) &&
             movementInput.sqrMagnitude >
             0.01f;
 
@@ -733,11 +726,7 @@ public class PlayerMovement3DNew : MonoBehaviour
         bool canAnimateMovement =
             isGrounded &&
             !isDodging &&
-            !IsMovementLocked &&
-            (
-                playerCombat == null ||
-                !playerCombat.IsAttacking
-            );
+            !IsMovementLocked;
 
         /*
          * Normal locomotion Blend Tree:

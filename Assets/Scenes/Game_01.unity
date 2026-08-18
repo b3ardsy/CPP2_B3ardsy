@@ -16532,6 +16532,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 12
       objectReference: {fileID: 0}
+    - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: axeHitReactionDuration
+      value: 0.7
+      objectReference: {fileID: 0}
     - target: {fileID: 5198917100671412841, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: interactionPrompt
       value: 
