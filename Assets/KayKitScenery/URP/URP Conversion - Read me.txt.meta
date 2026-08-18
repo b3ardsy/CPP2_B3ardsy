@@ -7,8 +7,8 @@ TextScriptImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 290676
-  packageName: KayKit - Dungeon Remastered Pack (for Unity)
-  packageVersion: 1.0.0
-  assetPath: Assets/KayKitForestNew/URP/URP Conversion - Read me.txt
-  uploadId: 814454
+  productId: 290678
+  packageName: KayKit - Medieval Hexagon Pack (for Unity)
+  packageVersion: 1.0.1
+  assetPath: Assets/KayKitScenery/URP/URP Conversion - Read me.txt
+  uploadId: 814460
