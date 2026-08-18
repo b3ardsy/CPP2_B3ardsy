@@ -54,6 +54,13 @@ public class PlayerMovement3DNew : MonoBehaviour
     [SerializeField] private float groundedRadius = 0.45f;
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Idle Waiting")]
+    [Tooltip(
+        "How long the player must remain completely idle before " +
+        "the Waiting animation begins."
+    )]
+    [SerializeField] private float waitingDelay = 8f;
+
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private PlayerCombatNew playerCombat;
@@ -72,6 +79,9 @@ public class PlayerMovement3DNew : MonoBehaviour
     private bool isGrounded;
     private bool wasGrounded;
     private bool isRunning;
+
+    private float waitingTimer;
+    private bool isWaiting;
 
     private readonly HashSet<Object> movementLocks =
         new HashSet<Object>();
@@ -115,6 +125,9 @@ public class PlayerMovement3DNew : MonoBehaviour
     private static readonly int LockOnVerticalFloat =
         Animator.StringToHash("LockOnVertical");
 
+    private static readonly int IsWaitingBool =
+        Animator.StringToHash("IsWaiting");
+
     public void AddMovementLock(Object lockSource)
     {
         if (lockSource == null)
@@ -123,6 +136,8 @@ public class PlayerMovement3DNew : MonoBehaviour
         }
 
         movementLocks.Add(lockSource);
+
+        ResetWaiting();
 
         movementInput = Vector2.zero;
         moveDirection = Vector3.zero;
@@ -171,6 +186,11 @@ public class PlayerMovement3DNew : MonoBehaviour
                 GetComponent<PlayerDodgeNew>();
         }
 
+        animator.SetBool(
+            IsWaitingBool,
+            false
+        );
+
         if (
             cameraTransform == null &&
             Camera.main != null
@@ -212,6 +232,10 @@ public class PlayerMovement3DNew : MonoBehaviour
             IsMovementLocked ||
             isAttacking ||
             isDodging;
+
+        UpdateWaitingState(
+            isDodging
+        );
 
         /*
          * Space performs a locked-on dodge or a normal jump.
@@ -298,6 +322,122 @@ public class PlayerMovement3DNew : MonoBehaviour
             );
     }
 
+    private void UpdateWaitingState(
+        bool isDodging
+    )
+    {
+        bool isLockedOn =
+            playerLockOn != null &&
+            playerLockOn.IsLockedOn;
+
+        bool isCombatBusy =
+            playerCombat != null &&
+            playerCombat.IsCombatBusy;
+
+        bool hasMovementInput =
+            movementInput.sqrMagnitude >
+            0.01f;
+
+        bool hasFreshInput =
+            HasFreshPlayerInput();
+
+        bool canWait =
+            isGrounded &&
+            !isLockedOn &&
+            !isCombatBusy &&
+            !isDodging &&
+            !IsMovementLocked &&
+            !hasMovementInput;
+
+        if (
+            !canWait ||
+            hasFreshInput
+        )
+        {
+            ResetWaiting();
+            return;
+        }
+
+        if (isWaiting)
+        {
+            return;
+        }
+
+        waitingTimer +=
+            Time.deltaTime;
+
+        if (
+            waitingTimer <
+            waitingDelay
+        )
+        {
+            return;
+        }
+
+        SetWaiting(
+            true
+        );
+    }
+
+    private bool HasFreshPlayerInput()
+    {
+        if (
+            Keyboard.current != null &&
+            Keyboard.current.anyKey.wasPressedThisFrame
+        )
+        {
+            return true;
+        }
+
+        if (Mouse.current == null)
+        {
+            return false;
+        }
+
+        return
+            Mouse.current.leftButton.wasPressedThisFrame ||
+            Mouse.current.rightButton.wasPressedThisFrame ||
+            Mouse.current.middleButton.wasPressedThisFrame;
+    }
+
+    private void ResetWaiting()
+    {
+        waitingTimer = 0f;
+
+        if (!isWaiting)
+        {
+            return;
+        }
+
+        SetWaiting(
+            false
+        );
+    }
+
+    private void SetWaiting(
+        bool value
+    )
+    {
+        if (
+            isWaiting ==
+            value
+        )
+        {
+            return;
+        }
+
+        isWaiting =
+            value;
+
+        if (animator != null)
+        {
+            animator.SetBool(
+                IsWaitingBool,
+                isWaiting
+            );
+        }
+    }
+
     private void HandleJumpOrDodge(
         bool movementUnavailable
     )
@@ -349,6 +489,8 @@ public class PlayerMovement3DNew : MonoBehaviour
         {
             return;
         }
+
+        ResetWaiting();
 
         /*
          * v = square root of height × -2 × gravity.
@@ -856,6 +998,8 @@ public class PlayerMovement3DNew : MonoBehaviour
 
     public void StopMovementImmediately()
     {
+        ResetWaiting();
+
         currentMoveSpeed = 0f;
         moveDirection = Vector3.zero;
         movementInput = Vector2.zero;
@@ -871,6 +1015,8 @@ public class PlayerMovement3DNew : MonoBehaviour
 
     private void OnDisable()
     {
+        ResetWaiting();
+
         currentMoveSpeed = 0f;
         moveDirection = Vector3.zero;
         movementInput = Vector2.zero;
@@ -942,6 +1088,12 @@ public class PlayerMovement3DNew : MonoBehaviour
             Mathf.Max(
                 0.01f,
                 groundedRadius
+            );
+
+        waitingDelay =
+            Mathf.Max(
+                0.1f,
+                waitingDelay
             );
     }
 

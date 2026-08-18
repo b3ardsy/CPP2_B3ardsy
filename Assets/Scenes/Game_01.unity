@@ -16458,11 +16458,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0.00000027235265
+      value: 0.00000036866308
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.0000017075482
+      value: 0.0000029628334
       objectReference: {fileID: 0}
     - target: {fileID: -5515783359193845756, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -16536,6 +16536,10 @@ PrefabInstance:
       propertyPath: axeHitReactionDuration
       value: 0.7
       objectReference: {fileID: 0}
+    - target: {fileID: 3364010743847596850, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: waitingDelay
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 5198917100671412841, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: interactionPrompt
       value: 
@@ -16554,11 +16558,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0.00000027235552
+      value: -0.0000011105548
       objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.0000034150949
+      value: -0.000004267813
       objectReference: {fileID: 0}
     - target: {fileID: 7214371169738337839, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
