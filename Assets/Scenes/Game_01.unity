@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogDensity: 0.003
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -3889,7 +3889,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 118.97
+      value: 68.32
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3897,19 +3897,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 45.17
+      value: 73.19
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.5408853
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.84109634
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalRotation.z
@@ -3921,7 +3921,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -114.512
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7ee0e3b9c13823441a7f8d17aee1820f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -5678,7 +5678,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &681449840
 Transform:
   m_ObjectHideFlags: 0
@@ -18319,7 +18319,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 43.07
+      value: 24.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.z
