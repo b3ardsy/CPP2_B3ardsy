@@ -821,11 +821,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 500, y: 650}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &108002674 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-  m_PrefabInstance: {fileID: 386692429}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &108042822
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2783,19 +2778,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
   m_PrefabInstance: {fileID: 386692429}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &365845646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 108002674}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
 --- !u!1001 &368234330
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3367,69 +3349,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Golem
       objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: chaseSpeed
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: attackRange
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: patrolSpeed
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: returnSpeed
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: patrolRadius
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: detectionRange
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: attackExitRange
-      value: 5.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: loseTargetRange
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: deathEffectPrefab
-      value: 
-      objectReference: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: deathEffectSpawnOffset.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: deathEffectSpawnOffset.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: deathEffectSpawnOffset.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5528081377850786559, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: locomotionRecoveryStateName
-      value: Melee_2H_Idle
-      objectReference: {fileID: 0}
-    - target: {fileID: 9120369343324474609, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: visibleDistance
-      value: 20
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 365845646}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
 --- !u!1001 &393149919
 PrefabInstance:
@@ -11193,24 +11116,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2602955548432068777, guid: be6c91bd99ae7ff4aa5221d75711b63a, type: 3}
   m_PrefabInstance: {fileID: 1238125913}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1170045660 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
-  m_PrefabInstance: {fileID: 1869601187}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1170045665
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1170045660}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
 --- !u!1001 &1170067604
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13275,89 +13180,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 30.530275
-      objectReference: {fileID: 0}
-    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 46.988483
-      objectReference: {fileID: 0}
-    - target: {fileID: -5515783359193845756, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: -0.7007012
-      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_Name
       value: Skeleton_Rogue
       objectReference: {fileID: 0}
-    - target: {fileID: 2977476398509093501, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: visibleDistance
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: firePoint
-      value: 
-      objectReference: {fileID: 1926205519}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: patrolSpeed
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: returnSpeed
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEvilPrefab
-      value: 
-      objectReference: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEffectPrefab
-      value: 
-      objectReference: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: groundLayer.m_Bits
-      value: 64
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: skullProjectilePrefab
-      value: 
-      objectReference: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEffectSpawnOffset.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEffectSpawnOffset.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3826238084626665851, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEffectSpawnOffset.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 16.4214
-      objectReference: {fileID: 0}
-    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -24.81061
-      objectReference: {fileID: 0}
-    - target: {fileID: 7214371169738337839, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 26.70924
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 8102211318610968479, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1926205519}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1761848893}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
 --- !u!4 &1330701855 stripped
 Transform:
@@ -18459,24 +18289,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 966271260}
   m_SourcePrefab: {fileID: 100100000, guid: 7385497e3ea5564408d35375051cd723, type: 3}
---- !u!1 &1761848887 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-  m_PrefabInstance: {fileID: 1328364080}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1761848893
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1761848887}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
 --- !u!1001 &1775498472
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20382,10 +20194,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1170045665}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
 --- !u!1001 &1876901380
 PrefabInstance:
@@ -21019,37 +20828,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd04d2843abe25d4f8d33cb2a0a4f7b5, type: 3}
---- !u!1 &1926205518
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1926205519}
-  m_Layer: 8
-  m_Name: Firepoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1926205519
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1926205518}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.56, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 791437899}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1926510503
 PrefabInstance:
   m_ObjectHideFlags: 0

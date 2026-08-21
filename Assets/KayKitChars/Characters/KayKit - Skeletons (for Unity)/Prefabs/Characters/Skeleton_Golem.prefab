@@ -937,10 +937,11 @@ GameObject:
   m_Component:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 3096381226399691132}
+  - component: {fileID: 2663395536026847230}
+  - component: {fileID: 5528081377850786559}
   - component: {fileID: 1118839868438648128}
   - component: {fileID: 6299778963109504847}
   - component: {fileID: 7167398855894057203}
-  - component: {fileID: 5528081377850786559}
   - component: {fileID: 4516182743743952825}
   m_Layer: 8
   m_Name: Skeleton_Golem
@@ -996,6 +997,60 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2663395536026847230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 3
+--- !u!114 &5528081377850786559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1199bdbc8c6a53438ae2fe4b3a77f5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankEnemy
+  destroyDelay: 2
+  deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+  deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
+  deathEffectLifetime: 3
+  pickupToDrop: 1
+  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
+  ammoPickupPrefab: {fileID: 0}
+  specialPickupPrefab: {fileID: 0}
+  pickupSpawnHeight: 1
+  patrolRadius: 15
+  patrolWaitTime: 2
+  destinationTolerance: 0.25
+  navMeshSampleDistance: 3
+  patrolSearchAttempts: 10
+  detectionRange: 20
+  loseTargetRange: 30
+  attackRange: 5
+  chaseStoppingDistance: 3.25
+  attackExitRange: 5.1
+  attackDamage: 1
+  attackCooldown: 3
+  attackRotationSpeed: 25
+  axeHitbox: {fileID: 8722070175505448502}
+  patrolSpeed: 6
+  chaseSpeed: 10
+  returnSpeed: 6
+  locomotionRecoveryStateName: Melee_2H_Idle
+  entangleRecoveryTransitionDuration: 0.05
+  entangleRecoveryAnimationFrames: 3
 --- !u!136 &1118839868438648128
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1068,40 +1123,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &5528081377850786559
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1199bdbc8c6a53438ae2fe4b3a77f5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TankEnemy
-  maxHealth: 10
-  destroyDelay: 2
-  pickupToDrop: 1
-  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
-  ammoPickupPrefab: {fileID: 0}
-  specialPickupPrefab: {fileID: 0}
-  pickupSpawnHeight: 1
-  patrolRadius: 10
-  patrolWaitTime: 2
-  destinationTolerance: 0.25
-  navMeshSampleDistance: 3
-  patrolSearchAttempts: 10
-  detectionRange: 10
-  loseTargetRange: 15
-  attackRange: 4
-  attackDamage: 1
-  attackCooldown: 3
-  attackRotationSpeed: 25
-  axeHitbox: {fileID: 8722070175505448502}
-  patrolSpeed: 3
-  chaseSpeed: 5
-  returnSpeed: 4
 --- !u!114 &4516182743743952825
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1926,6 +1947,10 @@ PrefabInstance:
     - target: {fileID: 5292030503592550368, guid: e02fa4282cda67d409c192b094c8d9a4, type: 3}
       propertyPath: m_Name
       value: EnemyHealthBar
+      objectReference: {fileID: 0}
+    - target: {fileID: 7086000961624350369, guid: e02fa4282cda67d409c192b094c8d9a4, type: 3}
+      propertyPath: visibleDistance
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

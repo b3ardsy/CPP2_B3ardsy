@@ -4,48 +4,94 @@ using UnityEngine.UI;
 
 public class EnemyHealthBar : MonoBehaviour
 {
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     [Header("References")]
-    [SerializeField] private Enemy enemy;
+    [SerializeField] private Health health;
     [SerializeField] private Canvas healthBarCanvas;
     [SerializeField] private Image healthFill;
     [SerializeField] private Image damageFill;
 
+    // =========================================================
+    // VISIBILITY
+    // =========================================================
+
     [Header("Visibility")]
-    [Tooltip("Maximum distance from the player where the health bar is visible.")]
-    [SerializeField] private float visibleDistance = 10f;
+    [Tooltip(
+        "Maximum distance from the player where the " +
+        "health bar is visible."
+    )]
+    [SerializeField]
+    private float visibleDistance = 10f;
+
+    // =========================================================
+    // DAMAGE EFFECT
+    // =========================================================
 
     [Header("Damage Effect")]
-    [Tooltip("How long the white damage bar waits before catching up.")]
-    [SerializeField] private float damageDelay = 0.4f;
+    [Tooltip(
+        "How long the white damage bar waits before catching up."
+    )]
+    [SerializeField]
+    private float damageDelay = 0.4f;
 
-    [Tooltip("How quickly the white damage bar catches up.")]
-    [SerializeField] private float damageDrainSpeed = 2f;
+    [Tooltip(
+        "How quickly the white damage bar catches up."
+    )]
+    [SerializeField]
+    private float damageDrainSpeed = 2f;
+
+    // =========================================================
+    // RUNTIME REFERENCES
+    // =========================================================
 
     private Transform player;
     private Camera mainCamera;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
+
     private Coroutine damageRoutine;
-    private bool enemyDead;
+    private bool healthDepleted;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
-        if (enemy == null)
+        /*
+         * The Health component normally lives on the enemy's
+         * root object while this script may live on the
+         * world-space health bar child.
+         */
+        if (health == null)
         {
-            enemy = GetComponentInParent<Enemy>();
+            health =
+                GetComponentInParent<Health>();
         }
 
         if (healthBarCanvas == null)
         {
-            healthBarCanvas = GetComponent<Canvas>();
+            healthBarCanvas =
+                GetComponent<Canvas>();
         }
 
-        mainCamera = Camera.main;
+        mainCamera =
+            Camera.main;
 
         GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
+            GameObject.FindGameObjectWithTag(
+                "Player"
+            );
 
         if (playerObject != null)
         {
-            player = playerObject.transform;
+            player =
+                playerObject.transform;
         }
 
         ValidateReferences();
@@ -53,29 +99,51 @@ public class EnemyHealthBar : MonoBehaviour
 
     private void Start()
     {
-        if (enemy == null)
+        if (health == null)
         {
             return;
         }
 
-        enemy.OnHealthChanged += HandleHealthChanged;
-        enemy.OnDied += HandleEnemyDied;
+        /*
+         * The health bar now talks directly to Health.
+         *
+         * It no longer needs to know that the object is
+         * specifically an Enemy.
+         */
+        health.OnHealthChanged +=
+            HandleHealthChanged;
+
+        health.OnDied +=
+            HandleHealthDepleted;
 
         float startingHealth =
             GetNormalizedHealth(
-                enemy.CurrentHealth,
-                enemy.MaxHealth
+                health.CurrentHealth,
+                health.MaxHealth
             );
 
-        healthFill.fillAmount = startingHealth;
-        damageFill.fillAmount = startingHealth;
+        if (healthFill != null)
+        {
+            healthFill.fillAmount =
+                startingHealth;
+        }
+
+        if (damageFill != null)
+        {
+            damageFill.fillAmount =
+                startingHealth;
+        }
 
         UpdateVisibility();
     }
 
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
     private void LateUpdate()
     {
-        if (enemyDead)
+        if (healthDepleted)
         {
             return;
         }
@@ -84,16 +152,9 @@ public class EnemyHealthBar : MonoBehaviour
         UpdateVisibility();
     }
 
-    private void OnDestroy()
-    {
-        if (enemy == null)
-        {
-            return;
-        }
-
-        enemy.OnHealthChanged -= HandleHealthChanged;
-        enemy.OnDied -= HandleEnemyDied;
-    }
+    // =========================================================
+    // HEALTH EVENTS
+    // =========================================================
 
     private void HandleHealthChanged(
         int currentHealth,
@@ -106,19 +167,65 @@ public class EnemyHealthBar : MonoBehaviour
                 maxHealth
             );
 
-        // Red health changes immediately.
-        healthFill.fillAmount = normalizedHealth;
-
-        // Restart the delayed white damage effect.
-        if (damageRoutine != null)
+        /*
+         * The red health amount changes immediately.
+         */
+        if (healthFill != null)
         {
-            StopCoroutine(damageRoutine);
+            healthFill.fillAmount =
+                normalizedHealth;
         }
 
-        damageRoutine = StartCoroutine(
-            DrainDamageBar(normalizedHealth)
-        );
+        /*
+         * Restart the delayed white damage effect whenever
+         * another health change occurs.
+         */
+        if (damageRoutine != null)
+        {
+            StopCoroutine(
+                damageRoutine
+            );
+
+            damageRoutine =
+                null;
+        }
+
+        if (damageFill != null)
+        {
+            damageRoutine =
+                StartCoroutine(
+                    DrainDamageBar(
+                        normalizedHealth
+                    )
+                );
+        }
     }
+
+    private void HandleHealthDepleted()
+    {
+        healthDepleted =
+            true;
+
+        if (damageRoutine != null)
+        {
+            StopCoroutine(
+                damageRoutine
+            );
+
+            damageRoutine =
+                null;
+        }
+
+        if (healthBarCanvas != null)
+        {
+            healthBarCanvas.enabled =
+                false;
+        }
+    }
+
+    // =========================================================
+    // DAMAGE BAR
+    // =========================================================
 
     private IEnumerator DrainDamageBar(
         float targetAmount
@@ -128,27 +235,42 @@ public class EnemyHealthBar : MonoBehaviour
             damageDelay
         );
 
-        while (damageFill.fillAmount > targetAmount)
+        while (
+            damageFill != null &&
+            damageFill.fillAmount > targetAmount
+        )
         {
             damageFill.fillAmount =
                 Mathf.MoveTowards(
                     damageFill.fillAmount,
                     targetAmount,
-                    damageDrainSpeed * Time.deltaTime
+                    damageDrainSpeed *
+                    Time.deltaTime
                 );
 
             yield return null;
         }
 
-        damageFill.fillAmount = targetAmount;
-        damageRoutine = null;
+        if (damageFill != null)
+        {
+            damageFill.fillAmount =
+                targetAmount;
+        }
+
+        damageRoutine =
+            null;
     }
+
+    // =========================================================
+    // CAMERA
+    // =========================================================
 
     private void FaceCamera()
     {
         if (mainCamera == null)
         {
-            mainCamera = Camera.main;
+            mainCamera =
+                Camera.main;
 
             if (mainCamera == null)
             {
@@ -156,13 +278,20 @@ public class EnemyHealthBar : MonoBehaviour
             }
         }
 
-        // Keep the health bar facing the player's camera.
+        /*
+         * Keep the world-space health bar facing
+         * the player's camera.
+         */
         transform.rotation =
             Quaternion.LookRotation(
                 transform.position -
                 mainCamera.transform.position
             );
     }
+
+    // =========================================================
+    // VISIBILITY
+    // =========================================================
 
     private void UpdateVisibility()
     {
@@ -173,7 +302,9 @@ public class EnemyHealthBar : MonoBehaviour
 
         if (player == null)
         {
-            healthBarCanvas.enabled = false;
+            healthBarCanvas.enabled =
+                false;
+
             return;
         }
 
@@ -184,24 +315,13 @@ public class EnemyHealthBar : MonoBehaviour
             );
 
         healthBarCanvas.enabled =
-            distanceToPlayer <= visibleDistance;
+            distanceToPlayer <=
+            visibleDistance;
     }
 
-    private void HandleEnemyDied()
-    {
-        enemyDead = true;
-
-        if (damageRoutine != null)
-        {
-            StopCoroutine(damageRoutine);
-            damageRoutine = null;
-        }
-
-        if (healthBarCanvas != null)
-        {
-            healthBarCanvas.enabled = false;
-        }
-    }
+    // =========================================================
+    // HELPERS
+    // =========================================================
 
     private float GetNormalizedHealth(
         int currentHealth,
@@ -214,45 +334,106 @@ public class EnemyHealthBar : MonoBehaviour
         }
 
         return Mathf.Clamp01(
-            (float)currentHealth / maxHealth
+            (float)currentHealth /
+            maxHealth
         );
     }
 
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
     private void ValidateReferences()
     {
-        if (enemy == null)
+        if (health == null)
         {
             Debug.LogError(
-                $"{name}: EnemyHealthBar could not find an Enemy."
+                $"{name}: EnemyHealthBar could not find a Health component.",
+                this
             );
         }
 
         if (healthBarCanvas == null)
         {
             Debug.LogError(
-                $"{name}: No Canvas assigned to EnemyHealthBar."
+                $"{name}: No Canvas assigned to EnemyHealthBar.",
+                this
             );
         }
 
         if (healthFill == null)
         {
             Debug.LogError(
-                $"{name}: No Health Fill image assigned."
+                $"{name}: No Health Fill image assigned.",
+                this
             );
         }
 
         if (damageFill == null)
         {
             Debug.LogError(
-                $"{name}: No Damage Fill image assigned."
+                $"{name}: No Damage Fill image assigned.",
+                this
             );
         }
 
         if (player == null)
         {
             Debug.LogError(
-                $"{name}: No GameObject with the Player tag was found."
+                $"{name}: No GameObject with the Player tag was found.",
+                this
             );
         }
+    }
+
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
+    private void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.OnHealthChanged -=
+                HandleHealthChanged;
+
+            health.OnDied -=
+                HandleHealthDepleted;
+        }
+
+        if (damageRoutine != null)
+        {
+            StopCoroutine(
+                damageRoutine
+            );
+
+            damageRoutine =
+                null;
+        }
+    }
+
+    // =========================================================
+    // EDITOR VALIDATION
+    // =========================================================
+
+    private void OnValidate()
+    {
+        visibleDistance =
+            Mathf.Max(
+                0f,
+                visibleDistance
+            );
+
+        damageDelay =
+            Mathf.Max(
+                0f,
+                damageDelay
+            );
+
+        damageDrainSpeed =
+            Mathf.Max(
+                0f,
+                damageDrainSpeed
+            );
     }
 }

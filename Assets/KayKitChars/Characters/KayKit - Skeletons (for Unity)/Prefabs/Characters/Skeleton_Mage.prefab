@@ -1273,6 +1273,7 @@ GameObject:
   m_Component:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 4827822787523049710}
+  - component: {fileID: 7135534848390685140}
   - component: {fileID: 3351296584005733219}
   - component: {fileID: 3655405520464804888}
   - component: {fileID: 301096215022004112}
@@ -1330,6 +1331,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7135534848390685140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 3
 --- !u!114 &3351296584005733219
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1342,7 +1356,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e12a868156dee54484c56dc6e6267e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BooEnemy
-  maxHealth: 5
   destroyDelay: 2
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}

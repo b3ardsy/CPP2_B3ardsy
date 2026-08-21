@@ -1,21 +1,41 @@
 using System;
 using UnityEngine;
 
-public class Health : MonoBehaviour
+public class Health : MonoBehaviour, IDamageable
 {
+    // =========================================================
+    // HEALTH
+    // =========================================================
+
     [Header("Health")]
     [SerializeField] private int maxHealth = 3;
 
     private int currentHealth;
 
-    public int CurrentHealth => currentHealth;
-    public int MaxHealth => maxHealth;
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
+
+    public int CurrentHealth =>
+        currentHealth;
+
+    public int MaxHealth =>
+        maxHealth;
 
     public bool IsDead =>
         currentHealth <= 0;
 
+    // =========================================================
+    // EVENTS
+    // =========================================================
+
     public event Action<int, int> OnHealthChanged;
+
     public event Action OnDied;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -28,7 +48,13 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
-    public bool TakeDamage(int damage)
+    // =========================================================
+    // DAMAGE
+    // =========================================================
+
+    public bool TakeDamage(
+        int damage
+    )
     {
         if (
             IsDead ||
@@ -61,7 +87,13 @@ public class Health : MonoBehaviour
         return true;
     }
 
-    public void Heal(int amount)
+    // =========================================================
+    // HEALING
+    // =========================================================
+
+    public void Heal(
+        int amount
+    )
     {
         if (
             IsDead ||
@@ -100,6 +132,10 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
+    // =========================================================
+    // MAXIMUM HEALTH
+    // =========================================================
+
     public void IncreaseMaxHealth(
         int amount,
         bool restoreFullHealth = true
@@ -134,6 +170,10 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
+    // =========================================================
+    // EVENTS
+    // =========================================================
+
     private void NotifyHealthChanged()
     {
         OnHealthChanged?.Invoke(
@@ -141,6 +181,10 @@ public class Health : MonoBehaviour
             maxHealth
         );
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

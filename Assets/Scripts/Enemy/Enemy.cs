@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(Health))]
 public abstract class Enemy : MonoBehaviour
 {
     // =========================================================
@@ -100,7 +101,7 @@ public abstract class Enemy : MonoBehaviour
      * Compatibility property for derived enemy classes.
      *
      * Existing enemies such as BooEnemy can continue checking
-     * "isDead" without needing to know about the Health component.
+     * "isDead" without needing to know about Health directly.
      */
     protected bool isDead =>
         health != null &&
@@ -112,6 +113,12 @@ public abstract class Enemy : MonoBehaviour
     public bool IsEntangled =>
         isEntangled;
 
+    /*
+     * These passthrough properties remain useful to anything
+     * that needs to inspect an Enemy's health without modifying it.
+     *
+     * The actual health data still belongs entirely to Health.
+     */
     public int CurrentHealth =>
         health != null
             ? health.CurrentHealth
@@ -127,38 +134,8 @@ public abstract class Enemy : MonoBehaviour
     // =========================================================
 
     /*
-     * Temporary compatibility bridge.
-     *
-     * Existing scripts such as EnemyHealthBar can continue
-     * subscribing to Enemy.OnHealthChanged while the actual
-     * health data now lives inside the Health component.
-     */
-    public event Action<int, int> OnHealthChanged
-    {
-        add
-        {
-            if (health != null)
-            {
-                health.OnHealthChanged +=
-                    value;
-            }
-        }
-
-        remove
-        {
-            if (health != null)
-            {
-                health.OnHealthChanged -=
-                    value;
-            }
-        }
-    }
-
-    /*
-     * Enemy-specific death event.
-     *
-     * This remains on Enemy for now because other systems may
-     * already be listening for an enemy's completed death state.
+     * Enemy-specific events remain here because they describe
+     * enemy behaviour rather than generic health state.
      */
     public event Action OnDied;
 
@@ -220,6 +197,11 @@ public abstract class Enemy : MonoBehaviour
         health =
             GetComponent<Health>();
 
+        /*
+         * RequireComponent should guarantee this exists.
+         * Keep the check as defensive protection in case a prefab
+         * or scene object somehow becomes invalid.
+         */
         if (health == null)
         {
             Debug.LogError(
@@ -286,6 +268,12 @@ public abstract class Enemy : MonoBehaviour
     // DAMAGE
     // =========================================================
 
+    /*
+     * Enemy still exposes TakeDamage so existing combat code
+     * does not need to change yet.
+     *
+     * The actual health calculation is delegated to Health.
+     */
     public virtual void TakeDamage(
         int damage
     )
@@ -309,17 +297,18 @@ public abstract class Enemy : MonoBehaviour
         }
 
         /*
-         * Health fires OnDied immediately when it reaches 0.
-         *
-         * HandleHealthDepleted() will therefore already have
-         * started the enemy death sequence before execution
-         * reaches this point.
+         * If Health reached zero, OnDied already fired and
+         * HandleHealthDepleted() already started the death sequence.
          */
         if (isDead)
         {
             return;
         }
 
+        /*
+         * Health owns damage values.
+         * Enemy owns the enemy-specific reaction to surviving damage.
+         */
         if (animator != null)
         {
             animator.SetTrigger(
@@ -516,7 +505,8 @@ public abstract class Enemy : MonoBehaviour
         DestroyEntangleEffect();
 
         /*
-         * Health already reached 0 before this method was called.
+         * Health already reached zero before this method was called.
+         *
          * Enemy is responsible only for reacting to that death.
          */
         OnDied?.Invoke();
@@ -569,7 +559,10 @@ public abstract class Enemy : MonoBehaviour
                 Vector3.zero
             );
 
-        foreach (Renderer enemyRenderer in renderers)
+        foreach (
+            Renderer enemyRenderer
+            in renderers
+        )
         {
             if (
                 enemyRenderer == null ||
@@ -623,7 +616,10 @@ public abstract class Enemy : MonoBehaviour
         Collider[] enemyColliders =
             GetComponentsInChildren<Collider>();
 
-        foreach (Collider enemyCollider in enemyColliders)
+        foreach (
+            Collider enemyCollider
+            in enemyColliders
+        )
         {
             if (enemyCollider == null)
             {
