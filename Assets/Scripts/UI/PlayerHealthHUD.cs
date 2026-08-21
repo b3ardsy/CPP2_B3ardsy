@@ -4,27 +4,56 @@ using UnityEngine;
 
 public class PlayerHealthHUD : MonoBehaviour
 {
+    // =========================================================
+    // HEALTH DISPLAY SETTINGS
+    // =========================================================
+
+    /*
+     * The HUD represents player health in quarter-heart units.
+     *
+     * 4 health = 1 full heart.
+     *
+     * This is a UI/display rule, so the HUD owns this value
+     * instead of depending on PlayerStatsNew for it.
+     */
+    private const int HealthPerHeart = 4;
+
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     [Header("References")]
-    [SerializeField] private PlayerStatsNew playerStats;
+    [SerializeField] private Health health;
     [SerializeField] private HeartUI heartPrefab;
     [SerializeField] private Transform heartsContainer;
+
+    // =========================================================
+    // HEART CONTAINER ANIMATION
+    // =========================================================
 
     [Header("Heart Container Animation")]
     [Tooltip(
         "How long each individual heart takes to refill " +
         "during a maximum-health upgrade."
     )]
-    [SerializeField] private float heartRefillDuration = 0.3f;
+    [SerializeField]
+    private float heartRefillDuration = 0.3f;
 
     [Tooltip(
         "Small delay between each heart filling."
     )]
-    [SerializeField] private float delayBetweenHearts = 0.05f;
+    [SerializeField]
+    private float delayBetweenHearts = 0.05f;
 
     [Tooltip(
         "Small amount of extra time added after the final heart fills."
     )]
-    [SerializeField] private float animationEndPadding = 0.15f;
+    [SerializeField]
+    private float animationEndPadding = 0.15f;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private readonly List<HeartUI> hearts =
         new List<HeartUI>();
@@ -33,22 +62,27 @@ public class PlayerHealthHUD : MonoBehaviour
 
     private int previousMaxHealth;
 
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
+
+    private void Awake()
+    {
+        FindReferences();
+    }
+
     private void Start()
     {
-        if (playerStats == null)
-        {
-            playerStats =
-                FindAnyObjectByType<PlayerStatsNew>();
-        }
-
-        if (playerStats == null)
+        if (health == null)
         {
             Debug.LogError(
-                $"{name}: PlayerHealthHUD could not find PlayerStatsNew.",
+                $"{name}: PlayerHealthHUD could not find Health.",
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
@@ -62,24 +96,66 @@ public class PlayerHealthHUD : MonoBehaviour
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
-        playerStats.OnHealthChanged +=
+        health.OnHealthChanged +=
             HandleHealthChanged;
 
         previousMaxHealth =
-            playerStats.MaxHealth;
+            health.MaxHealth;
 
         EnsureHeartCount(
-            playerStats.MaxHealth
+            health.MaxHealth
         );
 
         UpdateHeartsImmediately(
-            playerStats.CurrentHealth
+            health.CurrentHealth
         );
     }
+
+    private void FindReferences()
+    {
+        if (health != null)
+        {
+            return;
+        }
+
+        GameObject playerObject =
+            GameObject.FindGameObjectWithTag(
+                "Player"
+            );
+
+        if (playerObject == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerHealthHUD could not find " +
+                "a GameObject tagged Player.",
+                this
+            );
+
+            return;
+        }
+
+        health =
+            playerObject.GetComponent<Health>();
+
+        if (health == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerHealthHUD found the Player, " +
+                "but it does not have a Health component.",
+                this
+            );
+        }
+    }
+
+    // =========================================================
+    // HEALTH EVENTS
+    // =========================================================
 
     private void HandleHealthChanged(
         int currentHealth,
@@ -87,7 +163,8 @@ public class PlayerHealthHUD : MonoBehaviour
     )
     {
         bool maxHealthIncreased =
-            maxHealth > previousMaxHealth;
+            maxHealth >
+            previousMaxHealth;
 
         if (maxHealthIncreased)
         {
@@ -105,6 +182,9 @@ public class PlayerHealthHUD : MonoBehaviour
                 StopCoroutine(
                     healthUpgradeCoroutine
                 );
+
+                healthUpgradeCoroutine =
+                    null;
             }
 
             healthUpgradeCoroutine =
@@ -125,7 +205,8 @@ public class PlayerHealthHUD : MonoBehaviour
                     healthUpgradeCoroutine
                 );
 
-                healthUpgradeCoroutine = null;
+                healthUpgradeCoroutine =
+                    null;
             }
 
             EnsureHeartCount(
@@ -153,7 +234,7 @@ public class PlayerHealthHUD : MonoBehaviour
         int requiredHeartCount =
             Mathf.CeilToInt(
                 maxHealth /
-                (float)PlayerStatsNew.HealthPerHeart
+                (float)HealthPerHeart
             );
 
         /*
@@ -162,7 +243,10 @@ public class PlayerHealthHUD : MonoBehaviour
          * Existing hearts stay untouched so their current
          * radial fill can animate naturally.
          */
-        while (hearts.Count < requiredHeartCount)
+        while (
+            hearts.Count <
+            requiredHeartCount
+        )
         {
             HeartUI newHeart =
                 Instantiate(
@@ -189,7 +273,10 @@ public class PlayerHealthHUD : MonoBehaviour
          * Also supports future situations where maximum
          * health might decrease.
          */
-        while (hearts.Count > requiredHeartCount)
+        while (
+            hearts.Count >
+            requiredHeartCount
+        )
         {
             int lastIndex =
                 hearts.Count - 1;
@@ -218,7 +305,11 @@ public class PlayerHealthHUD : MonoBehaviour
         int currentHealth
     )
     {
-        for (int i = 0; i < hearts.Count; i++)
+        for (
+            int i = 0;
+            i < hearts.Count;
+            i++
+        )
         {
             int healthForThisHeart =
                 CalculateHealthForHeart(
@@ -244,14 +335,18 @@ public class PlayerHealthHUD : MonoBehaviour
          * Fill hearts sequentially from left to right.
          *
          * Hearts already at their target value are skipped.
-         * The newly-added heart begins empty, so it naturally
-         * becomes the final heart in the sequence.
+         * Newly-added hearts begin empty, so they naturally
+         * become the final hearts in the sequence.
          */
 
         List<int> heartsToAnimate =
             new List<int>();
 
-        for (int i = 0; i < hearts.Count; i++)
+        for (
+            int i = 0;
+            i < hearts.Count;
+            i++
+        )
         {
             int targetHealthForHeart =
                 CalculateHealthForHeart(
@@ -261,18 +356,24 @@ public class PlayerHealthHUD : MonoBehaviour
 
             float targetFill =
                 (float)targetHealthForHeart /
-                PlayerStatsNew.HealthPerHeart;
+                HealthPerHeart;
 
             float startingFill =
                 hearts[i].CurrentFillAmount;
 
-            if (targetFill > startingFill)
+            if (
+                targetFill >
+                startingFill
+            )
             {
                 heartsToAnimate.Add(
                     i
                 );
             }
-            else if (targetFill < startingFill)
+            else if (
+                targetFill <
+                startingFill
+            )
             {
                 hearts[i].SetFillAmount(
                     targetFill
@@ -280,7 +381,11 @@ public class PlayerHealthHUD : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < heartsToAnimate.Count; i++)
+        for (
+            int i = 0;
+            i < heartsToAnimate.Count;
+            i++
+        )
         {
             int heartIndex =
                 heartsToAnimate[i];
@@ -296,7 +401,7 @@ public class PlayerHealthHUD : MonoBehaviour
 
             float targetFill =
                 (float)targetHealthForHeart /
-                PlayerStatsNew.HealthPerHeart;
+                HealthPerHeart;
 
             float startingFill =
                 heart.CurrentFillAmount;
@@ -314,8 +419,10 @@ public class PlayerHealthHUD : MonoBehaviour
              * to animate after this one.
              */
             if (
-                i < heartsToAnimate.Count - 1 &&
-                delayBetweenHearts > 0f
+                i <
+                    heartsToAnimate.Count - 1 &&
+                delayBetweenHearts >
+                    0f
             )
             {
                 yield return new WaitForSeconds(
@@ -331,7 +438,8 @@ public class PlayerHealthHUD : MonoBehaviour
             targetHealth
         );
 
-        healthUpgradeCoroutine = null;
+        healthUpgradeCoroutine =
+            null;
     }
 
     private IEnumerator AnimateSingleHeart(
@@ -354,9 +462,13 @@ public class PlayerHealthHUD : MonoBehaviour
             yield break;
         }
 
-        float elapsedTime = 0f;
+        float elapsedTime =
+            0f;
 
-        while (elapsedTime < heartRefillDuration)
+        while (
+            elapsedTime <
+            heartRefillDuration
+        )
         {
             elapsedTime +=
                 Time.deltaTime;
@@ -400,12 +512,23 @@ public class PlayerHealthHUD : MonoBehaviour
         int targetHeartCount =
             Mathf.CeilToInt(
                 targetMaxHealth /
-                (float)PlayerStatsNew.HealthPerHeart
+                (float)HealthPerHeart
             );
 
-        int heartsThatNeedRefilling = 0;
+        int heartsThatNeedRefilling =
+            0;
 
-        for (int i = 0; i < targetHeartCount; i++)
+        int startingHeartCount =
+            Mathf.CeilToInt(
+                startingMaxHealth /
+                (float)HealthPerHeart
+            );
+
+        for (
+            int i = 0;
+            i < targetHeartCount;
+            i++
+        )
         {
             int startingHealthForHeart;
 
@@ -413,15 +536,13 @@ public class PlayerHealthHUD : MonoBehaviour
              * Hearts that did not exist before the upgrade
              * are treated as completely empty.
              */
-            int startingHeartCount =
-                Mathf.CeilToInt(
-                    startingMaxHealth /
-                    (float)PlayerStatsNew.HealthPerHeart
-                );
-
-            if (i >= startingHeartCount)
+            if (
+                i >=
+                startingHeartCount
+            )
             {
-                startingHealthForHeart = 0;
+                startingHealthForHeart =
+                    0;
             }
             else
             {
@@ -447,7 +568,10 @@ public class PlayerHealthHUD : MonoBehaviour
             }
         }
 
-        if (heartsThatNeedRefilling <= 0)
+        if (
+            heartsThatNeedRefilling <=
+            0
+        )
         {
             return animationEndPadding;
         }
@@ -482,25 +606,43 @@ public class PlayerHealthHUD : MonoBehaviour
             currentHealth -
             (
                 heartIndex *
-                PlayerStatsNew.HealthPerHeart
+                HealthPerHeart
             );
 
         return
             Mathf.Clamp(
                 healthForThisHeart,
                 0,
-                PlayerStatsNew.HealthPerHeart
+                HealthPerHeart
             );
     }
 
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
     private void OnDestroy()
     {
-        if (playerStats != null)
+        if (health != null)
         {
-            playerStats.OnHealthChanged -=
+            health.OnHealthChanged -=
                 HandleHealthChanged;
         }
+
+        if (healthUpgradeCoroutine != null)
+        {
+            StopCoroutine(
+                healthUpgradeCoroutine
+            );
+
+            healthUpgradeCoroutine =
+                null;
+        }
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

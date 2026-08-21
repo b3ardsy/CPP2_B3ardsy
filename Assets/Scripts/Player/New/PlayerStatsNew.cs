@@ -1,36 +1,58 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(Health))]
 public class PlayerStatsNew : MonoBehaviour
 {
-    [Header("Health")]
-    [Tooltip("Maximum health in quarter-heart units. 4 health = 1 full heart.")]
-    [SerializeField] private int maxHealth = 12;
+    // =========================================================
+    // HEALTH
+    // =========================================================
 
     public const int HealthPerHeart = 4;
 
+    // =========================================================
+    // DAMAGE PROTECTION
+    // =========================================================
+
     [Header("Damage Protection")]
-    [SerializeField] private float invulnerabilityDuration = 0.4f;
+    [SerializeField]
+    private float invulnerabilityDuration = 0.4f;
+
+    // =========================================================
+    // HIT REACTION
+    // =========================================================
 
     [Header("Hit Reaction")]
     [Tooltip(
         "How long movement, combat, and dodge stay disabled " +
         "after a non-lethal hit."
     )]
-    [SerializeField] private float hitReactionDuration = 0.4f;
-    [SerializeField] private float axeHitReactionDuration = 0.65f;
+    [SerializeField]
+    private float hitReactionDuration = 0.4f;
+
+    [SerializeField]
+    private float axeHitReactionDuration = 0.65f;
+
+    // =========================================================
+    // DEATH
+    // =========================================================
 
     [Header("Death")]
     [Tooltip(
-    "How long the death animation plays before the Game Over banner appears."
-)]
-    [SerializeField] private float deathAnimationDelay = 2f;
+        "How long the death animation plays before " +
+        "the Game Over banner appears."
+    )]
+    [SerializeField]
+    private float deathAnimationDelay = 2f;
 
     [Tooltip(
-        "How long the Game Over banner remains before returning to the Main Menu."
+        "How long the Game Over banner remains before " +
+        "returning to the Main Menu."
     )]
-    [SerializeField] private float gameOverDelay = 3f;
+    [SerializeField]
+    private float gameOverDelay = 3f;
 
     [Tooltip(
         "Scene loaded after the Game Over sequence."
@@ -40,18 +62,19 @@ public class PlayerStatsNew : MonoBehaviour
         "Game_Start";
 
     [TextArea]
-    [Tooltip("Message displayed after the player dies.")]
+    [Tooltip(
+        "Message displayed after the player dies."
+    )]
     [SerializeField]
     private string gameOverMessage =
         "GAME OVER";
 
-    [Header("Death UI")]
-    [Tooltip(
-        "Optional HUD notification banner. " +
-        "If left empty, it will be found automatically."
-    )]
+    // =========================================================
+    // REFERENCES
+    // =========================================================
 
     [Header("References")]
+    [SerializeField] private Health health;
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement3DNew playerMovement;
     [SerializeField] private PlayerCombatNew playerCombat;
@@ -59,7 +82,9 @@ public class PlayerStatsNew : MonoBehaviour
     [SerializeField] private PlayerLockOn playerLockOn;
     [SerializeField] private HUDNotificationBanner notificationBanner;
 
-    private int currentHealth;
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     /*
      * Short post-hit invulnerability.
@@ -75,27 +100,43 @@ public class PlayerStatsNew : MonoBehaviour
      */
     private int shieldProtectionSources;
 
-    private bool isDead;
     private bool isInHitReaction;
+
+    /*
+     * Health.IsDead becomes true before Health.OnDied is raised.
+     *
+     * This separate flag prevents the player-specific death
+     * sequence from running more than once.
+     */
+    private bool deathHandled;
 
     private Coroutine invulnerabilityCoroutine;
     private Coroutine hitReactionCoroutine;
     private Coroutine deathCoroutine;
 
-    public int CurrentHealth =>
-        currentHealth;
-
-    public int MaxHealth =>
-        maxHealth;
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
 
     /*
-     * Broadcast whenever current or maximum health changes.
-     * The HUD can subscribe to this instead of polling every frame.
+     * Compatibility properties.
+     *
+     * Existing systems can continue reading health through
+     * PlayerStatsNew while the actual data lives in Health.
      */
-    public event System.Action<int, int> OnHealthChanged;
+    public int CurrentHealth =>
+        health != null
+            ? health.CurrentHealth
+            : 0;
+
+    public int MaxHealth =>
+        health != null
+            ? health.MaxHealth
+            : 0;
 
     public bool IsDead =>
-        isDead;
+        health != null &&
+        health.IsDead;
 
     /*
      * Reports all current forms of damage invulnerability.
@@ -109,6 +150,24 @@ public class PlayerStatsNew : MonoBehaviour
 
     public bool IsInHitReaction =>
         isInHitReaction;
+
+    // =========================================================
+    // COMPATIBILITY EVENTS
+    // =========================================================
+
+    /*
+     * Existing HUD code may still subscribe to
+     * PlayerStatsNew.OnHealthChanged.
+     *
+     * For now, PlayerStatsNew relays the event from Health.
+     * Later the HUD can subscribe directly to Health, just like
+     * EnemyHealthBar now does.
+     */
+    public event Action<int, int> OnHealthChanged;
+
+    // =========================================================
+    // ANIMATOR PARAMETERS
+    // =========================================================
 
     private static readonly int HitTrigger =
         Animator.StringToHash("Hit");
@@ -155,33 +214,63 @@ public class PlayerStatsNew : MonoBehaviour
     private static readonly int LockOnVerticalFloat =
         Animator.StringToHash("LockOnVertical");
 
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
+
     private void Awake()
     {
-        maxHealth =
-            Mathf.Max(
-                HealthPerHeart,
-                maxHealth
+        FindReferences();
+
+        shieldProtectionSources =
+            0;
+
+        deathHandled =
+            false;
+
+        if (health == null)
+        {
+            Debug.LogError(
+                $"{name}: PlayerStatsNew requires a Health component.",
+                this
             );
 
-        currentHealth =
-            maxHealth;
+            enabled =
+                false;
 
-        shieldProtectionSources = 0;
+            return;
+        }
 
-        FindReferences();
+        health.OnHealthChanged +=
+            HandleHealthChanged;
+
+        health.OnDied +=
+            HandleHealthDepleted;
     }
 
     private void Start()
     {
         /*
-         * Notify listeners once all scene objects have completed Awake().
-         * This gives the HUD an initial health value when the scene starts.
+         * Preserve the old PlayerStatsNew behaviour of supplying
+         * listeners with the player's initial health after Awake.
+         *
+         * This temporary compatibility event can be removed once
+         * the HUD talks directly to Health.
          */
-        NotifyHealthChanged();
+        OnHealthChanged?.Invoke(
+            CurrentHealth,
+            MaxHealth
+        );
     }
 
     private void FindReferences()
     {
+        if (health == null)
+        {
+            health =
+                GetComponent<Health>();
+        }
+
         if (animator == null)
         {
             animator =
@@ -220,10 +309,32 @@ public class PlayerStatsNew : MonoBehaviour
     }
 
     // =========================================================
+    // HEALTH EVENT RELAY
+    // =========================================================
+
+    private void HandleHealthChanged(
+        int currentHealth,
+        int maxHealth
+    )
+    {
+        OnHealthChanged?.Invoke(
+            currentHealth,
+            maxHealth
+        );
+    }
+
+    private void HandleHealthDepleted()
+    {
+        Die();
+    }
+
+    // =========================================================
     // DAMAGE
     // =========================================================
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(
+        int damage
+    )
     {
         if (
             IsDamageBlocked() ||
@@ -239,7 +350,9 @@ public class PlayerStatsNew : MonoBehaviour
         );
     }
 
-    public void TakeAxeDamage(int damage)
+    public void TakeAxeDamage(
+        int damage
+    )
     {
         if (
             IsDamageBlocked() ||
@@ -258,7 +371,7 @@ public class PlayerStatsNew : MonoBehaviour
     private bool IsDamageBlocked()
     {
         return
-            isDead ||
+            IsDead ||
             isInvulnerable ||
             IsShieldProtected;
     }
@@ -268,24 +381,27 @@ public class PlayerStatsNew : MonoBehaviour
         bool useAxeHitReaction
     )
     {
-        currentHealth =
-            Mathf.Clamp(
-                currentHealth - damage,
-                0,
-                maxHealth
+        if (health == null)
+        {
+            return;
+        }
+
+        bool damageApplied =
+            health.TakeDamage(
+                damage
             );
 
-        Debug.Log(
-            $"{name} took {damage} damage. " +
-            $"Health: {currentHealth}/{maxHealth}",
-            this
-        );
-
-        NotifyHealthChanged();
-
-        if (currentHealth <= 0)
+        if (!damageApplied)
         {
-            Die();
+            return;
+        }
+
+        /*
+         * If this hit reduced Health to zero,
+         * Health.OnDied has already invoked Die().
+         */
+        if (IsDead)
+        {
             return;
         }
 
@@ -307,7 +423,7 @@ public class PlayerStatsNew : MonoBehaviour
 
     public void AddShieldProtection()
     {
-        if (isDead)
+        if (IsDead)
         {
             return;
         }
@@ -341,49 +457,42 @@ public class PlayerStatsNew : MonoBehaviour
     // HEALTH
     // =========================================================
 
-    public void Heal(int amount)
+    /*
+     * Compatibility methods.
+     *
+     * Existing pickups and progression systems can continue
+     * talking to PlayerStatsNew while Health now performs the
+     * actual health operation.
+     */
+    public void Heal(
+        int amount
+    )
     {
         if (
-            isDead ||
+            health == null ||
+            IsDead ||
             amount <= 0
         )
         {
             return;
         }
 
-        currentHealth =
-            Mathf.Clamp(
-                currentHealth + amount,
-                0,
-                maxHealth
-            );
-
-        Debug.Log(
-            $"{name} healed {amount}. " +
-            $"Health: {currentHealth}/{maxHealth}",
-            this
+        health.Heal(
+            amount
         );
-
-        NotifyHealthChanged();
     }
 
     public void RestoreFullHealth()
     {
-        if (isDead)
+        if (
+            health == null ||
+            IsDead
+        )
         {
             return;
         }
 
-        currentHealth =
-            maxHealth;
-
-        Debug.Log(
-            $"{name} restored to full health. " +
-            $"Health: {currentHealth}/{maxHealth}",
-            this
-        );
-
-        NotifyHealthChanged();
+        health.RestoreFullHealth();
     }
 
     /*
@@ -393,53 +502,22 @@ public class PlayerStatsNew : MonoBehaviour
      * By default the new health capacity is also filled.
      */
     public void IncreaseMaxHealth(
-    int amount,
-    bool restoreFullHealth = true
-)
+        int amount,
+        bool restoreFullHealth = true
+    )
     {
         if (
-            isDead ||
+            health == null ||
+            IsDead ||
             amount <= 0
         )
         {
             return;
         }
 
-        maxHealth =
-            Mathf.Max(
-                1,
-                maxHealth + amount
-            );
-
-        if (restoreFullHealth)
-        {
-            currentHealth =
-                maxHealth;
-        }
-        else
-        {
-            currentHealth =
-                Mathf.Clamp(
-                    currentHealth,
-                    0,
-                    maxHealth
-                );
-        }
-
-        Debug.Log(
-            $"{name} maximum health increased by {amount}. " +
-            $"Health: {currentHealth}/{maxHealth}",
-            this
-        );
-
-        NotifyHealthChanged();
-    }
-
-    private void NotifyHealthChanged()
-    {
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
+        health.IncreaseMaxHealth(
+            amount,
+            restoreFullHealth
         );
     }
 
@@ -455,7 +533,8 @@ public class PlayerStatsNew : MonoBehaviour
                 hitReactionCoroutine
             );
 
-            hitReactionCoroutine = null;
+            hitReactionCoroutine =
+                null;
         }
 
         hitReactionCoroutine =
@@ -466,7 +545,8 @@ public class PlayerStatsNew : MonoBehaviour
 
     private IEnumerator HitReactionCoroutine()
     {
-        isInHitReaction = true;
+        isInHitReaction =
+            true;
 
         DisableTemporaryPlayerActions();
         PlayHitAnimationImmediately();
@@ -475,13 +555,16 @@ public class PlayerStatsNew : MonoBehaviour
             hitReactionDuration
         );
 
-        if (!isDead)
+        if (!IsDead)
         {
             EnableTemporaryPlayerActions();
         }
 
-        isInHitReaction = false;
-        hitReactionCoroutine = null;
+        isInHitReaction =
+            false;
+
+        hitReactionCoroutine =
+            null;
     }
 
     private void PlayHitAnimationImmediately()
@@ -522,7 +605,8 @@ public class PlayerStatsNew : MonoBehaviour
                 hitReactionCoroutine
             );
 
-            hitReactionCoroutine = null;
+            hitReactionCoroutine =
+                null;
         }
 
         hitReactionCoroutine =
@@ -533,7 +617,8 @@ public class PlayerStatsNew : MonoBehaviour
 
     private IEnumerator AxeHitReactionCoroutine()
     {
-        isInHitReaction = true;
+        isInHitReaction =
+            true;
 
         DisableTemporaryPlayerActions();
         PlayAxeHitAnimationImmediately();
@@ -542,13 +627,16 @@ public class PlayerStatsNew : MonoBehaviour
             axeHitReactionDuration
         );
 
-        if (!isDead)
+        if (!IsDead)
         {
             EnableTemporaryPlayerActions();
         }
 
-        isInHitReaction = false;
-        hitReactionCoroutine = null;
+        isInHitReaction =
+            false;
+
+        hitReactionCoroutine =
+            null;
     }
 
     private void PlayAxeHitAnimationImmediately()
@@ -589,7 +677,8 @@ public class PlayerStatsNew : MonoBehaviour
                 invulnerabilityCoroutine
             );
 
-            invulnerabilityCoroutine = null;
+            invulnerabilityCoroutine =
+                null;
         }
 
         invulnerabilityCoroutine =
@@ -600,18 +689,21 @@ public class PlayerStatsNew : MonoBehaviour
 
     private IEnumerator InvulnerabilityCoroutine()
     {
-        isInvulnerable = true;
+        isInvulnerable =
+            true;
 
         yield return new WaitForSeconds(
             invulnerabilityDuration
         );
 
-        if (!isDead)
+        if (!IsDead)
         {
-            isInvulnerable = false;
+            isInvulnerable =
+                false;
         }
 
-        invulnerabilityCoroutine = null;
+        invulnerabilityCoroutine =
+            null;
     }
 
     // =========================================================
@@ -620,19 +712,25 @@ public class PlayerStatsNew : MonoBehaviour
 
     private void Die()
     {
-        if (isDead)
+        if (deathHandled)
         {
             return;
         }
 
-        isDead = true;
-        isInvulnerable = true;
-        isInHitReaction = false;
+        deathHandled =
+            true;
+
+        isInvulnerable =
+            true;
+
+        isInHitReaction =
+            false;
 
         /*
          * Shield is no longer relevant once the player dies.
          */
-        shieldProtectionSources = 0;
+        shieldProtectionSources =
+            0;
 
         StopActiveGameplayCoroutines();
         StopPlayerActions();
@@ -707,7 +805,8 @@ public class PlayerStatsNew : MonoBehaviour
                 invulnerabilityCoroutine
             );
 
-            invulnerabilityCoroutine = null;
+            invulnerabilityCoroutine =
+                null;
         }
 
         if (hitReactionCoroutine != null)
@@ -716,7 +815,8 @@ public class PlayerStatsNew : MonoBehaviour
                 hitReactionCoroutine
             );
 
-            hitReactionCoroutine = null;
+            hitReactionCoroutine =
+                null;
         }
     }
 
@@ -761,18 +861,23 @@ public class PlayerStatsNew : MonoBehaviour
         if (playerDodge != null)
         {
             playerDodge.CancelDodge();
-            playerDodge.enabled = false;
+            playerDodge.enabled =
+                false;
         }
 
         if (playerMovement != null)
         {
             playerMovement.StopMovementImmediately();
-            playerMovement.AddMovementLock(this);
+
+            playerMovement.AddMovementLock(
+                this
+            );
         }
 
         if (playerCombat != null)
         {
-            playerCombat.enabled = false;
+            playerCombat.enabled =
+                false;
         }
     }
 
@@ -780,17 +885,21 @@ public class PlayerStatsNew : MonoBehaviour
     {
         if (playerMovement != null)
         {
-            playerMovement.RemoveMovementLock(this);
+            playerMovement.RemoveMovementLock(
+                this
+            );
         }
 
         if (playerCombat != null)
         {
-            playerCombat.enabled = true;
+            playerCombat.enabled =
+                true;
         }
 
         if (playerDodge != null)
         {
-            playerDodge.enabled = true;
+            playerDodge.enabled =
+                true;
         }
     }
 
@@ -798,29 +907,36 @@ public class PlayerStatsNew : MonoBehaviour
     {
         if (playerLockOn != null)
         {
-            playerLockOn.enabled = false;
+            playerLockOn.enabled =
+                false;
         }
 
         if (playerDodge != null)
         {
             playerDodge.CancelDodge();
-            playerDodge.enabled = false;
+
+            playerDodge.enabled =
+                false;
         }
 
         if (playerCombat != null)
         {
-            playerCombat.enabled = false;
+            playerCombat.enabled =
+                false;
         }
 
         if (playerMovement != null)
         {
             playerMovement.StopMovementImmediately();
-            playerMovement.AddMovementLock(this);
+
+            playerMovement.AddMovementLock(
+                this
+            );
         }
     }
 
     // =========================================================
-    // SCENE RESTART
+    // GAME OVER
     // =========================================================
 
     private IEnumerator DeathCoroutine()
@@ -863,10 +979,14 @@ public class PlayerStatsNew : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
     private void OnDisable()
     {
         if (
-            !isDead &&
+            !IsDead &&
             playerMovement != null
         )
         {
@@ -876,14 +996,24 @@ public class PlayerStatsNew : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.OnHealthChanged -=
+                HandleHealthChanged;
+
+            health.OnDied -=
+                HandleHealthDepleted;
+        }
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
     private void OnValidate()
     {
-        maxHealth =
-            Mathf.Max(
-                HealthPerHeart,
-                maxHealth
-            );
-
         invulnerabilityDuration =
             Mathf.Max(
                 0f,
@@ -903,10 +1033,10 @@ public class PlayerStatsNew : MonoBehaviour
             );
 
         deathAnimationDelay =
-    Mathf.Max(
-        0f,
-        deathAnimationDelay
-    );
+            Mathf.Max(
+                0f,
+                deathAnimationDelay
+            );
 
         gameOverDelay =
             Mathf.Max(
