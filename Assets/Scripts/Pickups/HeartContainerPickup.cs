@@ -2,6 +2,12 @@ using UnityEngine;
 
 public class HeartContainerPickup : MonoBehaviour
 {
+    // =========================================================
+    // HEART UPGRADE
+    // =========================================================
+
+    private const int HealthPerHeart = 4;
+
     [Header("Heart Upgrade")]
     [Tooltip(
         "Amount of maximum health added when collected. " +
@@ -9,7 +15,11 @@ public class HeartContainerPickup : MonoBehaviour
     )]
     [SerializeField]
     private int healthIncrease =
-        PlayerStatsNew.HealthPerHeart;
+        HealthPerHeart;
+
+    // =========================================================
+    // HUD
+    // =========================================================
 
     [Header("HUD")]
     [Tooltip(
@@ -18,6 +28,10 @@ public class HeartContainerPickup : MonoBehaviour
     )]
     [SerializeField]
     private PlayerHealthHUD playerHealthHUD;
+
+    // =========================================================
+    // NOTIFICATION
+    // =========================================================
 
     [Header("Notification")]
     [Tooltip(
@@ -28,10 +42,16 @@ public class HeartContainerPickup : MonoBehaviour
     private HUDNotificationBanner notificationBanner;
 
     [TextArea]
-    [Tooltip("Message displayed when the Heart Container is collected.")]
+    [Tooltip(
+        "Message displayed when the Heart Container is collected."
+    )]
     [SerializeField]
     private string pickupMessage =
         "Your vitality grows: Maximum Health Increased";
+
+    // =========================================================
+    // PICKUP EFFECT
+    // =========================================================
 
     [Header("Pickup Effect")]
     [Tooltip(
@@ -54,6 +74,10 @@ public class HeartContainerPickup : MonoBehaviour
     [SerializeField]
     private float fallbackEffectLifetime = 1.5f;
 
+    // =========================================================
+    // PICKUP
+    // =========================================================
+
     [Header("Pickup")]
     [Tooltip(
         "Optional delay before the pickup object is destroyed."
@@ -63,12 +87,12 @@ public class HeartContainerPickup : MonoBehaviour
 
     private bool hasBeenCollected;
 
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
+
     private void Awake()
     {
-        /*
-         * Scene references usually cannot be stored directly
-         * on prefab assets, so find them automatically if needed.
-         */
         if (playerHealthHUD == null)
         {
             playerHealthHUD =
@@ -82,60 +106,73 @@ public class HeartContainerPickup : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // COLLECTION
+    // =========================================================
+
     private void OnTriggerEnter(
         Collider other
     )
     {
-        if (hasBeenCollected)
+        if (
+            hasBeenCollected ||
+            !other.CompareTag("Player")
+        )
         {
             return;
         }
 
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent<PlayerStatsNew>();
+        Health health =
+            other.GetComponent<Health>();
 
-        if (playerStats == null)
+        if (health == null)
+        {
+            health =
+                other.GetComponentInParent<Health>();
+        }
+
+        if (health == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Health was not found on the Player.",
+                this
+            );
+
+            return;
+        }
+
+        if (health.IsDead)
         {
             return;
         }
 
         Collect(
-            playerStats
+            health
         );
     }
 
     private void Collect(
-        PlayerStatsNew playerStats
+        Health health
     )
     {
-        hasBeenCollected = true;
+        hasBeenCollected =
+            true;
 
-        /*
-         * Capture the old state before increasing health.
-         * The HUD uses this to determine how many hearts
-         * need to visibly refill.
-         */
         int startingHealth =
-            playerStats.CurrentHealth;
+            health.CurrentHealth;
 
         int startingMaxHealth =
-            playerStats.MaxHealth;
+            health.MaxHealth;
 
-        /*
-         * Increase maximum health and fully restore the player.
-         *
-         * This also broadcasts OnHealthChanged, which begins
-         * the HUD's Heart Container refill animation.
-         */
-        playerStats.IncreaseMaxHealth(
+        health.IncreaseMaxHealth(
             healthIncrease
         );
 
         int targetHealth =
-            playerStats.CurrentHealth;
+            health.CurrentHealth;
 
         int targetMaxHealth =
-            playerStats.MaxHealth;
+            health.MaxHealth;
 
         float effectDuration =
             CalculateEffectDuration(
@@ -146,7 +183,7 @@ public class HeartContainerPickup : MonoBehaviour
             );
 
         PlayPickupEffect(
-            playerStats.transform,
+            health.transform,
             effectDuration
         );
 
@@ -154,8 +191,7 @@ public class HeartContainerPickup : MonoBehaviour
 
         Debug.Log(
             $"{name}: Heart Container collected. " +
-            $"Player maximum health is now " +
-            $"{playerStats.MaxHealth}.",
+            $"Player maximum health is now {health.MaxHealth}.",
             this
         );
 
@@ -166,6 +202,10 @@ public class HeartContainerPickup : MonoBehaviour
             destroyDelay
         );
     }
+
+    // =========================================================
+    // NOTIFICATION
+    // =========================================================
 
     private void ShowPickupNotification()
     {
@@ -183,6 +223,10 @@ public class HeartContainerPickup : MonoBehaviour
             pickupMessage
         );
     }
+
+    // =========================================================
+    // EFFECT TIMING
+    // =========================================================
 
     private float CalculateEffectDuration(
         int startingHealth,
@@ -212,6 +256,10 @@ public class HeartContainerPickup : MonoBehaviour
                 );
     }
 
+    // =========================================================
+    // PICKUP EFFECT
+    // =========================================================
+
     private void PlayPickupEffect(
         Transform playerTransform,
         float duration
@@ -231,23 +279,13 @@ public class HeartContainerPickup : MonoBehaviour
                 playerTransform
             );
 
-        /*
-         * Spawn the effect around the middle of the player
-         * and keep it parented so it follows movement.
-         */
         effect.transform.localPosition =
             Vector3.up *
             effectHeightOffset;
 
-        /*
-         * Preserve the particle prefab's authored rotation.
-         */
         effect.transform.localRotation =
             pickupEffectPrefab.transform.localRotation;
 
-        /*
-         * Preserve the prefab's authored scale.
-         */
         effect.transform.localScale =
             pickupEffectPrefab.transform.localScale;
 
@@ -286,10 +324,6 @@ public class HeartContainerPickup : MonoBehaviour
                 continue;
             }
 
-            /*
-             * Match non-looping particle emission duration
-             * to the HUD reward animation.
-             */
             ParticleSystem.MainModule main =
                 particleSystem.main;
 
@@ -299,9 +333,6 @@ public class HeartContainerPickup : MonoBehaviour
                     duration;
             }
 
-            /*
-             * Restart the particle after adjusting duration.
-             */
             particleSystem.Stop(
                 true,
                 ParticleSystemStopBehavior
@@ -313,6 +344,10 @@ public class HeartContainerPickup : MonoBehaviour
             );
         }
     }
+
+    // =========================================================
+    // COLLIDERS
+    // =========================================================
 
     private void DisablePickupColliders()
     {
@@ -332,11 +367,15 @@ public class HeartContainerPickup : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
     private void OnValidate()
     {
         healthIncrease =
             Mathf.Max(
-                PlayerStatsNew.HealthPerHeart,
+                HealthPerHeart,
                 healthIncrease
             );
 

@@ -2,15 +2,9 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public abstract class Enemy : MonoBehaviour
+[RequireComponent(typeof(Health))]
+public abstract class Enemy : MonoBehaviour, IDamageable
 {
-    // =========================================================
-    // ENEMY STATS
-    // =========================================================
-
-    [Header("Enemy Stats")]
-    [SerializeField] protected int maxHealth = 3;
-
     // =========================================================
     // DEATH
     // =========================================================
@@ -76,13 +70,20 @@ public abstract class Enemy : MonoBehaviour
     protected Animator animator;
     protected CapsuleCollider capsuleCollider;
     protected Transform player;
+    protected Health health;
 
     // =========================================================
-    // HEALTH
+    // RUNTIME STATE
     // =========================================================
 
-    protected int currentHealth;
-    protected bool isDead;
+    /*
+     * Tracks whether the enemy-specific death sequence
+     * has already been started.
+     *
+     * Health.IsDead becomes true as soon as health reaches 0,
+     * so it cannot also be used as the guard inside Die().
+     */
+    private bool deathHandled;
 
     // =========================================================
     // ENTANGLE
@@ -96,24 +97,46 @@ public abstract class Enemy : MonoBehaviour
     // PUBLIC PROPERTIES
     // =========================================================
 
+    /*
+     * Compatibility property for derived enemy classes.
+     *
+     * Existing enemies such as BooEnemy can continue checking
+     * "isDead" without needing to know about Health directly.
+     */
+    protected bool isDead =>
+        health != null &&
+        health.IsDead;
+
     public bool IsDead =>
         isDead;
 
     public bool IsEntangled =>
         isEntangled;
 
+    /*
+     * These passthrough properties remain useful to anything
+     * that needs to inspect an Enemy's health without modifying it.
+     *
+     * The actual health data still belongs entirely to Health.
+     */
     public int CurrentHealth =>
-        currentHealth;
+        health != null
+            ? health.CurrentHealth
+            : 0;
 
     public int MaxHealth =>
-        maxHealth;
+        health != null
+            ? health.MaxHealth
+            : 0;
 
     // =========================================================
     // EVENTS
     // =========================================================
 
-    public event Action<int, int> OnHealthChanged;
-
+    /*
+     * Enemy-specific events remain here because they describe
+     * enemy behaviour rather than generic health state.
+     */
     public event Action OnDied;
 
     public event Action OnEntangled;
@@ -171,8 +194,32 @@ public abstract class Enemy : MonoBehaviour
 
     protected virtual void Awake()
     {
-        currentHealth =
-            maxHealth;
+        health =
+            GetComponent<Health>();
+
+        /*
+         * RequireComponent should guarantee this exists.
+         * Keep the check as defensive protection in case a prefab
+         * or scene object somehow becomes invalid.
+         */
+        if (health == null)
+        {
+            Debug.LogError(
+                $"{name}: Enemy requires a Health component.",
+                this
+            );
+
+            enabled =
+                false;
+
+            return;
+        }
+
+        health.OnDied +=
+            HandleHealthDepleted;
+
+        deathHandled =
+            false;
 
         animator =
             GetComponentInChildren<Animator>();
@@ -221,47 +268,58 @@ public abstract class Enemy : MonoBehaviour
     // DAMAGE
     // =========================================================
 
+    /*
+     * Enemy still exposes TakeDamage so existing combat code
+     * does not need to change yet.
+     *
+     * The actual health calculation is delegated to Health.
+     */
     public virtual void TakeDamage(
         int damage
     )
     {
+        if (
+            health == null ||
+            isDead
+        )
+        {
+            return;
+        }
+
+        bool damageApplied =
+            health.TakeDamage(
+                damage
+            );
+
+        if (!damageApplied)
+        {
+            return;
+        }
+
+        /*
+         * If Health reached zero, OnDied already fired and
+         * HandleHealthDepleted() already started the death sequence.
+         */
         if (isDead)
         {
             return;
         }
 
-        if (damage <= 0)
-        {
-            return;
-        }
-
-        currentHealth -=
-            damage;
-
-        currentHealth =
-            Mathf.Clamp(
-                currentHealth,
-                0,
-                maxHealth
-            );
-
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
-        );
-
-        if (currentHealth <= 0)
-        {
-            Die();
-            return;
-        }
-
+        /*
+         * Health owns damage values.
+         * Enemy owns the enemy-specific reaction to surviving damage.
+         */
         if (animator != null)
         {
             animator.SetTrigger(
                 HitTrigger
             );
         }
+    }
+
+    private void HandleHealthDepleted()
+    {
+        Die();
     }
 
     // =========================================================
@@ -423,10 +481,13 @@ public abstract class Enemy : MonoBehaviour
 
     protected virtual void Die()
     {
-        if (isDead)
+        if (deathHandled)
         {
             return;
         }
+
+        deathHandled =
+            true;
 
         if (entangleRoutine != null)
         {
@@ -443,9 +504,11 @@ public abstract class Enemy : MonoBehaviour
 
         DestroyEntangleEffect();
 
-        isDead =
-            true;
-
+        /*
+         * Health already reached zero before this method was called.
+         *
+         * Enemy is responsible only for reacting to that death.
+         */
         OnDied?.Invoke();
 
         if (animator != null)
@@ -496,7 +559,10 @@ public abstract class Enemy : MonoBehaviour
                 Vector3.zero
             );
 
-        foreach (Renderer enemyRenderer in renderers)
+        foreach (
+            Renderer enemyRenderer
+            in renderers
+        )
         {
             if (
                 enemyRenderer == null ||
@@ -550,7 +616,10 @@ public abstract class Enemy : MonoBehaviour
         Collider[] enemyColliders =
             GetComponentsInChildren<Collider>();
 
-        foreach (Collider enemyCollider in enemyColliders)
+        foreach (
+            Collider enemyCollider
+            in enemyColliders
+        )
         {
             if (enemyCollider == null)
             {
@@ -721,6 +790,12 @@ public abstract class Enemy : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
+        if (health != null)
+        {
+            health.OnDied -=
+                HandleHealthDepleted;
+        }
+
         if (entangleRoutine != null)
         {
             StopCoroutine(
@@ -740,12 +815,6 @@ public abstract class Enemy : MonoBehaviour
 
     protected virtual void OnValidate()
     {
-        maxHealth =
-            Mathf.Max(
-                1,
-                maxHealth
-            );
-
         destroyDelay =
             Mathf.Max(
                 0f,

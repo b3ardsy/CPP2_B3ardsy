@@ -124,7 +124,8 @@ public class TankEnemy : Enemy
     // =========================================================
 
     private NavMeshAgent agent;
-    private PlayerStatsNew playerStats;
+    private Health playerHealth;
+    private IAxeDamageable playerAxeDamageable;
 
     private TankState currentState;
 
@@ -214,7 +215,7 @@ public class TankEnemy : Enemy
             axeHitbox.DisableHitbox();
         }
 
-        FindPlayerStats();
+        FindPlayerComponents();
     }
 
     private void Start()
@@ -245,36 +246,77 @@ public class TankEnemy : Enemy
         ChooseRandomPatrolDestination();
     }
 
-    private void FindPlayerStats()
+    private void FindPlayerComponents()
     {
         if (player == null)
         {
             return;
         }
 
-        playerStats =
-            player.GetComponent<PlayerStatsNew>();
+        playerHealth =
+            player.GetComponent<Health>();
 
-        if (playerStats == null)
+        if (playerHealth == null)
         {
-            playerStats =
-                player.GetComponentInParent<PlayerStatsNew>();
+            playerHealth =
+                player.GetComponentInParent<Health>();
         }
 
-        if (playerStats == null)
+        if (playerHealth == null)
         {
-            playerStats =
-                player.GetComponentInChildren<PlayerStatsNew>();
+            playerHealth =
+                player.GetComponentInChildren<Health>();
         }
 
-        if (playerStats == null)
+        playerAxeDamageable =
+            FindPlayerAxeDamageable();
+
+        if (playerHealth == null)
         {
             Debug.LogError(
                 $"{name}: The Player does not have " +
-                "a PlayerStatsNew component.",
+                "a Health component.",
                 this
             );
         }
+
+        if (playerAxeDamageable == null)
+        {
+            Debug.LogError(
+                $"{name}: The Player does not have a component " +
+                "implementing IAxeDamageable.",
+                this
+            );
+        }
+    }
+
+    private IAxeDamageable FindPlayerAxeDamageable()
+    {
+        if (player == null)
+        {
+            return null;
+        }
+
+        MonoBehaviour[] behaviours =
+            player.GetComponentsInChildren<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour is
+                IAxeDamageable axeDamageable
+            )
+            {
+                return axeDamageable;
+            }
+        }
+
+        return null;
     }
 
     // =========================================================
@@ -295,9 +337,12 @@ public class TankEnemy : Enemy
             return;
         }
 
-        if (playerStats == null)
+        if (
+            playerHealth == null ||
+            playerAxeDamageable == null
+        )
         {
-            FindPlayerStats();
+            FindPlayerComponents();
         }
 
         // =====================================================
@@ -347,8 +392,8 @@ public class TankEnemy : Enemy
         }
 
         if (
-            playerStats != null &&
-            playerStats.IsDead
+            playerHealth != null &&
+            playerHealth.IsDead
         )
         {
             ReturnHome();
@@ -936,8 +981,9 @@ public class TankEnemy : Enemy
         }
 
         if (
-            playerStats == null ||
-            playerStats.IsDead
+            playerHealth == null ||
+            playerHealth.IsDead ||
+            playerAxeDamageable == null
         )
         {
             return;
@@ -968,7 +1014,7 @@ public class TankEnemy : Enemy
     // =========================================================
 
     public void TryDamagePlayer(
-        PlayerStatsNew targetPlayer
+        IAxeDamageable targetPlayer
     )
     {
         /*
@@ -995,15 +1041,22 @@ public class TankEnemy : Enemy
 
         if (
             targetPlayer == null ||
-            targetPlayer.IsDead
+            playerHealth == null ||
+            playerHealth.IsDead
         )
         {
             return;
         }
 
+        /*
+         * Only damage the Player this Tank is currently targeting.
+         */
         if (
-            playerStats != null &&
-            targetPlayer != playerStats
+            playerAxeDamageable != null &&
+            !ReferenceEquals(
+                targetPlayer,
+                playerAxeDamageable
+            )
         )
         {
             return;
@@ -1439,8 +1492,8 @@ public class TankEnemy : Enemy
     private bool IsPlayerDead()
     {
         return
-            playerStats != null &&
-            playerStats.IsDead;
+            playerHealth != null &&
+            playerHealth.IsDead;
     }
 
     private float GetFlatDistance(

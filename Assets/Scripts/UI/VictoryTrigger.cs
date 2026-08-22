@@ -4,6 +4,10 @@ using UnityEngine.SceneManagement;
 
 public class VictoryTrigger : MonoBehaviour
 {
+    // =========================================================
+    // VICTORY
+    // =========================================================
+
     [Header("Victory")]
     [Tooltip(
         "Message displayed when the player reaches the victory trigger."
@@ -19,6 +23,10 @@ public class VictoryTrigger : MonoBehaviour
     [SerializeField]
     private float returnDelay = 5f;
 
+    // =========================================================
+    // SCENE
+    // =========================================================
+
     [Header("Scene")]
     [Tooltip(
         "Name of the Main Menu scene."
@@ -26,6 +34,10 @@ public class VictoryTrigger : MonoBehaviour
     [SerializeField]
     private string mainMenuSceneName =
         "Game_Start";
+
+    // =========================================================
+    // REFERENCES
+    // =========================================================
 
     [Header("References")]
     [Tooltip(
@@ -35,7 +47,15 @@ public class VictoryTrigger : MonoBehaviour
     [SerializeField]
     private HUDNotificationBanner notificationBanner;
 
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
+
     private bool victoryTriggered;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -46,6 +66,10 @@ public class VictoryTrigger : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // TRIGGER
+    // =========================================================
+
     private void OnTriggerEnter(
         Collider other
     )
@@ -55,10 +79,7 @@ public class VictoryTrigger : MonoBehaviour
             return;
         }
 
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent<PlayerStatsNew>();
-
-        if (playerStats == null)
+        if (!IsPlayerCollider(other))
         {
             return;
         }
@@ -66,9 +87,44 @@ public class VictoryTrigger : MonoBehaviour
         TriggerVictory();
     }
 
+    private bool IsPlayerCollider(
+        Collider other
+    )
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        Transform currentTransform =
+            other.transform;
+
+        while (currentTransform != null)
+        {
+            if (
+                currentTransform.CompareTag(
+                    "Player"
+                )
+            )
+            {
+                return true;
+            }
+
+            currentTransform =
+                currentTransform.parent;
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // VICTORY
+    // =========================================================
+
     private void TriggerVictory()
     {
-        victoryTriggered = true;
+        victoryTriggered =
+            true;
 
         DisableTriggerColliders();
 
@@ -98,6 +154,10 @@ public class VictoryTrigger : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // SCENE TRANSITION
+    // =========================================================
+
     private IEnumerator ReturnToMainMenu()
     {
         yield return new WaitForSeconds(
@@ -109,12 +169,19 @@ public class VictoryTrigger : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // COLLIDERS
+    // =========================================================
+
     private void DisableTriggerColliders()
     {
         Collider[] colliders =
             GetComponentsInChildren<Collider>();
 
-        foreach (Collider triggerCollider in colliders)
+        foreach (
+            Collider triggerCollider
+            in colliders
+        )
         {
             if (triggerCollider != null)
             {
@@ -123,6 +190,10 @@ public class VictoryTrigger : MonoBehaviour
             }
         }
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

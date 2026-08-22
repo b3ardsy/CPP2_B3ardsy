@@ -9,14 +9,17 @@ public class TankWeaponHitbox : MonoBehaviour
 
     private bool hitboxActive;
 
-    // Prevents multiple player colliders or repeated physics frames
-    // from dealing damage more than once during one hit window.
-    private readonly HashSet<PlayerStatsNew> playersHitThisWindow =
-        new HashSet<PlayerStatsNew>();
+    /*
+     * Prevents multiple Player colliders or repeated physics frames
+     * from dealing damage more than once during one hit window.
+     */
+    private readonly HashSet<IAxeDamageable> playersHitThisWindow =
+        new HashSet<IAxeDamageable>();
 
     private void Awake()
     {
-        hitboxCollider = GetComponent<Collider>();
+        hitboxCollider =
+            GetComponent<Collider>();
 
         if (!hitboxCollider.isTrigger)
         {
@@ -26,10 +29,12 @@ public class TankWeaponHitbox : MonoBehaviour
                 this
             );
 
-            hitboxCollider.isTrigger = true;
+            hitboxCollider.isTrigger =
+                true;
         }
 
-        owner = GetComponentInParent<TankEnemy>();
+        owner =
+            GetComponentInParent<TankEnemy>();
 
         if (owner == null)
         {
@@ -42,58 +47,156 @@ public class TankWeaponHitbox : MonoBehaviour
         DisableHitbox();
     }
 
-    public void SetOwner(TankEnemy tankEnemy)
+    public void SetOwner(
+        TankEnemy tankEnemy
+    )
     {
-        owner = tankEnemy;
+        owner =
+            tankEnemy;
     }
 
     public void EnableHitbox()
     {
         playersHitThisWindow.Clear();
-        hitboxActive = true;
+
+        hitboxActive =
+            true;
     }
 
     public void DisableHitbox()
     {
-        hitboxActive = false;
+        hitboxActive =
+            false;
+
         playersHitThisWindow.Clear();
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(
+        Collider other
+    )
     {
-        TryHitPlayer(other);
+        TryHitPlayer(
+            other
+        );
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerStay(
+        Collider other
+    )
     {
-        // Handles the case where the player is already overlapping
-        // when the animation enables the hit window.
-        TryHitPlayer(other);
+        /*
+         * Handles the case where the Player is already overlapping
+         * when the animation enables the hit window.
+         */
+        TryHitPlayer(
+            other
+        );
     }
 
-    private void TryHitPlayer(Collider other)
+    private void TryHitPlayer(
+        Collider other
+    )
     {
-        if (!hitboxActive || owner == null)
+        if (
+            !hitboxActive ||
+            owner == null
+        )
         {
             return;
         }
 
-        PlayerStatsNew targetPlayer =
-            other.GetComponentInParent<PlayerStatsNew>();
+        if (!IsPlayerCollider(other))
+        {
+            return;
+        }
+
+        IAxeDamageable targetPlayer =
+            FindAxeDamageable(
+                other
+            );
 
         if (targetPlayer == null)
         {
             return;
         }
 
-        if (playersHitThisWindow.Contains(targetPlayer))
+        if (
+            playersHitThisWindow.Contains(
+                targetPlayer
+            )
+        )
         {
             return;
         }
 
-        playersHitThisWindow.Add(targetPlayer);
+        playersHitThisWindow.Add(
+            targetPlayer
+        );
 
-        owner.TryDamagePlayer(targetPlayer);
+        owner.TryDamagePlayer(
+            targetPlayer
+        );
+    }
+
+    private IAxeDamageable FindAxeDamageable(
+        Collider other
+    )
+    {
+        if (other == null)
+        {
+            return null;
+        }
+
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour is
+                IAxeDamageable axeDamageable
+            )
+            {
+                return axeDamageable;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsPlayerCollider(
+        Collider other
+    )
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        Transform currentTransform =
+            other.transform;
+
+        while (currentTransform != null)
+        {
+            if (
+                currentTransform.CompareTag(
+                    "Player"
+                )
+            )
+            {
+                return true;
+            }
+
+            currentTransform =
+                currentTransform.parent;
+        }
+
+        return false;
     }
 
     private void OnDisable()

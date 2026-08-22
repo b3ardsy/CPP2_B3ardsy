@@ -3,18 +3,28 @@ using UnityEngine;
 
 public class PlayerShieldEffect : MonoBehaviour
 {
+    // =========================================================
+    // REFLECTION
+    // =========================================================
+
     [Header("Reflection")]
     [Tooltip(
         "Trigger collider covering the Shield bubble."
     )]
-    [SerializeField] private Collider reflectionCollider;
+    [SerializeField]
+    private Collider reflectionCollider;
+
+    // =========================================================
+    // SHRINKING
+    // =========================================================
 
     [Header("Shrinking")]
     [Tooltip(
         "How long the Shield remains at full size " +
         "before it begins shrinking."
     )]
-    [SerializeField] private float fullSizeDuration = 3f;
+    [SerializeField]
+    private float fullSizeDuration = 3f;
 
     [Tooltip(
         "How small the Shield becomes by the end " +
@@ -24,10 +34,18 @@ public class PlayerShieldEffect : MonoBehaviour
     [SerializeField]
     private float minimumScaleMultiplier = 0.1f;
 
-    private PlayerStatsNew playerStats;
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
+    private PlayerDamageController playerDamageController;
 
     private Action<PlayerShieldEffect>
         shieldEndedCallback;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private Vector3 startingScale;
 
@@ -38,9 +56,17 @@ public class PlayerShieldEffect : MonoBehaviour
     private bool protectionApplied;
     private bool hasEnded;
 
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
+
     public bool IsActive =>
         initialized &&
         !hasEnded;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -64,7 +90,7 @@ public class PlayerShieldEffect : MonoBehaviour
     }
 
     public void Initialize(
-        PlayerStatsNew stats,
+        PlayerDamageController damageController,
         float activeDuration,
         Action<PlayerShieldEffect> onShieldEnded
     )
@@ -74,10 +100,11 @@ public class PlayerShieldEffect : MonoBehaviour
             return;
         }
 
-        initialized = true;
+        initialized =
+            true;
 
-        playerStats =
-            stats;
+        playerDamageController =
+            damageController;
 
         duration =
             Mathf.Max(
@@ -98,11 +125,11 @@ public class PlayerShieldEffect : MonoBehaviour
                 duration
             );
 
-        if (playerStats == null)
+        if (playerDamageController == null)
         {
             Debug.LogError(
                 $"{name}: PlayerShieldEffect received " +
-                "no PlayerStatsNew.",
+                "no PlayerDamageController.",
                 this
             );
 
@@ -110,11 +137,15 @@ public class PlayerShieldEffect : MonoBehaviour
             return;
         }
 
-        playerStats.AddShieldProtection();
+        playerDamageController.AddShieldProtection();
 
         protectionApplied =
             true;
     }
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     private void Update()
     {
@@ -139,6 +170,10 @@ public class PlayerShieldEffect : MonoBehaviour
             EndShield();
         }
     }
+
+    // =========================================================
+    // SCALE
+    // =========================================================
 
     private void UpdateShieldScale()
     {
@@ -199,6 +234,10 @@ public class PlayerShieldEffect : MonoBehaviour
             scaleMultiplier;
     }
 
+    // =========================================================
+    // REFLECTION
+    // =========================================================
+
     private void OnTriggerEnter(
         Collider other
     )
@@ -221,6 +260,11 @@ public class PlayerShieldEffect : MonoBehaviour
             return;
         }
 
+        if (playerDamageController == null)
+        {
+            return;
+        }
+
         /*
          * Ownership is transferred to the player.
          *
@@ -228,9 +272,13 @@ public class PlayerShieldEffect : MonoBehaviour
          * reversing its current travel direction.
          */
         reflectableProjectile.Reflect(
-            playerStats.gameObject
+            playerDamageController.gameObject
         );
     }
+
+    // =========================================================
+    // END SHIELD
+    // =========================================================
 
     public void EndShield()
     {
@@ -266,11 +314,15 @@ public class PlayerShieldEffect : MonoBehaviour
         protectionApplied =
             false;
 
-        if (playerStats != null)
+        if (playerDamageController != null)
         {
-            playerStats.RemoveShieldProtection();
+            playerDamageController.RemoveShieldProtection();
         }
     }
+
+    // =========================================================
+    // CLEANUP
+    // =========================================================
 
     private void OnDestroy()
     {
@@ -293,6 +345,10 @@ public class PlayerShieldEffect : MonoBehaviour
                 null;
         }
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

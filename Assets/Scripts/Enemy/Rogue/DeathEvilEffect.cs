@@ -4,35 +4,60 @@ using UnityEngine;
 
 public class DeathEvilEffect : MonoBehaviour
 {
+    // =========================================================
+    // TIMING
+    // =========================================================
+
     [Header("Timing")]
     [Tooltip(
         "Delay before DeathEvil actually deals damage. " +
         "This gives the player a brief chance to escape."
     )]
-    [SerializeField] private float activationDelay = 0.5f;
+    [SerializeField]
+    private float activationDelay = 0.5f;
 
     [Tooltip(
         "How long the visual remains before being destroyed."
     )]
-    [SerializeField] private float lifetime = 2.5f;
+    [SerializeField]
+    private float lifetime = 2.5f;
+
+    // =========================================================
+    // DAMAGE
+    // =========================================================
 
     [Header("Damage")]
-    [SerializeField] private int damage = 1;
+    [SerializeField]
+    private int damage = 1;
 
     [Tooltip(
         "Radius around the centre of DeathEvil that " +
         "damages the player."
     )]
-    [SerializeField] private float damageRadius = 2f;
+    [SerializeField]
+    private float damageRadius = 2f;
+
+    // =========================================================
+    // GROUND
+    // =========================================================
 
     [Header("Ground")]
     [Tooltip(
         "Optional vertical offset above the ground."
     )]
-    [SerializeField] private float groundOffset = 0.05f;
+    [SerializeField]
+    private float groundOffset = 0.05f;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private bool initialized;
     private bool damageApplied;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Start()
     {
@@ -83,6 +108,10 @@ public class DeathEvilEffect : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // EFFECT ROUTINE
+    // =========================================================
+
     private IEnumerator EffectRoutine()
     {
         if (activationDelay > 0f)
@@ -113,6 +142,10 @@ public class DeathEvilEffect : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // DAMAGE
+    // =========================================================
+
     private void ApplyDamage()
     {
         if (damageApplied)
@@ -132,46 +165,180 @@ public class DeathEvilEffect : MonoBehaviour
             );
 
         /*
-         * A CharacterController/player may have several
-         * colliders, so make sure the same PlayerStatsNew
-         * is only damaged once.
+         * The player may have several colliders.
+         *
+         * Store each IDamageable target that has already
+         * received damage so the same target cannot be
+         * damaged more than once by this effect.
          */
-        HashSet<PlayerStatsNew> damagedPlayers =
-            new HashSet<PlayerStatsNew>();
+        HashSet<IDamageable> damagedTargets =
+            new HashSet<IDamageable>();
 
-        foreach (Collider hit in hits)
+        foreach (
+            Collider hit
+            in hits
+        )
         {
             if (hit == null)
             {
                 continue;
             }
 
-            PlayerStatsNew playerStats =
-                hit.GetComponentInParent<PlayerStatsNew>();
-
             if (
-                playerStats == null ||
-                playerStats.IsDead ||
-                damagedPlayers.Contains(playerStats)
+                !TryFindDamageable(
+                    hit,
+                    out IDamageable damageable,
+                    out MonoBehaviour damageableBehaviour
+                )
             )
             {
                 continue;
             }
 
-            damagedPlayers.Add(
-                playerStats
+            /*
+             * DeathEvil is an enemy attack and should
+             * damage only the Player.
+             */
+            if (
+                !IsPlayerDamageable(
+                    damageableBehaviour
+                )
+            )
+            {
+                continue;
+            }
+
+            /*
+             * Multiple player colliders may resolve to
+             * the same IDamageable component.
+             */
+            if (
+                damagedTargets.Contains(
+                    damageable
+                )
+            )
+            {
+                continue;
+            }
+
+            damagedTargets.Add(
+                damageable
             );
 
-            playerStats.TakeDamage(
+            damageable.TakeDamage(
                 damage
             );
 
             Debug.Log(
-                $"{name}: DeathEvil damaged {playerStats.name}.",
+                $"{name}: DeathEvil damaged " +
+                $"{damageableBehaviour.name}.",
                 this
             );
         }
     }
+
+    // =========================================================
+    // DAMAGEABLE HELPERS
+    // =========================================================
+
+    private bool TryFindDamageable(
+        Collider other,
+        out IDamageable damageable,
+        out MonoBehaviour damageableBehaviour
+    )
+    {
+        damageable =
+            null;
+
+        damageableBehaviour =
+            null;
+
+        if (other == null)
+        {
+            return false;
+        }
+
+        /*
+         * Search the collider and its parent hierarchy
+         * for a MonoBehaviour implementing IDamageable.
+         *
+         * For the Player this currently resolves to
+         * PlayerStatsNew.
+         *
+         * After we rename/refactor that component,
+         * DeathEvil will not need to change.
+         */
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (behaviour == null)
+            {
+                continue;
+            }
+
+            if (
+                behaviour is
+                IDamageable foundDamageable
+            )
+            {
+                damageable =
+                    foundDamageable;
+
+                damageableBehaviour =
+                    behaviour;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsPlayerDamageable(
+        MonoBehaviour damageableBehaviour
+    )
+    {
+        if (damageableBehaviour == null)
+        {
+            return false;
+        }
+
+        Transform currentTransform =
+            damageableBehaviour.transform;
+
+        /*
+         * Walk upward so this remains valid even if
+         * the IDamageable component is later moved
+         * onto a child object.
+         */
+        while (currentTransform != null)
+        {
+            if (
+                currentTransform.CompareTag(
+                    "Player"
+                )
+            )
+            {
+                return true;
+            }
+
+            currentTransform =
+                currentTransform.parent;
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {
@@ -205,6 +372,10 @@ public class DeathEvilEffect : MonoBehaviour
                 groundOffset
             );
     }
+
+    // =========================================================
+    // GIZMOS
+    // =========================================================
 
     private void OnDrawGizmosSelected()
     {

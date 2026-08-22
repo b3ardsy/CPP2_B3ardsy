@@ -2,35 +2,65 @@ using UnityEngine;
 
 public class HealthPickup : MonoBehaviour
 {
+    // =========================================================
+    // FLOATING
+    // =========================================================
+
     [Header("Floating")]
     [SerializeField] private float floatHeight = 0.25f;
     [SerializeField] private float floatSpeed = 2f;
 
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
+
     private Vector3 startPosition;
     private bool collected;
 
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
+
     private void Start()
     {
-        startPosition = transform.position;
+        startPosition =
+            transform.position;
     }
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     private void Update()
     {
         FloatPickup();
     }
 
+    // =========================================================
+    // FLOATING
+    // =========================================================
+
     private void FloatPickup()
     {
         float offset =
-            Mathf.Sin(Time.time * floatSpeed) *
+            Mathf.Sin(
+                Time.time * floatSpeed
+            ) *
             floatHeight;
 
         transform.position =
             startPosition +
-            Vector3.up * offset;
+            Vector3.up *
+            offset;
     }
 
-    private void OnTriggerEnter(Collider other)
+    // =========================================================
+    // COLLECTION
+    // =========================================================
+
+    private void OnTriggerEnter(
+        Collider other
+    )
     {
         if (
             collected ||
@@ -40,39 +70,61 @@ public class HealthPickup : MonoBehaviour
             return;
         }
 
-        PlayerStatsNew playerStats =
-            other.GetComponent<PlayerStatsNew>();
+        Health health =
+            other.GetComponent<Health>();
 
-        if (playerStats == null)
+        if (health == null)
         {
-            playerStats =
-                other.GetComponentInParent<PlayerStatsNew>();
+            health =
+                other.GetComponentInParent<Health>();
         }
 
-        if (playerStats == null)
+        if (health == null)
         {
             Debug.LogWarning(
-                $"{name}: PlayerStatsNew was not found.",
+                $"{name}: Health was not found on the Player.",
                 this
             );
 
             return;
         }
 
-        if (playerStats.IsDead)
+        if (health.IsDead)
         {
             return;
         }
 
-        collected = true;
+        collected =
+            true;
 
-        playerStats.RestoreFullHealth();
+        health.RestoreFullHealth();
 
         Debug.Log(
             $"{name}: Health pickup collected.",
             this
         );
 
-        Destroy(gameObject);
+        Destroy(
+            gameObject
+        );
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
+    private void OnValidate()
+    {
+        floatHeight =
+            Mathf.Max(
+                0f,
+                floatHeight
+            );
+
+        floatSpeed =
+            Mathf.Max(
+                0f,
+                floatSpeed
+            );
     }
 }

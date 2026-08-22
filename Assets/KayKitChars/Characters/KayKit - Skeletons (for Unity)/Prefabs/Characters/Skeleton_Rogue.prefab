@@ -244,7 +244,7 @@ Transform:
   m_Children:
   - {fileID: 6256410046460404839}
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: -0.0000013607008, y: 0.0000074438385, z: -90.00001}
+  m_LocalEulerAnglesHint: {x: 30.530275, y: 46.988483, z: -0.7007012}
 --- !u!1 &-6415790494268509736
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: -2.5404007, y: -1.3901252, z: 60.152878}
+  m_LocalEulerAnglesHint: {x: 16.4214, y: -24.81061, z: 26.70924}
 --- !u!1 &-638838958707032469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,6 +1047,7 @@ GameObject:
   - component: {fileID: 7512961557025003098}
   - component: {fileID: 4906132506217826178}
   - component: {fileID: 3826238084626665851}
+  - component: {fileID: 346439432101117519}
   m_Layer: 8
   m_Name: Skeleton_Rogue
   m_TagString: Untagged
@@ -1077,6 +1078,7 @@ Transform:
   - {fileID: 2933752591867835225}
   - {fileID: -8476837481360442385}
   - {fileID: 6386518064412208608}
+  - {fileID: 4593332172826405816}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &9058671232915413650
@@ -1185,8 +1187,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd6a30f31696f24595f561c0b91388c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RogueEnemy
-  maxHealth: 5
   destroyDelay: 2
+  deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+  deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
+  deathEffectLifetime: 3
   pickupToDrop: 1
   healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
   ammoPickupPrefab: {fileID: 0}
@@ -1199,17 +1203,71 @@ MonoBehaviour:
   patrolSearchAttempts: 10
   detectionRange: 12
   loseTargetRange: 17
-  patrolSpeed: 10
-  returnSpeed: 3.5
+  patrolSpeed: 15
+  returnSpeed: 10
   engagedRotationSpeed: 8
-  skullProjectilePrefab: {fileID: 0}
-  firePoint: {fileID: 0}
+  skullProjectilePrefab: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
+  firePoint: {fileID: 4593332172826405816}
   skullDamage: 1
   skullSpeed: 10
   aimHeightOffset: 1
+  deathEvilPrefab: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
+  deathEvilDamage: 1
+  deathEvilDamageRadius: 2
+  deathEvilMaximumCastRange: 10
+  deathEvilGroundCheckHeight: 5
+  deathEvilGroundOffset: 0.05
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
   minimumAttackCooldown: 2
   maximumAttackCooldown: 3
   attackRecoveryDuration: 0.6
+  startingAttack: 0
+--- !u!114 &346439432101117519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 3
+--- !u!1 &1091152896866926189
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4593332172826405816}
+  m_Layer: 8
+  m_Name: Firepoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4593332172826405816
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091152896866926189}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.56, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: -8679921383154817045}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1549165989305881335
 GameObject:
   m_ObjectHideFlags: 0
@@ -2098,6 +2156,10 @@ PrefabInstance:
     - target: {fileID: 5292030503592550368, guid: e02fa4282cda67d409c192b094c8d9a4, type: 3}
       propertyPath: m_Name
       value: EnemyHealthBar
+      objectReference: {fileID: 0}
+    - target: {fileID: 7086000961624350369, guid: e02fa4282cda67d409c192b094c8d9a4, type: 3}
+      propertyPath: visibleDistance
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
