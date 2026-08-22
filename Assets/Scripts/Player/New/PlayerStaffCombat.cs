@@ -182,7 +182,15 @@ public class PlayerStaffCombat : MonoBehaviour
      * preventing lock-on changes during the animation
      * from redirecting the spell.
      */
-    private Enemy pendingEntangleTarget;
+    /*
+     * Temporary migration support:
+     *
+     * Mage now uses EnemyController.
+     * Rogue and Tank still use the legacy Enemy component
+     * until their migrations are complete.
+     */
+    private EnemyController pendingEntangleController;
+    private Enemy pendingLegacyEntangleTarget;
 
     private float nextEntangleTime;
     private float nextFlamethrowerTime;
@@ -471,13 +479,15 @@ public class PlayerStaffCombat : MonoBehaviour
     public void EndStaffCast()
     {
         isCasting = false;
-        pendingEntangleTarget = null;
+        pendingEntangleController = null;
+        pendingLegacyEntangleTarget = null;
     }
 
     public void CancelStaffCast()
     {
         isCasting = false;
-        pendingEntangleTarget = null;
+        pendingEntangleController = null;
+        pendingLegacyEntangleTarget = null;
 
         if (animator != null)
         {
@@ -508,29 +518,49 @@ public class PlayerStaffCombat : MonoBehaviour
          * Clear any previous target before beginning
          * a new Entangle cast.
          */
-        pendingEntangleTarget = null;
+        pendingEntangleController = null;
+        pendingLegacyEntangleTarget = null;
 
         /*
          * Capture the current locked target if one exists.
          *
-         * Entangle will still cast without a target,
-         * but the spell will be wasted.
+         * During the enemy migration, lock-on can point at:
+         *
+         * - EnemyController for migrated enemies such as Mage
+         * - Enemy for legacy Rogue/Tank enemies
+         *
+         * Capture whichever one is currently active so changing
+         * lock-on during the cast animation cannot redirect Entangle.
          */
         if (
             playerLockOn != null &&
             playerLockOn.IsLockedOn
         )
         {
-            Enemy target =
-                playerLockOn.CurrentTarget;
+            EnemyController controllerTarget =
+                playerLockOn.CurrentTargetController;
 
             if (
-                target != null &&
-                !target.IsDead
+                controllerTarget != null &&
+                !controllerTarget.IsDead
             )
             {
-                pendingEntangleTarget =
-                    target;
+                pendingEntangleController =
+                    controllerTarget;
+            }
+            else
+            {
+                Enemy legacyTarget =
+                    playerLockOn.CurrentTarget;
+
+                if (
+                    legacyTarget != null &&
+                    !legacyTarget.IsDead
+                )
+                {
+                    pendingLegacyEntangleTarget =
+                        legacyTarget;
+                }
             }
         }
 
@@ -542,16 +572,15 @@ public class PlayerStaffCombat : MonoBehaviour
     private bool ReleaseEntangle()
     {
         /*
-         * If a valid target was captured when casting began,
-         * apply the real Entangle effect to that enemy.
+         * First support the new EnemyController architecture.
          */
         if (
-            pendingEntangleTarget != null &&
-            !pendingEntangleTarget.IsDead &&
+            pendingEntangleController != null &&
+            !pendingEntangleController.IsDead &&
             entanglePrefab != null
         )
         {
-            pendingEntangleTarget.ApplyEntangle(
+            pendingEntangleController.ApplyEntangle(
                 entangleDuration,
                 entanglePrefab,
                 entangleLocalOffset
@@ -559,11 +588,40 @@ public class PlayerStaffCombat : MonoBehaviour
 
             Debug.Log(
                 $"{name}: Entangle cast on " +
-                $"{pendingEntangleTarget.name}.",
+                $"{pendingEntangleController.name}.",
                 this
             );
 
-            pendingEntangleTarget = null;
+            pendingEntangleController = null;
+            pendingLegacyEntangleTarget = null;
+
+            return true;
+        }
+
+        /*
+         * Temporary fallback for Rogue/Tank while they still
+         * use the legacy Enemy component.
+         */
+        if (
+            pendingLegacyEntangleTarget != null &&
+            !pendingLegacyEntangleTarget.IsDead &&
+            entanglePrefab != null
+        )
+        {
+            pendingLegacyEntangleTarget.ApplyEntangle(
+                entangleDuration,
+                entanglePrefab,
+                entangleLocalOffset
+            );
+
+            Debug.Log(
+                $"{name}: Entangle cast on " +
+                $"{pendingLegacyEntangleTarget.name}.",
+                this
+            );
+
+            pendingEntangleController = null;
+            pendingLegacyEntangleTarget = null;
 
             return true;
         }
@@ -602,7 +660,8 @@ public class PlayerStaffCombat : MonoBehaviour
             );
         }
 
-        pendingEntangleTarget = null;
+        pendingEntangleController = null;
+        pendingLegacyEntangleTarget = null;
 
         Debug.Log(
             $"{name}: Entangle missed because there was " +

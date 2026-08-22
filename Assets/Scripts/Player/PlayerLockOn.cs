@@ -15,15 +15,170 @@ public class PlayerLockOn : MonoBehaviour
     [Header("Lock-On Limits")]
     [SerializeField] private float breakLockDistance = 20f;
 
-    private Enemy currentTarget;
+    // =========================================================
+    // TARGET WRAPPER
+    // =========================================================
+
+    /*
+     * Temporary migration wrapper.
+     *
+     * New enemies use EnemyController.
+     * Rogue/Tank still use the legacy Enemy component until
+     * their individual migrations are complete.
+     *
+     * Once all enemies use EnemyController, this wrapper and the
+     * legacy Enemy branch can be removed.
+     */
+    private sealed class LockOnTarget
+    {
+        public EnemyController Controller { get; }
+        public Enemy LegacyEnemy { get; }
+
+        public LockOnTarget(
+            EnemyController controller
+        )
+        {
+            Controller = controller;
+            LegacyEnemy = null;
+        }
+
+        public LockOnTarget(
+            Enemy enemy
+        )
+        {
+            Controller = null;
+            LegacyEnemy = enemy;
+        }
+
+        public bool IsValid =>
+            Controller != null ||
+            LegacyEnemy != null;
+
+        public bool IsDead
+        {
+            get
+            {
+                if (Controller != null)
+                {
+                    return Controller.IsDead;
+                }
+
+                return
+                    LegacyEnemy == null ||
+                    LegacyEnemy.IsDead;
+            }
+        }
+
+        public Vector3 LockOnPoint
+        {
+            get
+            {
+                if (Controller != null)
+                {
+                    return Controller.LockOnPoint;
+                }
+
+                if (LegacyEnemy != null)
+                {
+                    return LegacyEnemy.LockOnPoint;
+                }
+
+                return Vector3.zero;
+            }
+        }
+
+        public Transform TargetTransform
+        {
+            get
+            {
+                if (Controller != null)
+                {
+                    return Controller.transform;
+                }
+
+                if (LegacyEnemy != null)
+                {
+                    return LegacyEnemy.transform;
+                }
+
+                return null;
+            }
+        }
+
+        public string TargetName
+        {
+            get
+            {
+                Transform targetTransform =
+                    TargetTransform;
+
+                return targetTransform != null
+                    ? targetTransform.name
+                    : "Unknown";
+            }
+        }
+
+        public bool Matches(
+            LockOnTarget other
+        )
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (
+                Controller != null ||
+                other.Controller != null
+            )
+            {
+                return
+                    Controller != null &&
+                    Controller ==
+                    other.Controller;
+            }
+
+            return
+                LegacyEnemy != null &&
+                LegacyEnemy ==
+                other.LegacyEnemy;
+        }
+    }
+
+    private LockOnTarget currentTarget;
+
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
 
     public bool IsLockedOn =>
         currentTarget != null &&
+        currentTarget.IsValid &&
         !currentTarget.IsDead;
 
+    /*
+     * Legacy compatibility property.
+     *
+     * This continues to expose the old Enemy target while Rogue
+     * and Tank still use Enemy.cs. A migrated EnemyController
+     * target will return null here.
+     *
+     * Player systems should prefer IsLockedOn and
+     * CurrentTargetPosition.
+     */
     public Enemy CurrentTarget =>
         IsLockedOn
-            ? currentTarget
+            ? currentTarget.LegacyEnemy
+            : null;
+
+    public EnemyController CurrentTargetController =>
+        IsLockedOn
+            ? currentTarget.Controller
+            : null;
+
+    public Transform CurrentTargetTransform =>
+        IsLockedOn
+            ? currentTarget.TargetTransform
             : null;
 
     public Vector3 CurrentTargetPosition
@@ -38,6 +193,10 @@ public class PlayerLockOn : MonoBehaviour
             return currentTarget.LockOnPoint;
         }
     }
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -59,6 +218,10 @@ public class PlayerLockOn : MonoBehaviour
             enabled = false;
         }
     }
+
+    // =========================================================
+    // INPUT
+    // =========================================================
 
     private void Update()
     {
@@ -98,9 +261,13 @@ public class PlayerLockOn : MonoBehaviour
         FindBestTarget();
     }
 
+    // =========================================================
+    // TARGET SELECTION
+    // =========================================================
+
     private void FindBestTarget()
     {
-        List<Enemy> validTargets =
+        List<LockOnTarget> validTargets =
             FindValidTargets();
 
         if (validTargets.Count == 0)
@@ -112,27 +279,28 @@ public class PlayerLockOn : MonoBehaviour
             return;
         }
 
-        Enemy bestTarget = null;
+        LockOnTarget bestTarget = null;
         float bestScore = float.MaxValue;
 
-        foreach (Enemy enemy in validTargets)
+        foreach (
+            LockOnTarget target
+            in validTargets
+        )
         {
             float angleFromCamera =
                 GetUnsignedCameraAngle(
-                    enemy
+                    target
                 );
 
             float distanceToEnemy =
                 Vector3.Distance(
                     transform.position,
-                    enemy.LockOnPoint
+                    target.LockOnPoint
                 );
 
             /*
-             * Normal lock-on selection prefers enemies
-             * close to the centre of the camera.
-             *
-             * Distance is used as a smaller secondary factor.
+             * Prefer enemies near the centre of the camera.
+             * Distance remains a smaller secondary factor.
              */
             float targetScore =
                 angleFromCamera +
@@ -147,7 +315,7 @@ public class PlayerLockOn : MonoBehaviour
                     targetScore;
 
                 bestTarget =
-                    enemy;
+                    target;
             }
         }
 
@@ -158,7 +326,7 @@ public class PlayerLockOn : MonoBehaviour
 
     private void CycleTarget()
     {
-        List<Enemy> validTargets =
+        List<LockOnTarget> validTargets =
             FindValidTargets();
 
         if (
@@ -174,18 +342,19 @@ public class PlayerLockOn : MonoBehaviour
          * to the right side of the camera.
          */
         validTargets.Sort(
-            (enemyA, enemyB) =>
+            (targetA, targetB) =>
                 GetSignedCameraAngle(
-                    enemyA
+                    targetA
                 ).CompareTo(
                     GetSignedCameraAngle(
-                        enemyB
+                        targetB
                     )
                 )
         );
 
         int currentIndex =
-            validTargets.IndexOf(
+            FindTargetIndex(
+                validTargets,
                 currentTarget
             );
 
@@ -207,7 +376,40 @@ public class PlayerLockOn : MonoBehaviour
         );
     }
 
-    private List<Enemy> FindValidTargets()
+    private int FindTargetIndex(
+        List<LockOnTarget> targets,
+        LockOnTarget targetToFind
+    )
+    {
+        if (targetToFind == null)
+        {
+            return -1;
+        }
+
+        for (
+            int index = 0;
+            index < targets.Count;
+            index++
+        )
+        {
+            if (
+                targets[index].Matches(
+                    targetToFind
+                )
+            )
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    // =========================================================
+    // TARGET DISCOVERY
+    // =========================================================
+
+    private List<LockOnTarget> FindValidTargets()
     {
         Collider[] nearbyColliders =
             Physics.OverlapSphere(
@@ -217,23 +419,26 @@ public class PlayerLockOn : MonoBehaviour
                 QueryTriggerInteraction.Ignore
             );
 
-        List<Enemy> validTargets =
-            new List<Enemy>();
+        List<LockOnTarget> validTargets =
+            new List<LockOnTarget>();
 
         foreach (
             Collider nearbyCollider
             in nearbyColliders
         )
         {
-            Enemy enemy =
-                nearbyCollider
-                    .GetComponentInParent<Enemy>();
+            LockOnTarget target =
+                FindLockOnTarget(
+                    nearbyCollider
+                );
 
             if (
-                enemy == null ||
-                enemy.IsDead ||
-                validTargets.Contains(
-                    enemy
+                target == null ||
+                !target.IsValid ||
+                target.IsDead ||
+                ContainsTarget(
+                    validTargets,
+                    target
                 )
             )
             {
@@ -241,7 +446,7 @@ public class PlayerLockOn : MonoBehaviour
             }
 
             Vector3 directionToEnemy =
-                enemy.LockOnPoint -
+                target.LockOnPoint -
                 cameraTransform.position;
 
             directionToEnemy.y = 0f;
@@ -256,7 +461,7 @@ public class PlayerLockOn : MonoBehaviour
 
             float angleFromCamera =
                 GetUnsignedCameraAngle(
-                    enemy
+                    target
                 );
 
             if (
@@ -268,15 +473,79 @@ public class PlayerLockOn : MonoBehaviour
             }
 
             validTargets.Add(
-                enemy
+                target
             );
         }
 
         return validTargets;
     }
 
+    private LockOnTarget FindLockOnTarget(
+        Collider nearbyCollider
+    )
+    {
+        if (nearbyCollider == null)
+        {
+            return null;
+        }
+
+        /*
+         * Prefer the new shared EnemyController.
+         */
+        EnemyController controller =
+            nearbyCollider
+                .GetComponentInParent<EnemyController>();
+
+        if (controller != null)
+        {
+            return new LockOnTarget(
+                controller
+            );
+        }
+
+        /*
+         * Temporary fallback for Rogue/Tank while they still
+         * use the legacy Enemy hierarchy.
+         */
+        Enemy legacyEnemy =
+            nearbyCollider
+                .GetComponentInParent<Enemy>();
+
+        if (legacyEnemy != null)
+        {
+            return new LockOnTarget(
+                legacyEnemy
+            );
+        }
+
+        return null;
+    }
+
+    private bool ContainsTarget(
+        List<LockOnTarget> targets,
+        LockOnTarget candidate
+    )
+    {
+        foreach (
+            LockOnTarget target
+            in targets
+        )
+        {
+            if (target.Matches(candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // CAMERA ANGLES
+    // =========================================================
+
     private float GetUnsignedCameraAngle(
-        Enemy enemy
+        LockOnTarget target
     )
     {
         Vector3 cameraForward =
@@ -295,7 +564,7 @@ public class PlayerLockOn : MonoBehaviour
         cameraForward.Normalize();
 
         Vector3 directionToEnemy =
-            enemy.LockOnPoint -
+            target.LockOnPoint -
             cameraTransform.position;
 
         directionToEnemy.y = 0f;
@@ -317,7 +586,7 @@ public class PlayerLockOn : MonoBehaviour
     }
 
     private float GetSignedCameraAngle(
-        Enemy enemy
+        LockOnTarget target
     )
     {
         Vector3 cameraForward =
@@ -336,7 +605,7 @@ public class PlayerLockOn : MonoBehaviour
         cameraForward.Normalize();
 
         Vector3 directionToEnemy =
-            enemy.LockOnPoint -
+            target.LockOnPoint -
             cameraTransform.position;
 
         directionToEnemy.y = 0f;
@@ -358,6 +627,10 @@ public class PlayerLockOn : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // TARGET VALIDATION
+    // =========================================================
+
     private void ValidateCurrentTarget()
     {
         if (currentTarget == null)
@@ -370,7 +643,10 @@ public class PlayerLockOn : MonoBehaviour
          * to transfer lock-on to the nearest remaining
          * valid enemy.
          */
-        if (currentTarget.IsDead)
+        if (
+            !currentTarget.IsValid ||
+            currentTarget.IsDead
+        )
         {
             TryTransferToNearestTarget();
             return;
@@ -382,13 +658,6 @@ public class PlayerLockOn : MonoBehaviour
                 currentTarget.LockOnPoint
             );
 
-        /*
-         * Breaking lock because the current target moved
-         * too far away still fully releases lock-on.
-         *
-         * Automatic target transfer is currently intended
-         * specifically for enemy death.
-         */
         if (
             distanceToTarget >
             breakLockDistance
@@ -400,18 +669,14 @@ public class PlayerLockOn : MonoBehaviour
 
     private void TryTransferToNearestTarget()
     {
-        Enemy previousTarget =
+        LockOnTarget previousTarget =
             currentTarget;
 
-        List<Enemy> validTargets =
+        List<LockOnTarget> validTargets =
             FindValidTargets();
 
-        /*
-         * The dead target should already be excluded by
-         * FindValidTargets(), but remove it explicitly for
-         * safety.
-         */
-        validTargets.Remove(
+        RemoveTarget(
+            validTargets,
             previousTarget
         );
 
@@ -424,19 +689,19 @@ public class PlayerLockOn : MonoBehaviour
             return;
         }
 
-        Enemy nearestTarget = null;
+        LockOnTarget nearestTarget = null;
         float nearestDistance =
             float.MaxValue;
 
         foreach (
-            Enemy enemy
+            LockOnTarget target
             in validTargets
         )
         {
             float distanceToEnemy =
                 Vector3.Distance(
                     transform.position,
-                    enemy.LockOnPoint
+                    target.LockOnPoint
                 );
 
             if (
@@ -448,7 +713,7 @@ public class PlayerLockOn : MonoBehaviour
                     distanceToEnemy;
 
                 nearestTarget =
-                    enemy;
+                    target;
             }
         }
 
@@ -460,8 +725,8 @@ public class PlayerLockOn : MonoBehaviour
 
         Debug.Log(
             $"Lock-on transferred from " +
-            $"{previousTarget.name} to " +
-            $"{nearestTarget.name}."
+            $"{previousTarget?.TargetName ?? "Unknown"} to " +
+            $"{nearestTarget.TargetName}."
         );
 
         SetTarget(
@@ -469,11 +734,44 @@ public class PlayerLockOn : MonoBehaviour
         );
     }
 
-    private void SetTarget(
-        Enemy newTarget
+    private void RemoveTarget(
+        List<LockOnTarget> targets,
+        LockOnTarget targetToRemove
     )
     {
-        if (newTarget == null)
+        if (targetToRemove == null)
+        {
+            return;
+        }
+
+        for (
+            int index = targets.Count - 1;
+            index >= 0;
+            index--
+        )
+        {
+            if (
+                targets[index].Matches(
+                    targetToRemove
+                )
+            )
+            {
+                targets.RemoveAt(
+                    index
+                );
+            }
+        }
+    }
+
+    private void SetTarget(
+        LockOnTarget newTarget
+    )
+    {
+        if (
+            newTarget == null ||
+            !newTarget.IsValid ||
+            newTarget.IsDead
+        )
         {
             return;
         }
@@ -482,7 +780,7 @@ public class PlayerLockOn : MonoBehaviour
             newTarget;
 
         Debug.Log(
-            $"Locked onto {currentTarget.name}."
+            $"Locked onto {currentTarget.TargetName}."
         );
     }
 
@@ -491,12 +789,17 @@ public class PlayerLockOn : MonoBehaviour
         if (currentTarget != null)
         {
             Debug.Log(
-                $"Lock-on released from {currentTarget.name}."
+                $"Lock-on released from {currentTarget.TargetName}."
             );
         }
 
-        currentTarget = null;
+        currentTarget =
+            null;
     }
+
+    // =========================================================
+    // GIZMOS
+    // =========================================================
 
     private void OnDrawGizmosSelected()
     {

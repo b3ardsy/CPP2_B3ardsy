@@ -1274,7 +1274,8 @@ GameObject:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 4827822787523049710}
   - component: {fileID: 7135534848390685140}
-  - component: {fileID: 3351296584005733219}
+  - component: {fileID: 9130452639414364253}
+  - component: {fileID: 9078815949463096416}
   - component: {fileID: 3655405520464804888}
   - component: {fileID: 301096215022004112}
   m_Layer: 8
@@ -1344,7 +1345,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 3
---- !u!114 &3351296584005733219
+--- !u!114 &9130452639414364253
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1353,9 +1354,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 919132149155446097}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5e12a868156dee54484c56dc6e6267e3, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c9404505d38a2042a5f703c1bff41aa, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BooEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   destroyDelay: 2
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
@@ -1375,14 +1376,26 @@ MonoBehaviour:
   patrolSpeed: 2
   returnSpeed: 3
   engagedRotationSpeed: 8
+--- !u!114 &9078815949463096416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e26c7840809665448fa729b4790327a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MageLogic
   blackHoleProjectilePrefab: {fileID: 7418663436262262798, guid: c94e3e8eccf25e2409dcd7a97dfaf8f1, type: 3}
   firePoint: {fileID: 7655535924878438980}
-  blackHoleDamage: 3
+  blackHoleDamage: 1
   blackHoleSpeed: 12
   aimHeightOffset: 1
-  projectileCount: 5
+  projectileCount: 3
   projectileSpreadAngle: 12
-  homingChance: 0.25
+  homingChance: 0.5
   minimumAttackCooldown: 1.75
   maximumAttackCooldown: 2.75
   entangleRecoveryStateName: Idle_B

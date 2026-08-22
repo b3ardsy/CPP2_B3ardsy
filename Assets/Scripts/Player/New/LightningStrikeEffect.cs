@@ -4,10 +4,17 @@ using UnityEngine;
 public class LightningStrikeEffect : MonoBehaviour
 {
     [Header("Effect")]
-    [Tooltip("How long the Lightning Strike object remains in the scene.")]
-    [SerializeField] private float lifetime = 2f;
+    [Tooltip(
+        "How long the Lightning Strike object remains in the scene."
+    )]
+    [SerializeField]
+    private float lifetime = 2f;
 
     private bool initialized;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     public void Initialize(
         int damage,
@@ -20,7 +27,8 @@ public class LightningStrikeEffect : MonoBehaviour
             return;
         }
 
-        initialized = true;
+        initialized =
+            true;
 
         ApplyDamage(
             damage,
@@ -33,6 +41,10 @@ public class LightningStrikeEffect : MonoBehaviour
             lifetime
         );
     }
+
+    // =========================================================
+    // DAMAGE
+    // =========================================================
 
     private void ApplyDamage(
         int damage,
@@ -50,34 +62,104 @@ public class LightningStrikeEffect : MonoBehaviour
 
         /*
          * An enemy may contain multiple colliders.
-         * Only damage each enemy once per strike.
+         *
+         * Store the MonoBehaviour implementing IDamageable
+         * so each target only receives one hit per strike.
+         *
+         * This supports both:
+         * - EnemyController (new architecture)
+         * - Enemy (legacy Rogue/Tank during migration)
          */
-        HashSet<Enemy> damagedEnemies =
-            new HashSet<Enemy>();
+        HashSet<MonoBehaviour> damagedTargets =
+            new HashSet<MonoBehaviour>();
 
-        foreach (Collider hitCollider in hitColliders)
+        foreach (
+            Collider hitCollider
+            in hitColliders
+        )
         {
-            Enemy enemy =
-                hitCollider.GetComponentInParent<Enemy>();
-
             if (
-                enemy == null ||
-                enemy.IsDead ||
-                damagedEnemies.Contains(enemy)
+                !TryFindDamageable(
+                    hitCollider,
+                    out IDamageable damageable,
+                    out MonoBehaviour damageableBehaviour
+                )
             )
             {
                 continue;
             }
 
-            damagedEnemies.Add(
-                enemy
+            if (
+                damagedTargets.Contains(
+                    damageableBehaviour
+                )
+            )
+            {
+                continue;
+            }
+
+            damagedTargets.Add(
+                damageableBehaviour
             );
 
-            enemy.TakeDamage(
+            damageable.TakeDamage(
                 damage
             );
         }
     }
+
+    // =========================================================
+    // DAMAGEABLE LOOKUP
+    // =========================================================
+
+    private bool TryFindDamageable(
+        Collider other,
+        out IDamageable damageable,
+        out MonoBehaviour damageableBehaviour
+    )
+    {
+        damageable =
+            null;
+
+        damageableBehaviour =
+            null;
+
+        if (other == null)
+        {
+            return false;
+        }
+
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour is
+                IDamageable foundDamageable
+            )
+            {
+                damageable =
+                    foundDamageable;
+
+                damageableBehaviour =
+                    behaviour;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {
