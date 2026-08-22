@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
-public abstract class Enemy : MonoBehaviour
+public abstract class Enemy : MonoBehaviour, IDamageable
 {
     // =========================================================
     // DEATH

@@ -2,14 +2,30 @@ using UnityEngine;
 
 public class PlayerShieldController : MonoBehaviour
 {
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     [Header("References")]
-    [SerializeField] private PlayerStatsNew playerStats;
-    [SerializeField] private PlayerMovement3DNew playerMovement;
-    [SerializeField] private PlayerWeaponManager playerWeaponManager;
+    [SerializeField]
+    private PlayerDamageController playerDamageController;
+
+    [SerializeField]
+    private PlayerMovement3DNew playerMovement;
+
+    [SerializeField]
+    private PlayerWeaponManager playerWeaponManager;
+
+    // =========================================================
+    // SHIELD
+    // =========================================================
 
     [Header("Shield")]
-    [Tooltip("Shield effect spawned around the player.")]
-    [SerializeField] private PlayerShieldEffect shieldPrefab;
+    [Tooltip(
+        "Shield effect spawned around the player."
+    )]
+    [SerializeField]
+    private PlayerShieldEffect shieldPrefab;
 
     [Tooltip(
         "Local position offset used to center the Shield " +
@@ -22,19 +38,30 @@ public class PlayerShieldController : MonoBehaviour
     [Tooltip(
         "Maximum time the Shield remains active."
     )]
-    [SerializeField] private float shieldDuration = 4f;
+    [SerializeField]
+    private float shieldDuration = 4f;
 
     [Tooltip(
         "Additional cooldown time after the Shield ends."
     )]
-    [SerializeField] private float shieldCooldown = 5f;
+    [SerializeField]
+    private float shieldCooldown = 5f;
+
+    // =========================================================
+    // PROGRESSION
+    // =========================================================
 
     [Header("Progression")]
     [Tooltip(
         "If true, the Shield starts unlocked immediately. " +
         "Normally this should remain false."
     )]
-    [SerializeField] private bool startShieldUnlocked;
+    [SerializeField]
+    private bool startShieldUnlocked;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private PlayerShieldEffect activeShield;
 
@@ -47,6 +74,10 @@ public class PlayerShieldController : MonoBehaviour
     private float nextShieldReadyTime;
 
     private bool isShieldUnlocked;
+
+    // =========================================================
+    // PUBLIC PROPERTIES
+    // =========================================================
 
     public bool IsShieldActive =>
         activeShield != null;
@@ -81,6 +112,10 @@ public class PlayerShieldController : MonoBehaviour
     public float CooldownDuration =>
         shieldDuration +
         shieldCooldown;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -120,18 +155,22 @@ public class PlayerShieldController : MonoBehaviour
         UnsubscribeFromWeaponEvents();
     }
 
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     private void FindReferences()
     {
-        if (playerStats == null)
+        if (playerDamageController == null)
         {
-            playerStats =
-                GetComponent<PlayerStatsNew>();
+            playerDamageController =
+                GetComponent<PlayerDamageController>();
         }
 
-        if (playerStats == null)
+        if (playerDamageController == null)
         {
-            playerStats =
-                GetComponentInParent<PlayerStatsNew>();
+            playerDamageController =
+                GetComponentInParent<PlayerDamageController>();
         }
 
         if (playerMovement == null)
@@ -161,15 +200,17 @@ public class PlayerShieldController : MonoBehaviour
 
     private void ValidateReferences()
     {
-        if (playerStats == null)
+        if (playerDamageController == null)
         {
             Debug.LogError(
                 $"{name}: PlayerShieldController could not find " +
-                "PlayerStatsNew.",
+                "PlayerDamageController.",
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
@@ -181,7 +222,9 @@ public class PlayerShieldController : MonoBehaviour
                 this
             );
 
-            enabled = false;
+            enabled =
+                false;
+
             return;
         }
 
@@ -193,6 +236,10 @@ public class PlayerShieldController : MonoBehaviour
             );
         }
     }
+
+    // =========================================================
+    // WEAPON EVENTS
+    // =========================================================
 
     private void SubscribeToWeaponEvents()
     {
@@ -229,13 +276,18 @@ public class PlayerShieldController : MonoBehaviour
             return;
         }
 
-        isShieldUnlocked = true;
+        isShieldUnlocked =
+            true;
 
         Debug.Log(
             $"{name}: Shield unlocked.",
             this
         );
     }
+
+    // =========================================================
+    // ACTIVATION
+    // =========================================================
 
     public bool TryActivateShield()
     {
@@ -249,12 +301,12 @@ public class PlayerShieldController : MonoBehaviour
             return false;
         }
 
-        if (playerStats == null)
+        if (playerDamageController == null)
         {
             return false;
         }
 
-        if (playerStats.IsDead)
+        if (playerDamageController.IsDead)
         {
             return false;
         }
@@ -306,6 +358,10 @@ public class PlayerShieldController : MonoBehaviour
         return true;
     }
 
+    // =========================================================
+    // SPAWNING
+    // =========================================================
+
     private void SpawnShield()
     {
         /*
@@ -335,7 +391,7 @@ public class PlayerShieldController : MonoBehaviour
             shieldLocalOffset;
 
         activeShield.Initialize(
-            playerStats,
+            playerDamageController,
             shieldDuration,
             HandleShieldEnded
         );
@@ -346,6 +402,10 @@ public class PlayerShieldController : MonoBehaviour
             this
         );
     }
+
+    // =========================================================
+    // SHIELD END
+    // =========================================================
 
     private void HandleShieldEnded(
         PlayerShieldEffect endedShield
@@ -363,7 +423,8 @@ public class PlayerShieldController : MonoBehaviour
             return;
         }
 
-        activeShield = null;
+        activeShield =
+            null;
 
         /*
          * Do not start a new timer here.
@@ -377,6 +438,10 @@ public class PlayerShieldController : MonoBehaviour
             this
         );
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

@@ -4,7 +4,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Health))]
-public class PlayerStatsNew : MonoBehaviour
+public class PlayerDamageController :
+    MonoBehaviour,
+    IDamageable,
+    IAxeDamageable
 {
     // =========================================================
     // HEALTH
@@ -1045,3 +1048,4 @@ public class PlayerStatsNew : MonoBehaviour
             );
     }
 }
+

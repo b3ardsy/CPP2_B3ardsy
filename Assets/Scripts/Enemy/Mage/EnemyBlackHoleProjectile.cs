@@ -6,23 +6,37 @@ public class EnemyBlackHoleProjectile :
     MonoBehaviour,
     IReflectableProjectile
 {
+    // =========================================================
+    // PROJECTILE
+    // =========================================================
+
     [Header("Projectile")]
     [SerializeField] private float defaultSpeed = 12f;
     [SerializeField] private int defaultDamage = 1;
     [SerializeField] private float lifetime = 5f;
+
+    // =========================================================
+    // HOMING
+    // =========================================================
 
     [Header("Homing")]
     [Tooltip(
         "How quickly a homing Black Hole can rotate " +
         "toward its target."
     )]
-    [SerializeField] private float homingTurnSpeed = 120f;
+    [SerializeField]
+    private float homingTurnSpeed = 120f;
 
     [Tooltip(
         "Height above the target's root position that " +
         "the homing projectile aims toward."
     )]
-    [SerializeField] private float homingTargetHeightOffset = 1f;
+    [SerializeField]
+    private float homingTargetHeightOffset = 1f;
+
+    // =========================================================
+    // VISUAL
+    // =========================================================
 
     [Tooltip(
         "Visual rotation correction for the Black Hole prefab."
@@ -31,11 +45,19 @@ public class EnemyBlackHoleProjectile :
     private Vector3 visualRotationOffset =
         new Vector3(-90f, 0f, 0f);
 
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     private Rigidbody rb;
     private Collider projectileCollider;
 
     private GameObject owner;
     private Transform homingTarget;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private float speed;
     private int damage;
@@ -51,6 +73,10 @@ public class EnemyBlackHoleProjectile :
      * reflects this projectile.
      */
     private bool isPlayerOwned;
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -135,6 +161,10 @@ public class EnemyBlackHoleProjectile :
         initialized =
             true;
     }
+
+    // =========================================================
+    // MOVEMENT
+    // =========================================================
 
     private void FixedUpdate()
     {
@@ -366,14 +396,11 @@ public class EnemyBlackHoleProjectile :
         }
 
         /*
-         * IMPORTANT:
+         * The Shield owns projectile reflection.
          *
-         * The Shield is parented underneath the player.
-         * Without this check, GetComponentInParent
-         * <PlayerStatsNew>() could interpret the Shield
-         * collider as the Player collider.
-         *
-         * PlayerShieldEffect owns the actual reflection.
+         * Because the Shield is parented underneath the Player,
+         * it must be handled before searching the hierarchy for
+         * an IDamageable target.
          */
         PlayerShieldEffect shield =
             other.GetComponentInParent
@@ -398,33 +425,51 @@ public class EnemyBlackHoleProjectile :
         );
     }
 
+    // =========================================================
+    // ENEMY-OWNED COLLISION
+    // =========================================================
+
     private void HandleEnemyOwnedCollision(
         Collider other
     )
     {
         /*
-         * Enemy-owned projectile:
-         * damage the Player.
+         * Enemy-owned Black Holes may damage the Player.
+         *
+         * The projectile no longer needs to know about
+         * PlayerStatsNew specifically. It only needs an
+         * IDamageable component belonging to the Player.
          */
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent
-                <PlayerStatsNew>();
-
-        if (playerStats != null)
+        if (
+            TryFindDamageable(
+                other,
+                out IDamageable damageable,
+                out MonoBehaviour damageableBehaviour
+            )
+        )
         {
-            if (!playerStats.IsDead)
+            if (IsPlayerDamageable(
+                damageableBehaviour
+            ))
             {
-                playerStats.TakeDamage(
+                damageable.TakeDamage(
                     damage
                 );
+
+                HandleImpact();
+                return;
             }
 
-            HandleImpact();
+            /*
+             * Enemy-owned projectiles ignore other
+             * damageable objects such as enemies.
+             */
             return;
         }
 
         /*
-         * Ignore enemies while enemy-owned.
+         * Enemy-owned projectiles also ignore enemies even
+         * if that enemy somehow does not expose IDamageable.
          */
         if (
             other.GetComponentInParent
@@ -445,38 +490,47 @@ public class EnemyBlackHoleProjectile :
         HandleImpact();
     }
 
+    // =========================================================
+    // PLAYER-OWNED COLLISION
+    // =========================================================
+
     private void HandlePlayerOwnedCollision(
         Collider other
     )
     {
         /*
-         * Reflected projectile:
-         * ignore the Player entirely.
+         * Reflected projectiles use the same IDamageable
+         * contract as enemy-owned projectiles.
          */
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent
-                <PlayerStatsNew>();
-
-        if (playerStats != null)
+        if (
+            TryFindDamageable(
+                other,
+                out IDamageable damageable,
+                out MonoBehaviour damageableBehaviour
+            )
+        )
         {
-            return;
-        }
-
-        /*
-         * Reflected projectiles may damage enemies.
-         */
-        Enemy enemy =
-            other.GetComponentInParent
-                <Enemy>();
-
-        if (enemy != null)
-        {
-            if (!enemy.IsDead)
+            /*
+             * Reflected projectiles must never hurt the Player.
+             */
+            if (IsPlayerDamageable(
+                damageableBehaviour
+            ))
             {
-                enemy.TakeDamage(
-                    damage
-                );
+                return;
             }
+
+            /*
+             * Any non-player object exposing IDamageable may
+             * receive damage from a reflected projectile.
+             *
+             * Today that means enemies. Later this could also
+             * support destructible objects without changing
+             * this projectile.
+             */
+            damageable.TakeDamage(
+                damage
+            );
 
             HandleImpact();
             return;
@@ -496,6 +550,109 @@ public class EnemyBlackHoleProjectile :
          */
         HandleImpact();
     }
+
+    // =========================================================
+    // DAMAGEABLE HELPERS
+    // =========================================================
+
+    private bool TryFindDamageable(
+        Collider other,
+        out IDamageable damageable,
+        out MonoBehaviour damageableBehaviour
+    )
+    {
+        damageable =
+            null;
+
+        damageableBehaviour =
+            null;
+
+        if (other == null)
+        {
+            return false;
+        }
+
+        /*
+         * Search the collider and its parents for any
+         * MonoBehaviour that implements IDamageable.
+         *
+         * Health itself no longer implements IDamageable.
+         *
+         * This means:
+         *
+         * Player -> PlayerStatsNew / future PlayerDamageController
+         * Enemy  -> Enemy / TankEnemy / RogueEnemy / BooEnemy
+         */
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (behaviour == null)
+            {
+                continue;
+            }
+
+            if (
+                behaviour is
+                IDamageable foundDamageable
+            )
+            {
+                damageable =
+                    foundDamageable;
+
+                damageableBehaviour =
+                    behaviour;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsPlayerDamageable(
+        MonoBehaviour damageableBehaviour
+    )
+    {
+        if (damageableBehaviour == null)
+        {
+            return false;
+        }
+
+        Transform currentTransform =
+            damageableBehaviour.transform;
+
+        /*
+         * Walk upward in case the IDamageable implementation
+         * ever moves onto a child object later.
+         */
+        while (currentTransform != null)
+        {
+            if (
+                currentTransform.CompareTag(
+                    "Player"
+                )
+            )
+            {
+                return true;
+            }
+
+            currentTransform =
+                currentTransform.parent;
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // OWNER COLLISION
+    // =========================================================
 
     private bool IsOwnerCollider(
         Collider other
@@ -552,6 +709,10 @@ public class EnemyBlackHoleProjectile :
         }
     }
 
+    // =========================================================
+    // IMPACT
+    // =========================================================
+
     private void HandleImpact()
     {
         if (hasHit)
@@ -569,6 +730,10 @@ public class EnemyBlackHoleProjectile :
             gameObject
         );
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {

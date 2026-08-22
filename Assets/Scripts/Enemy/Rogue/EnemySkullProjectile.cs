@@ -6,22 +6,36 @@ public class EnemySkullProjectile :
     MonoBehaviour,
     IReflectableProjectile
 {
+    // =========================================================
+    // PROJECTILE
+    // =========================================================
+
     [Header("Projectile")]
     [SerializeField] private float defaultSpeed = 10f;
     [SerializeField] private int defaultDamage = 1;
     [SerializeField] private float lifetime = 6f;
 
+    // =========================================================
+    // HOMING
+    // =========================================================
+
     [Header("Homing")]
     [Tooltip(
         "How quickly the Skull rotates toward the player."
     )]
-    [SerializeField] private float homingTurnSpeed = 120f;
+    [SerializeField]
+    private float homingTurnSpeed = 120f;
 
     [Tooltip(
         "Height above the target's root position that " +
         "the Skull tries to follow."
     )]
-    [SerializeField] private float targetHeightOffset = 1f;
+    [SerializeField]
+    private float targetHeightOffset = 1f;
+
+    // =========================================================
+    // VISUAL
+    // =========================================================
 
     [Header("Visual")]
     [Tooltip(
@@ -31,11 +45,19 @@ public class EnemySkullProjectile :
     private Vector3 visualRotationOffset =
         new Vector3(-90f, 0f, 0f);
 
+    // =========================================================
+    // REFERENCES
+    // =========================================================
+
     private Rigidbody rb;
     private Collider projectileCollider;
 
     private GameObject owner;
     private Transform homingTarget;
+
+    // =========================================================
+    // RUNTIME STATE
+    // =========================================================
 
     private float speed;
     private int damage;
@@ -372,8 +394,8 @@ public class EnemySkullProjectile :
          * Shield owns the reflection logic.
          *
          * Because the Shield is parented beneath
-         * the Player, do not accidentally interpret
-         * the Shield collider itself as PlayerStatsNew.
+         * the Player, handle it before checking
+         * for IDamageable.
          */
         PlayerShieldEffect shield =
             other.GetComponentInParent
@@ -398,30 +420,49 @@ public class EnemySkullProjectile :
         );
     }
 
+    // =========================================================
+    // ENEMY-OWNED COLLISION
+    // =========================================================
+
     private void HandleEnemyOwnedCollision(
         Collider other
     )
     {
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent
-                <PlayerStatsNew>();
-
-        if (playerStats != null)
+        if (
+            TryFindDamageable(
+                other,
+                out IDamageable damageable,
+                out MonoBehaviour damageableBehaviour
+            )
+        )
         {
-            if (!playerStats.IsDead)
+            /*
+             * Enemy-owned Skulls may damage only the Player.
+             */
+            if (
+                IsPlayerDamageable(
+                    damageableBehaviour
+                )
+            )
             {
-                playerStats.TakeDamage(
+                damageable.TakeDamage(
                     damage
                 );
+
+                HandleImpact();
+                return;
             }
 
-            HandleImpact();
-
+            /*
+             * Ignore other damageable objects,
+             * such as enemies.
+             */
             return;
         }
 
         /*
-         * Enemy-owned Skulls cannot hurt enemies.
+         * Enemy-owned Skulls also ignore enemies
+         * even if no IDamageable is found.
          */
         if (
             other.GetComponentInParent
@@ -442,40 +483,49 @@ public class EnemySkullProjectile :
         HandleImpact();
     }
 
+    // =========================================================
+    // PLAYER-OWNED COLLISION
+    // =========================================================
+
     private void HandlePlayerOwnedCollision(
         Collider other
     )
     {
-        /*
-         * Reflected Skulls ignore the Player.
-         */
-        PlayerStatsNew playerStats =
-            other.GetComponentInParent
-                <PlayerStatsNew>();
-
-        if (playerStats != null)
+        if (
+            TryFindDamageable(
+                other,
+                out IDamageable damageable,
+                out MonoBehaviour damageableBehaviour
+            )
+        )
         {
-            return;
-        }
-
-        Enemy enemy =
-            other.GetComponentInParent
-                <Enemy>();
-
-        if (enemy != null)
-        {
-            if (!enemy.IsDead)
+            /*
+             * Reflected Skulls ignore the Player.
+             */
+            if (
+                IsPlayerDamageable(
+                    damageableBehaviour
+                )
+            )
             {
-                enemy.TakeDamage(
-                    damage
-                );
+                return;
             }
 
-            HandleImpact();
+            /*
+             * Reflected Skulls may damage any
+             * non-player IDamageable target.
+             */
+            damageable.TakeDamage(
+                damage
+            );
 
+            HandleImpact();
             return;
         }
 
+        /*
+         * Ignore unrelated trigger volumes.
+         */
         if (other.isTrigger)
         {
             return;
@@ -483,6 +533,94 @@ public class EnemySkullProjectile :
 
         HandleImpact();
     }
+
+    // =========================================================
+    // DAMAGEABLE HELPERS
+    // =========================================================
+
+    private bool TryFindDamageable(
+        Collider other,
+        out IDamageable damageable,
+        out MonoBehaviour damageableBehaviour
+    )
+    {
+        damageable =
+            null;
+
+        damageableBehaviour =
+            null;
+
+        if (other == null)
+        {
+            return false;
+        }
+
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (behaviour == null)
+            {
+                continue;
+            }
+
+            if (
+                behaviour is
+                IDamageable foundDamageable
+            )
+            {
+                damageable =
+                    foundDamageable;
+
+                damageableBehaviour =
+                    behaviour;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsPlayerDamageable(
+        MonoBehaviour damageableBehaviour
+    )
+    {
+        if (damageableBehaviour == null)
+        {
+            return false;
+        }
+
+        Transform currentTransform =
+            damageableBehaviour.transform;
+
+        while (currentTransform != null)
+        {
+            if (
+                currentTransform.CompareTag(
+                    "Player"
+                )
+            )
+            {
+                return true;
+            }
+
+            currentTransform =
+                currentTransform.parent;
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // OWNER COLLISION
+    // =========================================================
 
     private bool IsOwnerCollider(
         Collider other
@@ -538,6 +676,10 @@ public class EnemySkullProjectile :
             );
         }
     }
+
+    // =========================================================
+    // IMPACT
+    // =========================================================
 
     private void HandleImpact()
     {

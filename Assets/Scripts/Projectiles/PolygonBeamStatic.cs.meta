@@ -1,14 +1,5 @@
 fileFormatVersion: 2
 guid: 20c23a8bcd5b0134d84a61ddd807fdc5
-MonoImporter:
-  externalObjects: {}
-  serializedVersion: 2
-  defaultReferences: []
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
   productId: 109286
@@ -16,3 +7,12 @@ AssetOrigin:
   packageVersion: 2.07
   assetPath: Assets/Polygon Arsenal/Scripts/PolygonBeamStatic.cs
   uploadId: 757035
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

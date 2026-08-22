@@ -142,7 +142,7 @@ public class RogueEnemy : Enemy
     // =========================================================
 
     private NavMeshAgent agent;
-    private PlayerStatsNew playerStats;
+    private PlayerDamageController playerStats;
 
     private RogueState currentState;
 
@@ -266,18 +266,18 @@ public class RogueEnemy : Enemy
         }
 
         playerStats =
-            player.GetComponent<PlayerStatsNew>();
+            player.GetComponent<PlayerDamageController>();
 
         if (playerStats == null)
         {
             playerStats =
-                player.GetComponentInParent<PlayerStatsNew>();
+                player.GetComponentInParent<PlayerDamageController>();
         }
 
         if (playerStats == null)
         {
             playerStats =
-                player.GetComponentInChildren<PlayerStatsNew>();
+                player.GetComponentInChildren<PlayerDamageController>();
         }
 
         if (playerStats == null)
