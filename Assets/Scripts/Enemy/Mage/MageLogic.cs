@@ -139,13 +139,38 @@ public class MageLogic : MonoBehaviour
             enabled = false;
             return;
         }
-
-        animator =
-            enemyController.Animator;
     }
 
     private void Start()
     {
+        /*
+         * Fetch the Animator in Start rather than Awake.
+         *
+         * EnemyController and MageLogic are separate MonoBehaviours,
+         * so Unity does not guarantee which Awake runs first.
+         * Waiting until Start guarantees EnemyController.Awake()
+         * has already assigned its Animator reference.
+         */
+        animator =
+            enemyController.Animator;
+
+        if (animator == null)
+        {
+            animator =
+                GetComponentInChildren<Animator>();
+        }
+
+        if (animator == null)
+        {
+            Debug.LogError(
+                $"{name}: MageLogic could not find an Animator.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
         currentState =
             MageState.Patrolling;
 
