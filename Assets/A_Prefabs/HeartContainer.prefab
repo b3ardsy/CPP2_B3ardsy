@@ -14661,9 +14661,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartContainerPickup
   healthIncrease: 4
-  pickupEffectPrefab: {fileID: 5868650648049242934, guid: 527a4c35f07b5a343b68a84e6f238373, type: 3}
+  playerHealthHUD: {fileID: 0}
+  notificationBanner: {fileID: 0}
+  pickupMessage: 'Your vitality grows: Maximum Health Increased'
+  pickupEffectPrefab: {fileID: 1847039648824904, guid: c1ae5586f82d0fb4989ac017fa2cda05, type: 3}
   effectHeightOffset: 1
-  effectLifetime: 3
+  fallbackEffectLifetime: 1.5
   destroyDelay: 0
 --- !u!199 &199386691563868012
 ParticleSystemRenderer:
