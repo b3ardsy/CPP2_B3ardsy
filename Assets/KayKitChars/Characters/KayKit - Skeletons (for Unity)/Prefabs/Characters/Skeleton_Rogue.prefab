@@ -1043,11 +1043,11 @@ GameObject:
   m_Component:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 9058671232915413650}
+  - component: {fileID: 346439432101117519}
+  - component: {fileID: 3826238084626665851}
+  - component: {fileID: 4906132506217826178}
   - component: {fileID: 7608706286068099799}
   - component: {fileID: 7512961557025003098}
-  - component: {fileID: 4906132506217826178}
-  - component: {fileID: 3826238084626665851}
-  - component: {fileID: 346439432101117519}
   m_Layer: 8
   m_Name: Skeleton_Rogue
   m_TagString: Untagged
@@ -1103,6 +1103,90 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &346439432101117519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 3
+--- !u!114 &3826238084626665851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edd6a30f31696f24595f561c0b91388c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RogueEnemy
+  destroyDelay: 2
+  deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
+  deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
+  deathEffectLifetime: 3
+  pickupToDrop: 1
+  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
+  ammoPickupPrefab: {fileID: 0}
+  specialPickupPrefab: {fileID: 0}
+  pickupSpawnHeight: 1
+  patrolRadius: 10
+  patrolWaitTime: 2
+  destinationTolerance: 0.25
+  navMeshSampleDistance: 3
+  patrolSearchAttempts: 10
+  detectionRange: 12
+  loseTargetRange: 17
+  patrolSpeed: 15
+  returnSpeed: 10
+  engagedRotationSpeed: 8
+  skullProjectilePrefab: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
+  firePoint: {fileID: 4593332172826405816}
+  skullDamage: 1
+  skullSpeed: 10
+  aimHeightOffset: 1
+  deathEvilPrefab: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
+  deathEvilDamage: 1
+  deathEvilDamageRadius: 2
+  deathEvilMaximumCastRange: 10
+  deathEvilGroundCheckHeight: 5
+  deathEvilGroundOffset: 0.05
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  minimumAttackCooldown: 2
+  maximumAttackCooldown: 3
+  attackRecoveryDuration: 0.6
+  startingAttack: 0
+--- !u!195 &4906132506217826178
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 5
+  m_Acceleration: 16
+  avoidancePriority: 50
+  m_AngularSpeed: 720
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!136 &7608706286068099799
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1153,90 +1237,6 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 80
   m_CollisionDetection: 3
---- !u!195 &4906132506217826178
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.5
-  m_Speed: 5
-  m_Acceleration: 16
-  avoidancePriority: 50
-  m_AngularSpeed: 720
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
---- !u!114 &3826238084626665851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edd6a30f31696f24595f561c0b91388c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RogueEnemy
-  destroyDelay: 2
-  deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
-  deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
-  deathEffectLifetime: 3
-  pickupToDrop: 1
-  healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
-  ammoPickupPrefab: {fileID: 0}
-  specialPickupPrefab: {fileID: 0}
-  pickupSpawnHeight: 1
-  patrolRadius: 10
-  patrolWaitTime: 2
-  destinationTolerance: 0.25
-  navMeshSampleDistance: 3
-  patrolSearchAttempts: 10
-  detectionRange: 12
-  loseTargetRange: 17
-  patrolSpeed: 15
-  returnSpeed: 10
-  engagedRotationSpeed: 8
-  skullProjectilePrefab: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
-  firePoint: {fileID: 4593332172826405816}
-  skullDamage: 1
-  skullSpeed: 10
-  aimHeightOffset: 1
-  deathEvilPrefab: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
-  deathEvilDamage: 1
-  deathEvilDamageRadius: 2
-  deathEvilMaximumCastRange: 10
-  deathEvilGroundCheckHeight: 5
-  deathEvilGroundOffset: 0.05
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  minimumAttackCooldown: 2
-  maximumAttackCooldown: 3
-  attackRecoveryDuration: 0.6
-  startingAttack: 0
---- !u!114 &346439432101117519
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
 --- !u!1 &1091152896866926189
 GameObject:
   m_ObjectHideFlags: 0

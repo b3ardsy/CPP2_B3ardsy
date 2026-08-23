@@ -23,11 +23,22 @@ public class IceTornadoProjectile : MonoBehaviour
     private bool initialized;
 
     /*
-     * Prevent the Tornado from damaging the same enemy
-     * multiple times if that enemy has several colliders.
+     * Prevent the Tornado from damaging the same damageable
+     * object multiple times if it has several colliders.
+     *
+     * We store the MonoBehaviour that implements IDamageable
+     * rather than a concrete Enemy type so this works with:
+     *
+     * - EnemyController (new Mage architecture)
+     * - Enemy (legacy Rogue/Tank during migration)
+     * - future IDamageable targets
      */
-    private readonly HashSet<Enemy> damagedEnemies =
-        new HashSet<Enemy>();
+    private readonly HashSet<MonoBehaviour> damagedTargets =
+        new HashSet<MonoBehaviour>();
+
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
 
     private void Awake()
     {
@@ -37,10 +48,14 @@ public class IceTornadoProjectile : MonoBehaviour
         projectileCollider =
             GetComponent<Collider>();
 
-        rb.useGravity = false;
-        rb.isKinematic = false;
+        rb.useGravity =
+            false;
 
-        projectileCollider.isTrigger = true;
+        rb.isKinematic =
+            false;
+
+        projectileCollider.isTrigger =
+            true;
 
         speed =
             defaultSpeed;
@@ -96,8 +111,13 @@ public class IceTornadoProjectile : MonoBehaviour
             normalizedDirection *
             speed;
 
-        initialized = true;
+        initialized =
+            true;
     }
+
+    // =========================================================
+    // MOVEMENT
+    // =========================================================
 
     private void FixedUpdate()
     {
@@ -120,11 +140,18 @@ public class IceTornadoProjectile : MonoBehaviour
         }
     }
 
+    // =========================================================
+    // COLLISION
+    // =========================================================
+
     private void OnTriggerEnter(
         Collider other
     )
     {
-        if (!initialized)
+        if (
+            !initialized ||
+            other == null
+        )
         {
             return;
         }
@@ -134,52 +161,112 @@ public class IceTornadoProjectile : MonoBehaviour
             return;
         }
 
-        Enemy enemy =
-            other.GetComponentInParent<Enemy>();
-
-        /*
-         * Ignore terrain, scenery, pickups, and other
-         * non-enemy objects. The Tornado lasts until
-         * its lifetime expires.
-         */
-        if (enemy == null)
+        if (
+            !TryFindDamageable(
+                other,
+                out IDamageable damageable,
+                out MonoBehaviour damageableBehaviour
+            )
+        )
         {
-            return;
-        }
-
-        if (enemy.IsDead)
-        {
+            /*
+             * Terrain, scenery, pickups, and unrelated objects
+             * do not affect the Tornado. It lasts until its
+             * normal lifetime expires.
+             */
             return;
         }
 
         /*
-         * Only damage each enemy once per Tornado.
+         * Only damage each target once per Tornado even if
+         * that target exposes multiple colliders.
          */
-        if (damagedEnemies.Contains(enemy))
+        if (
+            damagedTargets.Contains(
+                damageableBehaviour
+            )
+        )
         {
             return;
         }
 
-        damagedEnemies.Add(
-            enemy
+        damagedTargets.Add(
+            damageableBehaviour
         );
 
-        enemy.TakeDamage(
+        damageable.TakeDamage(
             damage
         );
     }
+
+    // =========================================================
+    // DAMAGEABLE LOOKUP
+    // =========================================================
+
+    private bool TryFindDamageable(
+        Collider other,
+        out IDamageable damageable,
+        out MonoBehaviour damageableBehaviour
+    )
+    {
+        damageable =
+            null;
+
+        damageableBehaviour =
+            null;
+
+        if (other == null)
+        {
+            return false;
+        }
+
+        MonoBehaviour[] behaviours =
+            other.GetComponentsInParent<MonoBehaviour>(
+                true
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour is
+                IDamageable foundDamageable
+            )
+            {
+                damageable =
+                    foundDamageable;
+
+                damageableBehaviour =
+                    behaviour;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // OWNER COLLISION
+    // =========================================================
 
     private bool IsOwnerCollider(
         Collider other
     )
     {
-        if (owner == null)
+        if (
+            owner == null ||
+            other == null
+        )
         {
             return false;
         }
 
         return
-            other.gameObject == owner ||
+            other.gameObject ==
+            owner ||
             other.transform.IsChildOf(
                 owner.transform
             );
@@ -203,7 +290,11 @@ public class IceTornadoProjectile : MonoBehaviour
             in ownerColliders
         )
         {
-            if (ownerCollider == null)
+            if (
+                ownerCollider == null ||
+                ownerCollider ==
+                projectileCollider
+            )
             {
                 continue;
             }
@@ -215,6 +306,10 @@ public class IceTornadoProjectile : MonoBehaviour
             );
         }
     }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private void OnValidate()
     {
