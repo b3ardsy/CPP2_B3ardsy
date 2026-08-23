@@ -92,6 +92,18 @@ public class EnemyController : MonoBehaviour, IDamageable
     private float engagedRotationSpeed = 8f;
 
     // =========================================================
+    // EDITOR GIZMOS
+    // =========================================================
+
+    [Header("Editor Gizmos")]
+    [Tooltip(
+        "Show patrol, detection, and lose-target ranges " +
+        "when this enemy is selected in the Scene view."
+    )]
+    [SerializeField]
+    private bool showRangeGizmos = true;
+
+    // =========================================================
     // REFERENCES
     // =========================================================
 
@@ -1321,6 +1333,78 @@ public class EnemyController : MonoBehaviour, IDamageable
         }
 
         DestroyEntangleEffect();
+    }
+
+    // =========================================================
+    // EDITOR GIZMOS
+    // =========================================================
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!showRangeGizmos)
+        {
+            return;
+        }
+
+        /*
+         * In Edit Mode, homePosition has not been initialized yet,
+         * so the current transform position is the clearest patrol
+         * centre to visualize.
+         *
+         * In Play Mode, use the actual saved home position.
+         */
+        Vector3 patrolCentre =
+            Application.isPlaying
+                ? homePosition
+                : transform.position;
+
+        /*
+         * Patrol Radius
+         */
+        Gizmos.color =
+            new Color(
+                0.2f,
+                0.8f,
+                1f,
+                1f
+            );
+
+        Gizmos.DrawWireSphere(
+            patrolCentre,
+            patrolRadius
+        );
+
+        /*
+         * Detection Range
+         */
+        Gizmos.color =
+            new Color(
+                1f,
+                0.8f,
+                0.1f,
+                1f
+            );
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            detectionRange
+        );
+
+        /*
+         * Lose Target Range
+         */
+        Gizmos.color =
+            new Color(
+                1f,
+                0.25f,
+                0.25f,
+                1f
+            );
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            loseTargetRange
+        );
     }
 
     // =========================================================

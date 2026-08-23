@@ -938,14 +938,14 @@ GameObject:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 3096381226399691132}
   - component: {fileID: 2663395536026847230}
-  - component: {fileID: 5528081377850786559}
+  - component: {fileID: 4995706864453659995}
+  - component: {fileID: 264397444210247005}
+  - component: {fileID: 7167398855894057203}
   - component: {fileID: 1118839868438648128}
   - component: {fileID: 6299778963109504847}
-  - component: {fileID: 7167398855894057203}
-  - component: {fileID: 4516182743743952825}
   m_Layer: 8
   m_Name: Skeleton_Golem
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1010,7 +1010,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 3
---- !u!114 &5528081377850786559
+--- !u!114 &4995706864453659995
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1019,9 +1019,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 919132149155446097}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1199bdbc8c6a53438ae2fe4b3a77f5c, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c9404505d38a2042a5f703c1bff41aa, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TankEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   destroyDelay: 2
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
@@ -1031,26 +1031,62 @@ MonoBehaviour:
   ammoPickupPrefab: {fileID: 0}
   specialPickupPrefab: {fileID: 0}
   pickupSpawnHeight: 1
-  patrolRadius: 15
+  patrolRadius: 10
   patrolWaitTime: 2
   destinationTolerance: 0.25
   navMeshSampleDistance: 3
   patrolSearchAttempts: 10
   detectionRange: 20
-  loseTargetRange: 30
-  attackRange: 5
+  loseTargetRange: 25
+  patrolSpeed: 2
+  returnSpeed: 3
+  engagedRotationSpeed: 8
+  showRangeGizmos: 1
+--- !u!114 &264397444210247005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 854dbebcc2c8db840aa8aed1d2852b72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankLogic
+  attackRange: 4
   chaseStoppingDistance: 3.25
-  attackExitRange: 5.1
+  attackExitRange: 4.75
   attackDamage: 1
   attackCooldown: 3
   attackRotationSpeed: 25
   axeHitbox: {fileID: 8722070175505448502}
-  patrolSpeed: 6
   chaseSpeed: 10
-  returnSpeed: 6
   locomotionRecoveryStateName: Melee_2H_Idle
   entangleRecoveryTransitionDuration: 0.05
   entangleRecoveryAnimationFrames: 3
+--- !u!195 &7167398855894057203
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 1
+  m_Speed: 2.5
+  m_Acceleration: 16
+  avoidancePriority: 50
+  m_AngularSpeed: 720
+  m_StoppingDistance: 2
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 4.5
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!136 &1118839868438648128
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1101,40 +1137,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!195 &7167398855894057203
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 1
-  m_Speed: 2.5
-  m_Acceleration: 16
-  avoidancePriority: 50
-  m_AngularSpeed: 720
-  m_StoppingDistance: 2
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 4.5
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
---- !u!114 &4516182743743952825
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e3235fec20f4244683c33d7fa8d1163, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TankAnimationEventRelay
 --- !u!1 &2906422263482941188
 GameObject:
   m_ObjectHideFlags: 0

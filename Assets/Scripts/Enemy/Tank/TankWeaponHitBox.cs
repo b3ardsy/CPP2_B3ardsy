@@ -4,13 +4,22 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class TankWeaponHitbox : MonoBehaviour
 {
-    private TankEnemy owner;
+    /*
+     * Temporary migration support:
+     *
+     * New Tank uses TankLogic.
+     * Legacy TankEnemy remains supported until the prefab swap
+     * is complete so the project can compile safely.
+     */
+    private TankLogic owner;
+    private TankEnemy legacyOwner;
+
     private Collider hitboxCollider;
 
     private bool hitboxActive;
 
     /*
-     * Prevents multiple Player colliders or repeated physics frames
+     * Prevent multiple Player colliders or repeated physics frames
      * from dealing damage more than once during one hit window.
      */
     private readonly HashSet<IAxeDamageable> playersHitThisWindow =
@@ -24,8 +33,8 @@ public class TankWeaponHitbox : MonoBehaviour
         if (!hitboxCollider.isTrigger)
         {
             Debug.LogWarning(
-                $"{name}: The weapon collider was not marked as a trigger. " +
-                "Is Trigger has now been enabled.",
+                $"{name}: Tank weapon collider was not marked " +
+                "as a trigger. Is Trigger has now been enabled.",
                 this
             );
 
@@ -34,25 +43,46 @@ public class TankWeaponHitbox : MonoBehaviour
         }
 
         owner =
-            GetComponentInParent<TankEnemy>();
+            GetComponentInParent<TankLogic>();
 
         if (owner == null)
         {
-            Debug.LogError(
-                $"{name}: Could not find TankEnemy on a parent object.",
-                this
-            );
+            legacyOwner =
+                GetComponentInParent<TankEnemy>();
         }
 
+        /*
+         * During migration, either TankLogic or TankEnemy may own
+         * this hitbox. The new TankLogic will explicitly call SetOwner.
+         */
         DisableHitbox();
     }
 
     public void SetOwner(
-        TankEnemy tankEnemy
+        TankLogic tankLogic
     )
     {
         owner =
+            tankLogic;
+
+        legacyOwner =
+            null;
+    }
+
+    /*
+     * Temporary overload for the old TankEnemy script.
+     *
+     * Remove this overload after TankEnemy has been retired.
+     */
+    public void SetOwner(
+        TankEnemy tankEnemy
+    )
+    {
+        legacyOwner =
             tankEnemy;
+
+        owner =
+            null;
     }
 
     public void EnableHitbox()
@@ -85,8 +115,8 @@ public class TankWeaponHitbox : MonoBehaviour
     )
     {
         /*
-         * Handles the case where the Player is already overlapping
-         * when the animation enables the hit window.
+         * Handles the case where the Player is already
+         * overlapping when the hit window opens.
          */
         TryHitPlayer(
             other
@@ -99,7 +129,10 @@ public class TankWeaponHitbox : MonoBehaviour
     {
         if (
             !hitboxActive ||
-            owner == null
+            (
+                owner == null &&
+                legacyOwner == null
+            )
         )
         {
             return;
@@ -133,9 +166,21 @@ public class TankWeaponHitbox : MonoBehaviour
             targetPlayer
         );
 
-        owner.TryDamagePlayer(
-            targetPlayer
-        );
+        if (owner != null)
+        {
+            owner.TryDamagePlayer(
+                targetPlayer
+            );
+
+            return;
+        }
+
+        if (legacyOwner != null)
+        {
+            legacyOwner.TryDamagePlayer(
+                targetPlayer
+            );
+        }
     }
 
     private IAxeDamageable FindAxeDamageable(
