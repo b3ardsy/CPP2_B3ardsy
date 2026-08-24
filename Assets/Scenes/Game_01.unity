@@ -9044,17 +9044,22 @@ MonoBehaviour:
   shieldDuration: 4
   shieldCooldown: 5
   startShieldUnlocked: 0
---- !u!114 &966271264 stripped
+--- !u!114 &966271268 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_CorrespondingSourceObject: {fileID: 7690415708235302229, guid: 7385497e3ea5564408d35375051cd723, type: 3}
   m_PrefabInstance: {fileID: 1739097295}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 966271249}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9029ede211b73864eb2084e7233f031a, type: 3}
+  m_Script: {fileID: 11500000, guid: fd28cd2e8fbfe8547b91adc113138481, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatNew
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
+--- !u!95 &966271274 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7937088398246958496, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_PrefabInstance: {fileID: 1739097295}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &966271275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9084,9 +9089,9 @@ MonoBehaviour:
     m_Bits: 64
   waitingDelay: 8
   cameraTransform: {fileID: 1771091026}
-  playerCombat: {fileID: 0}
-  playerLockOn: {fileID: 0}
-  playerDodge: {fileID: 0}
+  playerCombat: {fileID: 966271278}
+  playerLockOn: {fileID: 966271277}
+  playerDodge: {fileID: 966271276}
 --- !u!114 &966271276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9099,7 +9104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f35452a433e0b949a039f3dbc228fe1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player_Dodge
-  playerLockOn: {fileID: 0}
+  playerLockOn: {fileID: 966271277}
   dodgeSpeed: 15
   dodgeDuration: 0.3
   dodgeCooldown: 0.2
@@ -9122,6 +9127,81 @@ MonoBehaviour:
   detectionRadius: 20
   maximumLockAngle: 60
   breakLockDistance: 20
+--- !u!114 &966271278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b7d08fdebbb93f428b182036ed09548, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_Combat
+  animator: {fileID: 966271274}
+  playerController: {fileID: 966271275}
+  playerLockOn: {fileID: 966271277}
+  playerWeaponManager: {fileID: 966271268}
+  playerStaffCombat: {fileID: 966271279}
+  playerShieldController: {fileID: 966271260}
+  wandProjectilePrefab: {fileID: 652429852690551798, guid: cbee370379a30094a936e7155b2be5eb, type: 3}
+  wandFirePoint: {fileID: 2068847699}
+  wandDamage: 1
+  wandProjectileSpeed: 12
+  usePlayerForwardWhenUnlocked: 1
+--- !u!114 &966271279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9aef6452709fe754690097c9a0f3c7cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_StaffCombat
+  animator: {fileID: 966271274}
+  playerController: {fileID: 966271275}
+  playerLockOn: {fileID: 966271277}
+  staffFirePoint: {fileID: 1680256363}
+  slot1Spell: 3
+  slot2Spell: 2
+  slot3Spell: 0
+  startWithLightningUnlocked: 0
+  startWithIceTornadoUnlocked: 0
+  startWithEntangleUnlocked: 0
+  entangleCooldown: 7
+  flamethrowerCooldown: 5
+  iceTornadoCooldown: 5
+  lightningStrikeCooldown: 3
+  entanglePrefab: {fileID: 3312029078939134375, guid: 47979636eddea1c45b4e0950f37b3cf6, type: 3}
+  entangleDuration: 5
+  entangleLocalOffset: {x: 0, y: 0, z: 0}
+  entangleMissDistance: 6
+  entangleGroundCheckHeight: 5
+  entangleGroundOffset: 0.05
+  iceTornadoPrefab: {fileID: 3246411546289460215, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
+  iceTornadoDamage: 5
+  iceTornadoSpeed: 10
+  iceTornadoSpawnDistance: 0
+  iceTornadoGroundCheckHeight: 3
+  iceTornadoGroundOffset: 0.05
+  iceTornadoRotationOffset: {x: -90, y: 0, z: 0}
+  lightningStrikePrefab: {fileID: -6621363650049744213, guid: 5a00130b18b389a499fb14acfe26bc2d, type: 3}
+  lightningStrikeDamage: 2
+  lightningStrikeDamageRadius: 1.25
+  lightningStrikeRange: 6
+  lightningGroundCheckHeight: 5
+  lightningGroundOffset: 0.05
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  usePlayerForwardWhenUnlocked: 1
 --- !u!1 &966509247
 GameObject:
   m_ObjectHideFlags: 0
@@ -10628,8 +10708,8 @@ MonoBehaviour:
   mainMenuConfirmationPanel: {fileID: 1881434340}
   quitConfirmationPanel: {fileID: 1305461591}
   mainMenuSceneName: Game_Start
-  cameraController: {fileID: 0}
-  playerCombat: {fileID: 966271264}
+  cameraController: {fileID: 1907595496}
+  playerCombat: {fileID: 966271278}
 --- !u!20 &1116078652 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 7274144138896859639, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -17698,6 +17778,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1679201526}
   m_CullTransparentMesh: 1
+--- !u!4 &1680256363 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5520820917836687221, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_PrefabInstance: {fileID: 1739097295}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1682714150
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18577,15 +18662,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: wandFirePoint
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: playerMovement
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: wandProjectilePrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: slot1Spell
@@ -18653,6 +18746,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: playerDodge
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: playerCombat
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -18744,6 +18841,8 @@ PrefabInstance:
     - {fileID: 6658573693976217545, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     - {fileID: 6209135657088217799, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     - {fileID: 8985355908063834351, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+    - {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+    - {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -18759,6 +18858,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: 4
       addedObject: {fileID: 966271277}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      insertIndex: 5
+      addedObject: {fileID: 966271278}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      insertIndex: 6
+      addedObject: {fileID: 966271279}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: -1
       addedObject: {fileID: 966271260}
@@ -22823,6 +22928,11 @@ Transform:
 Transform:
   m_CorrespondingSourceObject: {fileID: 2535176770576831750, guid: 89a8486d66d7f5f4c9ca8f9f56bb6184, type: 3}
   m_PrefabInstance: {fileID: 1419318507}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2068847699 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4050644116854047295, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_PrefabInstance: {fileID: 1739097295}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &2077234192 stripped
 Transform:

@@ -4,7 +4,7 @@ public class PlayerAbilityHUD : MonoBehaviour
 {
     [Header("Player References")]
     [SerializeField] private PlayerWeaponManager weaponManager;
-    [SerializeField] private PlayerStaffCombat staffCombat;
+    [SerializeField] private Player_StaffCombat staffCombat;
     [SerializeField] private PlayerShieldController shieldController;
 
     [Header("Ability Slot Objects")]
@@ -111,7 +111,7 @@ public class PlayerAbilityHUD : MonoBehaviour
     }
 
     private void HandleSpellUnlocked(
-        PlayerStaffCombat.StaffSpell spell
+        Player_StaffCombat.StaffSpell spell
     )
     {
         UpdateSpellVisibility(spell);
@@ -125,7 +125,7 @@ public class PlayerAbilityHUD : MonoBehaviour
     // =========================================================
 
     private void ShowSpellUnlockNotification(
-        PlayerStaffCombat.StaffSpell spell
+        Player_StaffCombat.StaffSpell spell
     )
     {
         if (notificationBanner == null)
@@ -137,17 +137,17 @@ public class PlayerAbilityHUD : MonoBehaviour
 
         switch (spell)
         {
-            case PlayerStaffCombat.StaffSpell.LightningStrike:
+            case Player_StaffCombat.StaffSpell.LightningStrike:
                 message =
                     lightningUnlockMessage;
                 break;
 
-            case PlayerStaffCombat.StaffSpell.IceTornado:
+            case Player_StaffCombat.StaffSpell.IceTornado:
                 message =
                     tornadoUnlockMessage;
                 break;
 
-            case PlayerStaffCombat.StaffSpell.Entangle:
+            case Player_StaffCombat.StaffSpell.Entangle:
                 message =
                     entangleUnlockMessage;
                 break;
@@ -170,15 +170,15 @@ public class PlayerAbilityHUD : MonoBehaviour
         UpdateShieldVisibility();
 
         UpdateSpellVisibility(
-            PlayerStaffCombat.StaffSpell.LightningStrike
+            Player_StaffCombat.StaffSpell.LightningStrike
         );
 
         UpdateSpellVisibility(
-            PlayerStaffCombat.StaffSpell.IceTornado
+            Player_StaffCombat.StaffSpell.IceTornado
         );
 
         UpdateSpellVisibility(
-            PlayerStaffCombat.StaffSpell.Entangle
+            Player_StaffCombat.StaffSpell.Entangle
         );
     }
 
@@ -199,17 +199,9 @@ public class PlayerAbilityHUD : MonoBehaviour
     }
 
     private void UpdateSpellVisibility(
-        PlayerStaffCombat.StaffSpell spell
-    )
+    Player_StaffCombat.StaffSpell spell
+)
     {
-        if (staffCombat == null)
-        {
-            return;
-        }
-
-        bool unlocked =
-            staffCombat.IsSpellUnlocked(spell);
-
         GameObject slotObject =
             GetSlotObject(spell);
 
@@ -218,24 +210,33 @@ public class PlayerAbilityHUD : MonoBehaviour
             return;
         }
 
+        if (staffCombat == null)
+        {
+            slotObject.SetActive(false);
+            return;
+        }
+
+        bool unlocked =
+            staffCombat.IsSpellUnlocked(spell);
+
         slotObject.SetActive(
             unlocked
         );
     }
 
     private GameObject GetSlotObject(
-        PlayerStaffCombat.StaffSpell spell
+        Player_StaffCombat.StaffSpell spell
     )
     {
         switch (spell)
         {
-            case PlayerStaffCombat.StaffSpell.LightningStrike:
+            case Player_StaffCombat.StaffSpell.LightningStrike:
                 return lightningSlotObject;
 
-            case PlayerStaffCombat.StaffSpell.IceTornado:
+            case Player_StaffCombat.StaffSpell.IceTornado:
                 return tornadoSlotObject;
 
-            case PlayerStaffCombat.StaffSpell.Entangle:
+            case Player_StaffCombat.StaffSpell.Entangle:
                 return entangleSlotObject;
 
             default:
@@ -262,40 +263,40 @@ public class PlayerAbilityHUD : MonoBehaviour
 
         if (
             staffCombat.IsSpellUnlocked(
-                PlayerStaffCombat.StaffSpell.LightningStrike
+                Player_StaffCombat.StaffSpell.LightningStrike
             )
         )
         {
             UpdateStaffCooldown(
-                PlayerStaffCombat.StaffSpell.LightningStrike
+                Player_StaffCombat.StaffSpell.LightningStrike
             );
         }
 
         if (
             staffCombat.IsSpellUnlocked(
-                PlayerStaffCombat.StaffSpell.IceTornado
+                Player_StaffCombat.StaffSpell.IceTornado
             )
         )
         {
             UpdateStaffCooldown(
-                PlayerStaffCombat.StaffSpell.IceTornado
+                Player_StaffCombat.StaffSpell.IceTornado
             );
         }
 
         if (
             staffCombat.IsSpellUnlocked(
-                PlayerStaffCombat.StaffSpell.Entangle
+                Player_StaffCombat.StaffSpell.Entangle
             )
         )
         {
             UpdateStaffCooldown(
-                PlayerStaffCombat.StaffSpell.Entangle
+                Player_StaffCombat.StaffSpell.Entangle
             );
         }
     }
 
     private void UpdateStaffCooldown(
-        PlayerStaffCombat.StaffSpell spell
+        Player_StaffCombat.StaffSpell spell
     )
     {
         if (staffCombat == null)
@@ -328,18 +329,18 @@ public class PlayerAbilityHUD : MonoBehaviour
     }
 
     private AbilityCooldownUI GetCooldownUI(
-        PlayerStaffCombat.StaffSpell spell
+        Player_StaffCombat.StaffSpell spell
     )
     {
         switch (spell)
         {
-            case PlayerStaffCombat.StaffSpell.LightningStrike:
+            case Player_StaffCombat.StaffSpell.LightningStrike:
                 return lightningCooldownUI;
 
-            case PlayerStaffCombat.StaffSpell.IceTornado:
+            case Player_StaffCombat.StaffSpell.IceTornado:
                 return tornadoCooldownUI;
 
-            case PlayerStaffCombat.StaffSpell.Entangle:
+            case Player_StaffCombat.StaffSpell.Entangle:
                 return entangleCooldownUI;
 
             default:
@@ -379,7 +380,7 @@ public class PlayerAbilityHUD : MonoBehaviour
         if (staffCombat == null)
         {
             staffCombat =
-                FindAnyObjectByType<PlayerStaffCombat>();
+                FindAnyObjectByType<Player_StaffCombat>();
         }
 
         if (shieldController == null)

@@ -63,7 +63,7 @@ public class Player_Controller : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
-    [SerializeField] private PlayerCombatNew playerCombat;
+    [SerializeField] private Player_Combat playerCombat;
     [SerializeField] private Player_LockOn playerLockOn;
     [SerializeField] private Player_Dodge playerDodge;
 
@@ -171,7 +171,7 @@ public class Player_Controller : MonoBehaviour
         if (playerCombat == null)
         {
             playerCombat =
-                GetComponent<PlayerCombatNew>();
+                GetComponent<Player_Combat>();
         }
 
         if (playerLockOn == null)
