@@ -6,8 +6,8 @@ public class SpellRune : MonoBehaviour, IInteract
     [Header("Rune Unlock")]
     [Tooltip("The Staff spell unlocked when this rune is activated.")]
     [SerializeField]
-    private PlayerStaffCombat.StaffSpell spellToUnlock =
-        PlayerStaffCombat.StaffSpell.LightningStrike;
+    private Player_StaffCombat.StaffSpell spellToUnlock =
+        Player_StaffCombat.StaffSpell.LightningStrike;
 
     [Header("Interaction")]
     [Tooltip(
@@ -54,19 +54,19 @@ public class SpellRune : MonoBehaviour, IInteract
             return;
         }
 
-        PlayerStaffCombat staffCombat =
-            interactor.GetComponent<PlayerStaffCombat>();
+        Player_StaffCombat staffCombat =
+            interactor.GetComponent<Player_StaffCombat>();
 
         if (staffCombat == null)
         {
             staffCombat =
-                interactor.GetComponentInParent<PlayerStaffCombat>();
+                interactor.GetComponentInParent<Player_StaffCombat>();
         }
 
         if (staffCombat == null)
         {
             Debug.LogError(
-                $"{name}: Could not find PlayerStaffCombat on the player.",
+                $"{name}: Could not find Player_StaffCombat on the player.",
                 this
             );
 
@@ -77,7 +77,7 @@ public class SpellRune : MonoBehaviour, IInteract
          * Staff spells should not be learned before
          * the player has actually collected the Staff.
          */
-        PlayerWeaponManager weaponManager =
+        Player_WeaponManager weaponManager =
             interactor.GetWeaponManager();
 
         if (

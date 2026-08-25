@@ -18,7 +18,7 @@ public class PauseMenuController : MonoBehaviour
 
     [Header("Gameplay Input")]
     [SerializeField] private MonoBehaviour cameraController;
-    [SerializeField] private PlayerCombatNew playerCombat;
+    [SerializeField] private Player_Combat playerCombat;
 
     private bool isPaused;
     private Coroutine resumeCoroutine;
