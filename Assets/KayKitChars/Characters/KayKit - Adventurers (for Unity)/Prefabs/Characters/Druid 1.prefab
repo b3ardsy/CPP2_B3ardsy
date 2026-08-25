@@ -878,6 +878,7 @@ GameObject:
   - component: {fileID: 7690415708235302229}
   - component: {fileID: 5198917100671412841}
   - component: {fileID: 2427465129357510108}
+  - component: {fileID: 4557537408726290429}
   m_Layer: 0
   m_Name: Druid 1
   m_TagString: Player
@@ -1004,6 +1005,7 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  waitingDelay: 8
   cameraTransform: {fileID: 7468378734651127450}
   playerCombat: {fileID: 1929804244283084515}
   playerLockOn: {fileID: 8985355908063834351}
@@ -1037,18 +1039,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b5269ef22bdd5047aca11551afc75c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsNew
-  maxHealth: 10
   invulnerabilityDuration: 0
   hitReactionDuration: 0.4
-  hitAnimationStateName: Base Layer.Player_Hit
-  axeHitAnimationStateName: AxeHit
-  deathRestartDelay: 2
-  restartSceneOnDeath: 1
+  axeHitReactionDuration: 0.65
+  deathAnimationDelay: 2
+  gameOverDelay: 3
+  mainMenuSceneName: Game_Start
+  gameOverMessage: GAME OVER
+  health: {fileID: 0}
   animator: {fileID: 7937088398246958496}
   playerMovement: {fileID: 3364010743847596850}
   playerCombat: {fileID: 1929804244283084515}
   playerDodge: {fileID: 6658573693976217545}
   playerLockOn: {fileID: 8985355908063834351}
+  notificationBanner: {fileID: 0}
 --- !u!114 &1929804244283084515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1066,6 +1070,7 @@ MonoBehaviour:
   playerLockOn: {fileID: 0}
   playerWeaponManager: {fileID: 0}
   playerStaffCombat: {fileID: 0}
+  playerShieldController: {fileID: 0}
   wandProjectilePrefab: {fileID: 652429852690551798, guid: cbee370379a30094a936e7155b2be5eb, type: 3}
   wandFirePoint: {fileID: 4050644116854047295}
   wandDamage: 1
@@ -1083,10 +1088,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd28cd2e8fbfe8547b91adc113138481, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
-  playerCombat: {fileID: 0}
   wandObject: {fileID: 7660894127998281888}
   staffObject: {fileID: 5434485785058172231}
-  startingWeapon: 0
+  waitingFadeDuration: 0.25
 --- !u!114 &5198917100671412841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1100,6 +1104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   interactionPrompt: {fileID: 0}
+  promptHeightOffset: 0.35
 --- !u!114 &2427465129357510108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1116,11 +1121,55 @@ MonoBehaviour:
   playerMovement: {fileID: 0}
   playerLockOn: {fileID: 0}
   staffFirePoint: {fileID: 5520820917836687221}
-  selectedSpell: 1
-  fireTornadoPrefab: {fileID: 4247989493703643989, guid: 018e87eab46bc2c48b212f0643995519, type: 3}
-  fireTornadoDamage: 1
-  fireTornadoSpeed: 10
+  slot1Spell: 3
+  slot2Spell: 2
+  slot3Spell: 0
+  startWithLightningUnlocked: 0
+  startWithIceTornadoUnlocked: 0
+  startWithEntangleUnlocked: 0
+  entangleCooldown: 8
+  flamethrowerCooldown: 5
+  iceTornadoCooldown: 5
+  lightningStrikeCooldown: 5
+  entanglePrefab: {fileID: 0}
+  entangleDuration: 5
+  entangleLocalOffset: {x: 0, y: 0, z: 0}
+  entangleMissDistance: 6
+  entangleGroundCheckHeight: 5
+  entangleGroundOffset: 0.05
+  iceTornadoPrefab: {fileID: 0}
+  iceTornadoDamage: 1
+  iceTornadoSpeed: 10
+  iceTornadoSpawnDistance: 1.5
+  iceTornadoGroundCheckHeight: 3
+  iceTornadoGroundOffset: 0.05
+  iceTornadoRotationOffset: {x: -90, y: 0, z: 0}
+  lightningStrikePrefab: {fileID: 0}
+  lightningStrikeDamage: 2
+  lightningStrikeDamageRadius: 1.25
+  lightningStrikeRange: 6
+  lightningGroundCheckHeight: 5
+  lightningGroundOffset: 0.05
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   usePlayerForwardWhenUnlocked: 1
+--- !u!114 &4557537408726290429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 3
 --- !u!1 &1115911922453957853
 GameObject:
   m_ObjectHideFlags: 0
@@ -1176,6 +1225,7 @@ MonoBehaviour:
   startingPitch: 10
   startingYawOffset: 0
   heightOffset: 1.5
+  startingZoomDistance: 6
   lockOnHeightOffset: 2.5
   lockOnRotationSmoothTime: 0.12
   shoulderOffset: 1

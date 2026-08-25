@@ -4651,6 +4651,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 527911724}
   m_CullTransparentMesh: 1
+--- !u!1001 &538018686
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 122.26712
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 24.99542
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 112.01277
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067137, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3926328079490067148, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
+      propertyPath: m_Name
+      value: VFX_Dust_Storm
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e79e6b5fbbea19446b93a35ba8f9ff14, type: 3}
 --- !u!4 &547792190 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6087472029130258816, guid: ee3a974dc56e9c54ea26b1e6fbd3dad4, type: 3}
@@ -24127,3 +24184,4 @@ SceneRoots:
   - {fileID: 127476658}
   - {fileID: 428961470}
   - {fileID: 398498481}
+  - {fileID: 538018686}
