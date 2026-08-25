@@ -77,7 +77,7 @@ public class SpellRune : MonoBehaviour, IInteract
          * Staff spells should not be learned before
          * the player has actually collected the Staff.
          */
-        PlayerWeaponManager weaponManager =
+        Player_WeaponManager weaponManager =
             interactor.GetWeaponManager();
 
         if (

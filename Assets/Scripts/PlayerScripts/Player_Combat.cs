@@ -11,15 +11,15 @@ public class Player_Combat : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private Player_Controller playerController;
     [SerializeField] private Player_LockOn playerLockOn;
+    [SerializeField] private Player_WeaponManager playerWeaponManager;
+    [SerializeField] private Player_StaffCombat playerStaffCombat;
 
     /*
-     * These three systems are still using their legacy classes.
-     * They will be replaced individually after Player_Combat
-     * has been tested and confirmed working.
+     * Shield is still using its legacy component temporarily.
+     * This reference will migrate when Player_ShieldController
+     * replaces PlayerShieldController.
      */
-    [SerializeField] private PlayerWeaponManager playerWeaponManager;
-    [SerializeField] private Player_StaffCombat playerStaffCombat;
-    [SerializeField] private PlayerShieldController playerShieldController;
+    [SerializeField] private Player_ShieldController playerShieldController;
 
     // =========================================================
     // WAND
@@ -49,13 +49,6 @@ public class Player_Combat : MonoBehaviour
 
     private bool isWandAttackInProgress;
 
-    /*
-     * Staff casting prevents normal movement.
-     *
-     * We preserve the existing behaviour here for now.
-     * Once Player_StaffCombat is created, Staff will use the
-     * Player_Controller movement-lock system directly.
-     */
     public bool IsAttacking =>
         playerStaffCombat != null &&
         playerStaffCombat.IsCasting;
@@ -207,12 +200,6 @@ public class Player_Combat : MonoBehaviour
         }
     }
 
-    /*
-     * Common cancellation point for other player systems.
-     *
-     * Player_DamageController will eventually call this instead
-     * of knowing how Wand and Staff attacks work internally.
-     */
     public void CancelCombat()
     {
         CancelWandAttack();
@@ -476,7 +463,13 @@ public class Player_Combat : MonoBehaviour
         if (playerWeaponManager == null)
         {
             playerWeaponManager =
-                GetComponent<PlayerWeaponManager>();
+                GetComponent<Player_WeaponManager>();
+        }
+
+        if (playerWeaponManager == null)
+        {
+            playerWeaponManager =
+                GetComponentInParent<Player_WeaponManager>();
         }
 
         if (playerStaffCombat == null)
@@ -485,10 +478,22 @@ public class Player_Combat : MonoBehaviour
                 GetComponent<Player_StaffCombat>();
         }
 
+        if (playerStaffCombat == null)
+        {
+            playerStaffCombat =
+                GetComponentInParent<Player_StaffCombat>();
+        }
+
         if (playerShieldController == null)
         {
             playerShieldController =
-                GetComponent<PlayerShieldController>();
+                GetComponent<Player_ShieldController>();
+        }
+
+        if (playerShieldController == null)
+        {
+            playerShieldController =
+                GetComponentInParent<Player_ShieldController>();
         }
     }
 
@@ -528,7 +533,7 @@ public class Player_Combat : MonoBehaviour
         {
             Debug.LogError(
                 $"{name}: Player_Combat could not find " +
-                "PlayerWeaponManager.",
+                "Player_WeaponManager.",
                 this
             );
 
@@ -540,7 +545,7 @@ public class Player_Combat : MonoBehaviour
         {
             Debug.LogWarning(
                 $"{name}: Player_Combat could not find " +
-                "PlayerStaffCombat.",
+                "Player_StaffCombat.",
                 this
             );
         }

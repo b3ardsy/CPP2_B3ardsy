@@ -3,9 +3,14 @@ using UnityEngine;
 public class PlayerAbilityHUD : MonoBehaviour
 {
     [Header("Player References")]
-    [SerializeField] private PlayerWeaponManager weaponManager;
+    [SerializeField] private Player_WeaponManager weaponManager;
     [SerializeField] private Player_StaffCombat staffCombat;
-    [SerializeField] private PlayerShieldController shieldController;
+
+    /*
+     * Shield remains legacy until Player_ShieldController
+     * is migrated.
+     */
+    [SerializeField] private Player_ShieldController shieldController;
 
     [Header("Ability Slot Objects")]
     [SerializeField] private GameObject shieldSlotObject;
@@ -199,8 +204,8 @@ public class PlayerAbilityHUD : MonoBehaviour
     }
 
     private void UpdateSpellVisibility(
-    Player_StaffCombat.StaffSpell spell
-)
+        Player_StaffCombat.StaffSpell spell
+    )
     {
         GameObject slotObject =
             GetSlotObject(spell);
@@ -210,6 +215,12 @@ public class PlayerAbilityHUD : MonoBehaviour
             return;
         }
 
+        /*
+         * Fail safely.
+         *
+         * If Staff Combat is unavailable, the HUD should
+         * never imply that a spell has been unlocked.
+         */
         if (staffCombat == null)
         {
             slotObject.SetActive(false);
@@ -374,7 +385,7 @@ public class PlayerAbilityHUD : MonoBehaviour
         if (weaponManager == null)
         {
             weaponManager =
-                FindAnyObjectByType<PlayerWeaponManager>();
+                FindAnyObjectByType<Player_WeaponManager>();
         }
 
         if (staffCombat == null)
@@ -386,7 +397,7 @@ public class PlayerAbilityHUD : MonoBehaviour
         if (shieldController == null)
         {
             shieldController =
-                FindAnyObjectByType<PlayerShieldController>();
+                FindAnyObjectByType<Player_ShieldController>();
         }
 
         if (notificationBanner == null)
@@ -402,7 +413,7 @@ public class PlayerAbilityHUD : MonoBehaviour
         {
             Debug.LogError(
                 $"{name}: PlayerAbilityHUD could not find " +
-                "PlayerWeaponManager.",
+                "Player_WeaponManager.",
                 this
             );
         }
@@ -411,7 +422,7 @@ public class PlayerAbilityHUD : MonoBehaviour
         {
             Debug.LogWarning(
                 $"{name}: PlayerAbilityHUD could not find " +
-                "PlayerStaffCombat.",
+                "Player_StaffCombat.",
                 this
             );
         }

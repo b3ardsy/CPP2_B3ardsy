@@ -9024,37 +9024,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
   m_PrefabInstance: {fileID: 1739097295}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &966271260
+--- !u!114 &966271265 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 966271249}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 452c9c34c0cb4da41be30952c1d7081f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerShieldController
-  playerDamageController: {fileID: 0}
-  playerMovement: {fileID: 0}
-  playerWeaponManager: {fileID: 0}
-  shieldPrefab: {fileID: 7981973961279171691, guid: e51ec52db07c4dc46899db57f7c63f21, type: 3}
-  shieldLocalOffset: {x: 0, y: 0.8, z: 0}
-  shieldDuration: 4
-  shieldCooldown: 5
-  startShieldUnlocked: 0
---- !u!114 &966271268 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7690415708235302229, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4557537408726290429, guid: 7385497e3ea5564408d35375051cd723, type: 3}
   m_PrefabInstance: {fileID: 1739097295}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 966271249}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fd28cd2e8fbfe8547b91adc113138481, type: 3}
+  m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
+  m_EditorClassIdentifier: Assembly-CSharp::Health
 --- !u!95 &966271274 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 7937088398246958496, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -9142,9 +9122,9 @@ MonoBehaviour:
   animator: {fileID: 966271274}
   playerController: {fileID: 966271275}
   playerLockOn: {fileID: 966271277}
-  playerWeaponManager: {fileID: 966271268}
+  playerWeaponManager: {fileID: 966271280}
   playerStaffCombat: {fileID: 966271279}
-  playerShieldController: {fileID: 966271260}
+  playerShieldController: {fileID: 966271281}
   wandProjectilePrefab: {fileID: 652429852690551798, guid: cbee370379a30094a936e7155b2be5eb, type: 3}
   wandFirePoint: {fileID: 2068847699}
   wandDamage: 1
@@ -9202,6 +9182,67 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   usePlayerForwardWhenUnlocked: 1
+--- !u!114 &966271280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e53897336ca9af4281cb036fe3813bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_WeaponManager
+  wandObject: {fileID: 1584090438}
+  staffObject: {fileID: 1407489163}
+  waitingFadeDuration: 0.25
+--- !u!114 &966271281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8942c63ed299e5645bcf6f51e851a53b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_ShieldController
+  playerDamageController: {fileID: 966271282}
+  playerController: {fileID: 966271275}
+  playerWeaponManager: {fileID: 966271280}
+  shieldPrefab: {fileID: 2678100132997556333, guid: e51ec52db07c4dc46899db57f7c63f21, type: 3}
+  shieldLocalOffset: {x: 0, y: 0.8, z: 0}
+  shieldDuration: 4
+  shieldCooldown: 5
+  startShieldUnlocked: 0
+--- !u!114 &966271282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 763344f54c4b3d34991a3e6783d93675, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_DamageController
+  invulnerabilityDuration: 0.4
+  hitReactionDuration: 0.4
+  axeHitReactionDuration: 0.65
+  deathAnimationDelay: 2
+  gameOverDelay: 3
+  mainMenuSceneName: Game_Start
+  gameOverMessage: GAME OVER
+  health: {fileID: 966271265}
+  animator: {fileID: 966271274}
+  playerController: {fileID: 966271275}
+  playerCombat: {fileID: 966271278}
+  playerDodge: {fileID: 966271276}
+  playerLockOn: {fileID: 966271277}
+  notificationBanner: {fileID: 372983519}
 --- !u!1 &966509247
 GameObject:
   m_ObjectHideFlags: 0
@@ -13329,9 +13370,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0bc8dd338dcee348ad654571920660d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAbilityHUD
-  weaponManager: {fileID: 0}
-  staffCombat: {fileID: 0}
-  shieldController: {fileID: 0}
+  weaponManager: {fileID: 966271280}
+  staffCombat: {fileID: 966271279}
+  shieldController: {fileID: 966271281}
   shieldSlotObject: {fileID: 1834938049}
   lightningSlotObject: {fileID: 562300205}
   tornadoSlotObject: {fileID: 1860334051}
@@ -14712,6 +14753,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 5702479192095418062, guid: ba1b1ab9928fa5b4e9a1dddba799ec5d, type: 3}
   m_PrefabInstance: {fileID: 1406179422}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1407489163 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5434485785058172231, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_PrefabInstance: {fileID: 1739097295}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1414842104
 PrefabInstance:
@@ -16888,6 +16934,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1583171592}
   m_CullTransparentMesh: 1
+--- !u!1 &1584090438 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7660894127998281888, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+  m_PrefabInstance: {fileID: 1739097295}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1586353928
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18738,7 +18789,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: maxHealth
@@ -18843,6 +18894,8 @@ PrefabInstance:
     - {fileID: 8985355908063834351, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     - {fileID: 1929804244283084515, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     - {fileID: 2427465129357510108, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+    - {fileID: 2891897481618495717, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+    - {fileID: 7690415708235302229, guid: 7385497e3ea5564408d35375051cd723, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
@@ -18865,8 +18918,14 @@ PrefabInstance:
       insertIndex: 6
       addedObject: {fileID: 966271279}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      insertIndex: 7
+      addedObject: {fileID: 966271280}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      insertIndex: 8
+      addedObject: {fileID: 966271282}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 966271260}
+      addedObject: {fileID: 966271281}
     - targetCorrespondingSourceObject: {fileID: 1115911922453957853, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1907595496}

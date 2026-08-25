@@ -14764,8 +14764,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4342645838018078}
   - component: {fileID: 198776327788599770}
+  - component: {fileID: 2678100132997556333}
   - component: {fileID: 199433191677388342}
-  - component: {fileID: 7981973961279171691}
   - component: {fileID: 6763851929100985825}
   m_Layer: 0
   m_Name: ShieldBlue
@@ -19594,6 +19594,21 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &2678100132997556333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1657702766857390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a843acfd6e19949bc0fbf4855bd615, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_ShieldEffect
+  reflectionCollider: {fileID: 6763851929100985825}
+  fullSizeDuration: 3
+  minimumScaleMultiplier: 0.1
 --- !u!199 &199433191677388342
 ParticleSystemRenderer:
   serializedVersion: 7
@@ -19674,21 +19689,6 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
---- !u!114 &7981973961279171691
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1657702766857390}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b353e453cc6945140911609b110564b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerShieldEffect
-  reflectionCollider: {fileID: 1232505082546111864, guid: 7e9da8a58f11d5d4da8dd27eacab7372, type: 3}
-  fullSizeDuration: 3
-  minimumScaleMultiplier: 0.1
 --- !u!135 &6763851929100985825
 SphereCollider:
   m_ObjectHideFlags: 0

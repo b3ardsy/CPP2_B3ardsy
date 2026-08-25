@@ -397,9 +397,9 @@ public class EnemySkullProjectile :
          * the Player, handle it before checking
          * for IDamageable.
          */
-        PlayerShieldEffect shield =
+        Player_ShieldEffect shield =
             other.GetComponentInParent
-                <PlayerShieldEffect>();
+                <Player_ShieldEffect>();
 
         if (shield != null)
         {

@@ -177,8 +177,11 @@ public class PlayerInteraction : MonoBehaviour
 
             if (!foundValidRenderer)
             {
-                combinedBounds = renderer.bounds;
-                foundValidRenderer = true;
+                combinedBounds =
+                    renderer.bounds;
+
+                foundValidRenderer =
+                    true;
             }
             else
             {
@@ -201,7 +204,8 @@ public class PlayerInteraction : MonoBehaviour
         else
         {
             promptPosition +=
-                Vector3.up * promptHeightOffset;
+                Vector3.up *
+                promptHeightOffset;
         }
 
         interactionPrompt.transform.position =
@@ -225,19 +229,24 @@ public class PlayerInteraction : MonoBehaviour
             );
     }
 
-    private void SetPromptVisible(bool visible)
+    private void SetPromptVisible(
+        bool visible
+    )
     {
         if (interactionPrompt == null)
         {
             return;
         }
 
-        interactionPrompt.SetActive(visible);
+        interactionPrompt.SetActive(
+            visible
+        );
     }
 
-    public PlayerWeaponManager GetWeaponManager()
+    public Player_WeaponManager GetWeaponManager()
     {
-        return GetComponent<PlayerWeaponManager>();
+        return
+            GetComponent<Player_WeaponManager>();
     }
 
     public void ClearCurrentInteractable()

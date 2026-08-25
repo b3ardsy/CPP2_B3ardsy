@@ -23,6 +23,7 @@ public class StaffPickup : MonoBehaviour, IInteract
         /*
          * The Staff is a prefab, so a scene HUD reference
          * usually cannot be assigned directly to the prefab asset.
+         *
          * Find the notification banner automatically instead.
          */
         if (notificationBanner == null)
@@ -32,7 +33,9 @@ public class StaffPickup : MonoBehaviour, IInteract
         }
     }
 
-    public void Interact(PlayerInteraction interactor)
+    public void Interact(
+        PlayerInteraction interactor
+    )
     {
         if (hasBeenCollected)
         {
@@ -44,13 +47,14 @@ public class StaffPickup : MonoBehaviour, IInteract
             return;
         }
 
-        PlayerWeaponManager weaponManager =
+        Player_WeaponManager weaponManager =
             interactor.GetWeaponManager();
 
         if (weaponManager == null)
         {
             Debug.LogError(
-                $"{name}: Player does not have a PlayerWeaponManager.",
+                $"{name}: Player does not have a " +
+                "Player_WeaponManager.",
                 this
             );
 
@@ -61,8 +65,9 @@ public class StaffPickup : MonoBehaviour, IInteract
 
         /*
          * Unlock the Staff first.
-         * PlayerWeaponManager will handle the Staff progression
-         * and Shield availability.
+         *
+         * Player_WeaponManager owns Staff progression
+         * and raises OnStaffUnlocked for listening systems.
          */
         weaponManager.UnlockStaff();
 
@@ -85,7 +90,8 @@ public class StaffPickup : MonoBehaviour, IInteract
         else
         {
             Debug.LogWarning(
-                $"{name}: HUDNotificationBanner could not be found.",
+                $"{name}: HUDNotificationBanner " +
+                "could not be found.",
                 this
             );
         }
