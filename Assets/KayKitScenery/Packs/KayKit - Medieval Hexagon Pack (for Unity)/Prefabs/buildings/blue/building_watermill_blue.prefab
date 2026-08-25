@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: -7910887202414434138}
   - component: {fileID: -1768089672313462912}
   - component: {fileID: -1176576858691942612}
-  - component: {fileID: 3310043674291469367}
+  - component: {fileID: 8480530449212812452}
   m_Layer: 0
   m_Name: building_watermill_wheel_blue
   m_TagString: Untagged
@@ -183,7 +183,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3310043674291469367
+--- !u!114 &8480530449212812452
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -192,9 +192,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8685066967014656488}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3652f39087a07f04289cb5336faeb92e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a34e576befc1624ca30cda7b450baae, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WindmillRotation
+  m_EditorClassIdentifier: Assembly-CSharp::Object_Rotation
   rotationSpeed: 20
   reverseRotation: 1
 --- !u!1001 &4783288125682609157

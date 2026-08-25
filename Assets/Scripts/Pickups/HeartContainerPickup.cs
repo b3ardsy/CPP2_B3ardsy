@@ -53,6 +53,12 @@ public class HeartContainerPickup : MonoBehaviour
     // PICKUP EFFECT
     // =========================================================
 
+    private enum EffectTimingMode
+    {
+        MatchHealthAnimation,
+        FixedDuration
+    }
+
     [Header("Pickup Effect")]
     [Tooltip(
         "Particle effect spawned around the player " +
@@ -66,6 +72,27 @@ public class HeartContainerPickup : MonoBehaviour
     )]
     [SerializeField]
     private float effectHeightOffset = 1f;
+
+    [Tooltip(
+        "Determines whether the pickup effect matches the Health HUD " +
+        "animation duration or uses a fixed duration."
+    )]
+    [SerializeField]
+    private EffectTimingMode effectTimingMode =
+        EffectTimingMode.MatchHealthAnimation;
+
+    [Tooltip(
+        "Effect duration when Fixed Duration mode is selected."
+    )]
+    [SerializeField]
+    private float fixedEffectDuration = 3f;
+
+    [Tooltip(
+        "Extra time after the main effect duration so particles " +
+        "already emitted can naturally finish before the object is destroyed."
+    )]
+    [SerializeField]
+    private float particleTailDuration = 0.75f;
 
     [Tooltip(
         "Fallback effect lifetime if the Health HUD " +
@@ -235,6 +262,21 @@ public class HeartContainerPickup : MonoBehaviour
         int targetMaxHealth
     )
     {
+        /*
+         * Fixed mode ignores the HUD animation entirely.
+         */
+        if (
+            effectTimingMode ==
+            EffectTimingMode.FixedDuration
+        )
+        {
+            return
+                fixedEffectDuration;
+        }
+
+        /*
+         * Match Health Animation mode.
+         */
         if (playerHealthHUD == null)
         {
             playerHealthHUD =
@@ -243,7 +285,8 @@ public class HeartContainerPickup : MonoBehaviour
 
         if (playerHealthHUD == null)
         {
-            return fallbackEffectLifetime;
+            return
+                fallbackEffectLifetime;
         }
 
         return
@@ -300,9 +343,15 @@ public class HeartContainerPickup : MonoBehaviour
             finalDuration
         );
 
+        /*
+         * Give particles emitted near the end of the effect
+         * some extra time to naturally finish before destroying
+         * the spawned effect object.
+         */
         Destroy(
             effect,
-            finalDuration
+            finalDuration +
+            particleTailDuration
         );
     }
 
@@ -327,6 +376,12 @@ public class HeartContainerPickup : MonoBehaviour
             ParticleSystem.MainModule main =
                 particleSystem.main;
 
+            /*
+             * Only alter non-looping systems.
+             *
+             * Looping systems retain their prefab configuration
+             * and are destroyed with the parent effect.
+             */
             if (!main.loop)
             {
                 main.duration =
@@ -383,6 +438,18 @@ public class HeartContainerPickup : MonoBehaviour
             Mathf.Max(
                 0f,
                 effectHeightOffset
+            );
+
+        fixedEffectDuration =
+            Mathf.Max(
+                0.1f,
+                fixedEffectDuration
+            );
+
+        particleTailDuration =
+            Mathf.Max(
+                0f,
+                particleTailDuration
             );
 
         fallbackEffectLifetime =

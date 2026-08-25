@@ -4080,7 +4080,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &461920815
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11440,7 +11440,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d656b77a7a44919479574bdf1e98dde0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealthHUD
-  health: {fileID: 0}
+  health: {fileID: 966271265}
   heartPrefab: {fileID: 3713715117719990381, guid: da6c7af73c6441d4e94f77647f390a58, type: 3}
   heartsContainer: {fileID: 1163528294}
   heartRefillDuration: 0.5
@@ -18657,7 +18657,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -26.65
+      value: 70.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.y
@@ -18665,7 +18665,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -64.49
+      value: -31.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: m_LocalRotation.w

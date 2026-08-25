@@ -14664,8 +14664,11 @@ MonoBehaviour:
   playerHealthHUD: {fileID: 0}
   notificationBanner: {fileID: 0}
   pickupMessage: 'Your vitality grows: Maximum Health Increased'
-  pickupEffectPrefab: {fileID: 1847039648824904, guid: c1ae5586f82d0fb4989ac017fa2cda05, type: 3}
+  pickupEffectPrefab: {fileID: 1169868283634440, guid: 42544422015c35b4eb8bda8cbacaa387, type: 3}
   effectHeightOffset: 1
+  effectTimingMode: 1
+  fixedEffectDuration: 5
+  particleTailDuration: 0.75
   fallbackEffectLifetime: 1.5
   destroyDelay: 0
 --- !u!199 &199386691563868012

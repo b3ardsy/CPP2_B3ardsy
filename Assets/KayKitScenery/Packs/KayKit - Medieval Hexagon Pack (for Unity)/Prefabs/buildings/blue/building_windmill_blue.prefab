@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7767934087325119157}
   - component: {fileID: 7051461276538871404}
   - component: {fileID: 1552249943927482493}
-  - component: {fileID: 2919246356446822014}
+  - component: {fileID: 4159507458099227709}
   m_Layer: 0
   m_Name: building_windmill_top_fan_blue
   m_TagString: Untagged
@@ -91,7 +91,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &2919246356446822014
+--- !u!114 &4159507458099227709
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -100,9 +100,9 @@ MonoBehaviour:
   m_GameObject: {fileID: -6376894192594649566}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3652f39087a07f04289cb5336faeb92e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a34e576befc1624ca30cda7b450baae, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WindmillRotation
+  m_EditorClassIdentifier: Assembly-CSharp::Object_Rotation
   rotationSpeed: 20
   reverseRotation: 0
 --- !u!1 &919132149155446097
