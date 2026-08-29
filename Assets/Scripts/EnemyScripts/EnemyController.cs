@@ -858,6 +858,133 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
         ResetForRespawn();
     }
 
+    /*
+     * Restores meaningful enemy state from a manual save.
+     *
+     * Manual saves preserve exact position, rotation, health,
+     * and alive/dead state. Transient AI details such as current
+     * attack frame, target, NavMesh path, cooldowns, and entangle
+     * state are intentionally reset.
+     */
+    public void RestoreManualSaveState(
+        Vector3 savedPosition,
+        Quaternion savedRotation,
+        int savedHealth,
+        int savedMaxHealth,
+        bool savedIsDead
+    )
+    {
+        if (deathRoutine != null)
+        {
+            StopCoroutine(
+                deathRoutine
+            );
+
+            deathRoutine =
+                null;
+        }
+
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        isEntangled =
+            false;
+
+        DestroyEntangleEffect();
+
+        /*
+         * A drop created after the save belongs to the newer runtime
+         * timeline. Remove it before reconstructing the saved enemy.
+         *
+         * Persisting an uncollected drop that existed AT save time is
+         * a separate step handled later.
+         */
+        if (activeDroppedPickup != null)
+        {
+            Destroy(
+                activeDroppedPickup
+            );
+
+            activeDroppedPickup =
+                null;
+        }
+
+        StopAgent();
+
+        RestoreSavedTransform(
+            savedPosition,
+            savedRotation
+        );
+
+        ClearPatrolState();
+
+        if (savedIsDead)
+        {
+            deathHandled =
+                true;
+
+            if (health != null)
+            {
+                health.RestoreSavedHealthState(
+                    0,
+                    savedMaxHealth
+                );
+            }
+
+            OnDied?.Invoke();
+
+            SetEnemyCollidersActive(
+                false
+            );
+
+            SetEnemyRenderersActive(
+                false
+            );
+
+            RefreshHealthBars();
+
+            return;
+        }
+
+        deathHandled =
+            false;
+
+        if (health != null)
+        {
+            health.RestoreSavedHealthState(
+                Mathf.Max(
+                    1,
+                    savedHealth
+                ),
+                savedMaxHealth
+            );
+        }
+
+        RestoreEnemyRenderers();
+        RestoreEnemyColliders();
+
+        ResetSharedAnimatorState();
+
+        OnRespawned?.Invoke();
+
+        RefreshHealthBars();
+
+        BeginPatrol();
+
+        Debug.Log(
+            $"{name}: Restored from manual save at " +
+            $"{savedHealth}/{savedMaxHealth} health.",
+            this
+        );
+    }
+
     public void ResetForRespawn()
     {
         if (deathRoutine != null)
@@ -920,6 +1047,8 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
         ResetSharedAnimatorState();
 
         OnRespawned?.Invoke();
+
+        RefreshHealthBars();
 
         BeginPatrol();
 
@@ -1074,6 +1203,64 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
         }
     }
 
+    private void RestoreSavedTransform(
+        Vector3 savedPosition,
+        Quaternion savedRotation
+    )
+    {
+        if (agent == null)
+        {
+            transform.SetPositionAndRotation(
+                savedPosition,
+                savedRotation
+            );
+
+            return;
+        }
+
+        bool agentWasEnabled =
+            agent.enabled;
+
+        if (!agentWasEnabled)
+        {
+            agent.enabled =
+                true;
+        }
+
+        if (
+            NavMesh.SamplePosition(
+                savedPosition,
+                out NavMeshHit hit,
+                navMeshSampleDistance,
+                agent.areaMask
+            )
+        )
+        {
+            agent.Warp(
+                hit.position
+            );
+        }
+        else
+        {
+            agent.enabled =
+                false;
+
+            transform.position =
+                savedPosition;
+
+            agent.enabled =
+                true;
+        }
+
+        transform.rotation =
+            savedRotation;
+
+        agent.isStopped =
+            true;
+
+        agent.ResetPath();
+    }
+
     private void RestoreHomeTransform()
     {
         if (agent == null)
@@ -1150,6 +1337,25 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
 
         animator.Rebind();
         animator.Update(0f);
+    }
+
+    private void RefreshHealthBars()
+    {
+        EnemyHealthBar[] healthBars =
+            GetComponentsInChildren<EnemyHealthBar>(
+                true
+            );
+
+        foreach (
+            EnemyHealthBar healthBar
+            in healthBars
+        )
+        {
+            if (healthBar != null)
+            {
+                healthBar.RefreshFromHealth();
+            }
+        }
     }
 
     // =========================================================

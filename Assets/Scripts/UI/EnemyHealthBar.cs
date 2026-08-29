@@ -224,6 +224,71 @@ public class EnemyHealthBar : MonoBehaviour
     }
 
     // =========================================================
+    // EXTERNAL STATE REFRESH
+    // =========================================================
+
+    /*
+     * Re-synchronizes the health bar after an enemy is restored
+     * from a checkpoint or manual save.
+     *
+     * Death sets healthDepleted=true and disables the Canvas.
+     * Restoring Health alone is not enough to clear that UI-owned
+     * runtime state, so EnemyController calls this explicitly.
+     */
+    public void RefreshFromHealth()
+    {
+        if (health == null)
+        {
+            return;
+        }
+
+        if (damageRoutine != null)
+        {
+            StopCoroutine(
+                damageRoutine
+            );
+
+            damageRoutine =
+                null;
+        }
+
+        healthDepleted =
+            health.IsDead;
+
+        float normalizedHealth =
+            GetNormalizedHealth(
+                health.CurrentHealth,
+                health.MaxHealth
+            );
+
+        if (healthFill != null)
+        {
+            healthFill.fillAmount =
+                normalizedHealth;
+        }
+
+        if (damageFill != null)
+        {
+            damageFill.fillAmount =
+                normalizedHealth;
+        }
+
+        if (healthDepleted)
+        {
+            if (healthBarCanvas != null)
+            {
+                healthBarCanvas.enabled =
+                    false;
+            }
+
+            return;
+        }
+
+        FaceCamera();
+        UpdateVisibility();
+    }
+
+    // =========================================================
     // DAMAGE BAR
     // =========================================================
 

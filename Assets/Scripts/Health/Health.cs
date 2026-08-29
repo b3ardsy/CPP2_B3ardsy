@@ -196,6 +196,34 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
+    /*
+     * Restores exact serialized health, including 0 HP.
+     *
+     * Unlike TakeDamage(), this deliberately does not invoke OnDied.
+     * The owning load/restoration system is responsible for putting
+     * a dead entity into its correct runtime presentation/state.
+     */
+    public void RestoreSavedHealthState(
+        int healthAmount,
+        int maxHealthAmount
+    )
+    {
+        maxHealth =
+            Mathf.Max(
+                1,
+                maxHealthAmount
+            );
+
+        currentHealth =
+            Mathf.Clamp(
+                healthAmount,
+                0,
+                maxHealth
+            );
+
+        NotifyHealthChanged();
+    }
+
     // =========================================================
     // MAXIMUM HEALTH
     // =========================================================

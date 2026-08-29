@@ -65,6 +65,351 @@ public class CheckpointManager : MonoBehaviour
     public PlayerCheckpointState CurrentPlayerState =>
         playerCheckpointState;
 
+
+    public CheckpointSaveData CapturePersistentCheckpointData()
+    {
+        CheckpointSaveData data =
+            new CheckpointSaveData();
+
+        data.hasCheckpoint =
+            HasCheckpoint;
+
+        if (!HasCheckpoint)
+        {
+            return data;
+        }
+
+        data.checkpointId =
+            currentCheckpointId;
+
+        data.player.currentHealth =
+            playerCheckpointState.currentHealth;
+
+        data.player.maxHealth =
+            playerCheckpointState.maxHealth;
+
+        data.player.progression.hasStaff =
+            playerCheckpointState
+                .weaponProgression
+                .hasStaff;
+
+        data.player.progression.lightningUnlocked =
+            playerCheckpointState
+                .spellProgression
+                .lightningUnlocked;
+
+        data.player.progression.iceTornadoUnlocked =
+            playerCheckpointState
+                .spellProgression
+                .iceTornadoUnlocked;
+
+        data.player.progression.entangleUnlocked =
+            playerCheckpointState
+                .spellProgression
+                .entangleUnlocked;
+
+        foreach (
+            WorldCheckpointState state
+            in worldCheckpointStates
+        )
+        {
+            if (state.component == null)
+            {
+                continue;
+            }
+
+            PersistentID persistentID =
+                state.component.GetComponent<PersistentID>();
+
+            if (
+                persistentID == null ||
+                !persistentID.HasValidID
+            )
+            {
+                continue;
+            }
+
+            data.worldStates.Add(
+                new CheckpointWorldStateSaveData
+                {
+                    persistentId =
+                        persistentID.ID,
+
+                    available =
+                        state.wasAvailable
+                }
+            );
+        }
+
+        return data;
+    }
+
+    // =========================================================
+    // PERSISTENT CHECKPOINT RECONSTRUCTION
+    // =========================================================
+
+    /*
+     * Rebuilds the runtime checkpoint snapshot from XML-friendly
+     * save data.
+     *
+     * No disk/XML work happens here. This class only reconstructs
+     * the runtime state it already owns.
+     */
+    public bool RestorePersistentCheckpointData(
+        CheckpointSaveData data
+    )
+    {
+        if (
+            data == null ||
+            !data.hasCheckpoint
+        )
+        {
+            ClearCheckpoint();
+
+            return true;
+        }
+
+        if (
+            string.IsNullOrWhiteSpace(
+                data.checkpointId
+            )
+        )
+        {
+            Debug.LogError(
+                "CheckpointManager: Saved checkpoint has no ID.",
+                this
+            );
+
+            return false;
+        }
+
+        PersistentID[] persistentObjects =
+            FindObjectsByType<PersistentID>(
+                FindObjectsInactive.Include
+            );
+
+        System.Collections.Generic.Dictionary<string, PersistentID>
+            objectsById =
+                new System.Collections.Generic.Dictionary<string, PersistentID>();
+
+        foreach (
+            PersistentID persistentObject
+            in persistentObjects
+        )
+        {
+            if (
+                persistentObject == null ||
+                !persistentObject.HasValidID ||
+                objectsById.ContainsKey(
+                    persistentObject.ID
+                )
+            )
+            {
+                continue;
+            }
+
+            objectsById.Add(
+                persistentObject.ID,
+                persistentObject
+            );
+        }
+
+        if (
+            !objectsById.TryGetValue(
+                data.checkpointId,
+                out PersistentID shrinePersistentId
+            )
+        )
+        {
+            Debug.LogError(
+                "CheckpointManager: Saved checkpoint shrine could not " +
+                $"be found: {data.checkpointId}",
+                this
+            );
+
+            return false;
+        }
+
+        CheckpointShrine shrine =
+            shrinePersistentId
+                .GetComponent<CheckpointShrine>();
+
+        if (shrine == null)
+        {
+            Debug.LogError(
+                "CheckpointManager: Persistent checkpoint ID does not " +
+                $"belong to a CheckpointShrine: {data.checkpointId}",
+                shrinePersistentId
+            );
+
+            return false;
+        }
+
+        currentCheckpoint =
+            shrine.RespawnPoint;
+
+        currentCheckpointId =
+            data.checkpointId;
+
+        playerCheckpointState =
+            new PlayerCheckpointState
+            {
+                position =
+                    shrine.RespawnPoint.position,
+
+                rotation =
+                    shrine.RespawnPoint.rotation,
+
+                currentHealth =
+                    data.player.currentHealth,
+
+                maxHealth =
+                    data.player.maxHealth,
+
+                weaponProgression =
+                    new Player_WeaponManager
+                        .WeaponProgressionState(
+                            data.player
+                                .progression
+                                .hasStaff
+                        ),
+
+                spellProgression =
+                    new Player_StaffCombat
+                        .SpellProgressionState(
+                            data.player
+                                .progression
+                                .lightningUnlocked,
+
+                            data.player
+                                .progression
+                                .iceTornadoUnlocked,
+
+                            data.player
+                                .progression
+                                .entangleUnlocked
+                        )
+            };
+
+        worldCheckpointStates.Clear();
+
+        int missingWorldStates =
+            0;
+
+        foreach (
+            CheckpointWorldStateSaveData savedState
+            in data.worldStates
+        )
+        {
+            if (
+                savedState == null ||
+                string.IsNullOrWhiteSpace(
+                    savedState.persistentId
+                ) ||
+                !objectsById.TryGetValue(
+                    savedState.persistentId,
+                    out PersistentID persistentObject
+                )
+            )
+            {
+                missingWorldStates++;
+
+                continue;
+            }
+
+            MonoBehaviour resettableComponent =
+                FindCheckpointResettableComponent(
+                    persistentObject
+                );
+
+            if (resettableComponent == null)
+            {
+                missingWorldStates++;
+
+                continue;
+            }
+
+            worldCheckpointStates.Add(
+                new WorldCheckpointState(
+                    resettableComponent,
+                    savedState.available
+                )
+            );
+        }
+
+        /*
+         * A freshly loaded scene starts with all shrines unlit.
+         * Mark the saved active shrine as activated without
+         * capturing a new snapshot.
+         */
+        shrine.RestoreActivatedState(
+            true
+        );
+
+        /*
+         * Player_RespawnController listens for this event.
+         * Raising it here gives a loaded checkpoint the same runtime
+         * death ownership as one activated normally during gameplay.
+         */
+        OnCheckpointCaptured?.Invoke();
+
+        Debug.Log(
+            "CheckpointManager: Persistent checkpoint restored.\n" +
+            $"Checkpoint={currentCheckpointId}\n" +
+            $"Health={playerCheckpointState.currentHealth}/" +
+            $"{playerCheckpointState.maxHealth}\n" +
+            $"WorldStates={worldCheckpointStates.Count}\n" +
+            $"MissingWorldStates={missingWorldStates}",
+            shrine
+        );
+
+        return missingWorldStates == 0;
+    }
+
+    private MonoBehaviour FindCheckpointResettableComponent(
+        PersistentID persistentObject
+    )
+    {
+        if (persistentObject == null)
+        {
+            return null;
+        }
+
+        MonoBehaviour[] behaviours =
+            persistentObject
+                .GetComponents<MonoBehaviour>();
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour != null &&
+                behaviour is ICheckpointResettable
+            )
+            {
+                return behaviour;
+            }
+        }
+
+        return null;
+    }
+
+    public void ClearCheckpoint()
+    {
+        currentCheckpoint =
+            null;
+
+        currentCheckpointId =
+            string.Empty;
+
+        playerCheckpointState =
+            default;
+
+        worldCheckpointStates.Clear();
+    }
+
     /*
      * Raised after a complete player/world checkpoint snapshot
      * has been captured successfully.

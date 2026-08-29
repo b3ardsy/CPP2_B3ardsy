@@ -70,6 +70,23 @@ public class PlayerAbilityHUD : MonoBehaviour
     }
 
     // =========================================================
+    // EXTERNAL STATE REFRESH
+    // =========================================================
+
+    /*
+     * Used after save/load or checkpoint restoration.
+     *
+     * This re-reads progression from the systems that own it
+     * without firing unlock notifications.
+     */
+    public void RefreshFromProgression()
+    {
+        FindReferences();
+        UpdateAllVisibility();
+        UpdateAllCooldowns();
+    }
+
+    // =========================================================
     // EVENTS
     // =========================================================
 

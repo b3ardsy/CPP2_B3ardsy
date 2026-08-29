@@ -195,6 +195,34 @@ public class CheckpointShrine :
     }
 
     // =========================================================
+    // SAVE / LOAD RESTORE
+    // =========================================================
+
+    /*
+     * Restores the shrine's activated presentation without
+     * capturing a new checkpoint snapshot.
+     *
+     * Used when a saved active checkpoint is reconstructed.
+     */
+    public void RestoreActivatedState(
+        bool activated
+    )
+    {
+        isActivated =
+            activated;
+
+        SetCandleEffects(
+            activated
+        );
+
+        if (interactionTrigger != null)
+        {
+            interactionTrigger.enabled =
+                !activated;
+        }
+    }
+
+    // =========================================================
     // CANDLE EFFECTS
     // =========================================================
 
