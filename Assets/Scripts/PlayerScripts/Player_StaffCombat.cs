@@ -11,6 +11,25 @@ public class Player_StaffCombat : MonoBehaviour
         LightningStrike
     }
 
+    [Serializable]
+    public struct SpellProgressionState
+    {
+        public bool lightningUnlocked;
+        public bool iceTornadoUnlocked;
+        public bool entangleUnlocked;
+
+        public SpellProgressionState(
+            bool lightning,
+            bool iceTornado,
+            bool entangle
+        )
+        {
+            lightningUnlocked = lightning;
+            iceTornadoUnlocked = iceTornado;
+            entangleUnlocked = entangle;
+        }
+    }
+
     public event Action<StaffSpell> OnSpellUnlocked;
 
     [Header("References")]
@@ -292,6 +311,29 @@ public class Player_StaffCombat : MonoBehaviour
             $"{name}: {spell} unlocked.",
             this
         );
+    }
+
+    public SpellProgressionState CaptureProgressionState()
+    {
+        return new SpellProgressionState(
+            lightningUnlocked,
+            iceTornadoUnlocked,
+            entangleUnlocked
+        );
+    }
+
+    public void RestoreProgressionState(
+        SpellProgressionState state
+    )
+    {
+        lightningUnlocked =
+            state.lightningUnlocked;
+
+        iceTornadoUnlocked =
+            state.iceTornadoUnlocked;
+
+        entangleUnlocked =
+            state.entangleUnlocked;
     }
 
     // =========================================================
@@ -1051,6 +1093,27 @@ public class Player_StaffCombat : MonoBehaviour
                     readyTime;
                 break;
         }
+    }
+
+    // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Clears only temporary Staff combat state.
+     * Spell unlock progression is restored separately.
+     */
+    public void ResetForRespawn()
+    {
+        CancelStaffCast();
+
+        activeSpell =
+            default;
+
+        nextEntangleTime = 0f;
+        nextFlamethrowerTime = 0f;
+        nextIceTornadoTime = 0f;
+        nextLightningStrikeTime = 0f;
     }
 
     // =========================================================

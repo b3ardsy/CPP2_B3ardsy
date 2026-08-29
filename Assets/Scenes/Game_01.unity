@@ -2106,7 +2106,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 6af0ae7729f3d314cab43f05097192ce, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 89.7521
+      value: 113.08
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af0ae7729f3d314cab43f05097192ce, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2114,7 +2114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af0ae7729f3d314cab43f05097192ce, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 62
+      value: 105.33
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af0ae7729f3d314cab43f05097192ce, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3364,7 +3364,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 85f05e5c182c025449d083b010b9cff2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 33.07
+      value: 84.55
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 85f05e5c182c025449d083b010b9cff2, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3372,7 +3372,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 85f05e5c182c025449d083b010b9cff2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 88.7
+      value: 113.69
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 85f05e5c182c025449d083b010b9cff2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9300,6 +9300,34 @@ MonoBehaviour:
   playerDodge: {fileID: 966271276}
   playerLockOn: {fileID: 966271277}
   notificationBanner: {fileID: 372983519}
+--- !u!114 &966271285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966271249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a5b988323cd4f44385889c17ace7215, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player_RespawnController
+  deathAnimationDelay: 4
+  respawnControlDelay: 3
+  respawnEffectPrefab: {fileID: 5990377524553406831, guid: 2833342d29f77a849a2ae8c096e15bc3, type: 3}
+  respawnEffectPrefab2: {fileID: 992766990823386071, guid: 4d3e64d092333274ca8ec94543f29412, type: 3}
+  respawnEffectPrefab3: {fileID: 5381570716127183593, guid: 0ebf7568bfcc5da4a928a592f199591a, type: 3}
+  respawnEffectOffset: {x: 0, y: 0, z: 0}
+  health: {fileID: 0}
+  damageController: {fileID: 0}
+  playerController: {fileID: 0}
+  playerCombat: {fileID: 0}
+  playerDodge: {fileID: 0}
+  playerLockOn: {fileID: 0}
+  shieldController: {fileID: 0}
+  staffCombat: {fileID: 0}
+  weaponManager: {fileID: 0}
+  animator: {fileID: 0}
 --- !u!1 &966509247
 GameObject:
   m_ObjectHideFlags: 0
@@ -18983,6 +19011,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: -1
       addedObject: {fileID: 966271281}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 966271285}
     - targetCorrespondingSourceObject: {fileID: 1115911922453957853, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1907595496}
@@ -20893,6 +20924,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
       propertyPath: m_Name
       value: Skeleton_Mage
+      objectReference: {fileID: 0}
+    - target: {fileID: 9078815949463096416, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: blackHoleDamage
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

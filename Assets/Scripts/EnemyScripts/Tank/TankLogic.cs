@@ -197,6 +197,12 @@ public class TankLogic : MonoBehaviour
 
         enemyController.OnDied +=
             HandleDied;
+
+        enemyController.OnRespawned -=
+            ResetForRespawn;
+
+        enemyController.OnRespawned +=
+            ResetForRespawn;
     }
 
     private void Start()
@@ -970,6 +976,43 @@ public class TankLogic : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    public void ResetForRespawn()
+    {
+        CancelCurrentAttack();
+
+        currentState =
+            TankState.Patrolling;
+
+        attackCooldownTimer =
+            0f;
+
+        wasEntangledLastFrame =
+            false;
+
+        movementAnimationRecoveryFrames =
+            0;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                AttackHash
+            );
+
+            animator.ResetTrigger(
+                EntangleHash
+            );
+
+            animator.SetFloat(
+                SpeedHash,
+                0f
+            );
+        }
+    }
+
+    // =========================================================
     // RETURN HOME
     // =========================================================
 
@@ -1112,6 +1155,9 @@ public class TankLogic : MonoBehaviour
 
             enemyController.OnDied -=
                 HandleDied;
+
+            enemyController.OnRespawned -=
+                ResetForRespawn;
 
             enemyController.StopAgent();
         }

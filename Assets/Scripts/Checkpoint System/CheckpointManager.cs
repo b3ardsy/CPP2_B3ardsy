@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CheckpointManager : MonoBehaviour
@@ -9,16 +11,61 @@ public class CheckpointManager : MonoBehaviour
     public static CheckpointManager Instance { get; private set; }
 
     // =========================================================
-    // CHECKPOINT
+    // CHECKPOINT DATA
     // =========================================================
 
+    [Serializable]
+    public struct PlayerCheckpointState
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public int currentHealth;
+        public int maxHealth;
+
+        public Player_WeaponManager.WeaponProgressionState
+            weaponProgression;
+
+        public Player_StaffCombat.SpellProgressionState
+            spellProgression;
+    }
+
+    [Serializable]
+    private struct WorldCheckpointState
+    {
+        public MonoBehaviour component;
+        public bool wasAvailable;
+
+        public WorldCheckpointState(
+            MonoBehaviour worldComponent,
+            bool available
+        )
+        {
+            component = worldComponent;
+            wasAvailable = available;
+        }
+    }
+
     private Transform currentCheckpoint;
+    private PlayerCheckpointState playerCheckpointState;
+
+    private readonly List<WorldCheckpointState>
+        worldCheckpointStates =
+            new List<WorldCheckpointState>();
 
     public Transform CurrentCheckpoint =>
         currentCheckpoint;
 
     public bool HasCheckpoint =>
         currentCheckpoint != null;
+
+    public PlayerCheckpointState CurrentPlayerState =>
+        playerCheckpointState;
+
+    /*
+     * Raised after a complete player/world checkpoint snapshot
+     * has been captured successfully.
+     */
+    public event Action OnCheckpointCaptured;
 
     // =========================================================
     // INITIALIZATION
@@ -31,19 +78,26 @@ public class CheckpointManager : MonoBehaviour
             Instance != this
         )
         {
-            Destroy(gameObject);
+            Destroy(
+                gameObject
+            );
+
             return;
         }
 
-        Instance = this;
+        Instance =
+            this;
     }
 
     // =========================================================
-    // CHECKPOINT MANAGEMENT
+    // CHECKPOINT CAPTURE
     // =========================================================
 
     public void SetCheckpoint(
-        Transform checkpoint
+        Transform checkpoint,
+        Health playerHealth,
+        Player_WeaponManager weaponManager,
+        Player_StaffCombat staffCombat
     )
     {
         if (checkpoint == null)
@@ -56,33 +110,146 @@ public class CheckpointManager : MonoBehaviour
             return;
         }
 
+        if (
+            playerHealth == null ||
+            weaponManager == null ||
+            staffCombat == null
+        )
+        {
+            Debug.LogError(
+                "CheckpointManager: Cannot capture checkpoint because " +
+                "one or more required player systems are missing.",
+                this
+            );
+
+            return;
+        }
+
         currentCheckpoint =
             checkpoint;
 
+        playerCheckpointState =
+            new PlayerCheckpointState
+            {
+                position =
+                    checkpoint.position,
+
+                rotation =
+                    checkpoint.rotation,
+
+                currentHealth =
+                    playerHealth.CurrentHealth,
+
+                maxHealth =
+                    playerHealth.MaxHealth,
+
+                weaponProgression =
+                    weaponManager
+                        .CaptureProgressionState(),
+
+                spellProgression =
+                    staffCombat
+                        .CaptureProgressionState()
+            };
+
+        CaptureWorldStates();
+
+        OnCheckpointCaptured?.Invoke();
+
         Debug.Log(
             $"CheckpointManager: Checkpoint updated to " +
-            $"{checkpoint.name}.",
+            $"{checkpoint.name}. " +
+            $"Health={playerCheckpointState.currentHealth}, " +
+            $"WorldObjectsTracked={worldCheckpointStates.Count}.",
             checkpoint
         );
     }
 
+    private void CaptureWorldStates()
+    {
+        worldCheckpointStates.Clear();
+
+        MonoBehaviour[] behaviours =
+            FindObjectsByType<MonoBehaviour>(
+                FindObjectsInactive.Include
+            );
+
+        foreach (
+            MonoBehaviour behaviour
+            in behaviours
+        )
+        {
+            if (
+                behaviour == null ||
+                behaviour is not ICheckpointResettable resettable
+            )
+            {
+                continue;
+            }
+
+            worldCheckpointStates.Add(
+                new WorldCheckpointState(
+                    behaviour,
+                    resettable.IsCheckpointAvailable
+                )
+            );
+        }
+    }
+
+    // =========================================================
+    // PLAYER CHECKPOINT ACCESS
+    // =========================================================
+
     public Vector3 GetRespawnPosition()
     {
-        if (currentCheckpoint == null)
-        {
-            return Vector3.zero;
-        }
-
-        return currentCheckpoint.position;
+        return HasCheckpoint
+            ? playerCheckpointState.position
+            : Vector3.zero;
     }
 
     public Quaternion GetRespawnRotation()
     {
-        if (currentCheckpoint == null)
+        return HasCheckpoint
+            ? playerCheckpointState.rotation
+            : Quaternion.identity;
+    }
+
+    // =========================================================
+    // WORLD RESTORE
+    // =========================================================
+
+    /*
+     * Restores only enemy state here.
+     *
+     * Player restoration is intentionally handled by the future
+     * Player_RespawnController so the checkpoint manager remains
+     * the snapshot owner rather than the respawn orchestrator.
+     */
+    public void RestoreWorldStates()
+    {
+        if (!HasCheckpoint)
         {
-            return Quaternion.identity;
+            return;
         }
 
-        return currentCheckpoint.rotation;
+        foreach (
+            WorldCheckpointState state
+            in worldCheckpointStates
+        )
+        {
+            if (
+                state.component == null ||
+                state.component is not
+                    ICheckpointResettable resettable
+            )
+            {
+                continue;
+            }
+
+            resettable.RestoreCheckpointState(
+                state.wasAvailable
+            );
+        }
     }
+
 }

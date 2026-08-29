@@ -90,8 +90,48 @@ public class CheckpointShrine :
                 ? respawnPoint
                 : transform;
 
+        if (interactor == null)
+        {
+            Debug.LogError(
+                $"{name}: Checkpoint interaction requires " +
+                "a valid PlayerInteraction.",
+                this
+            );
+
+            return;
+        }
+
+        Health playerHealth =
+            interactor.GetComponentInParent<Health>();
+
+        Player_WeaponManager weaponManager =
+            interactor.GetComponentInParent
+                <Player_WeaponManager>();
+
+        Player_StaffCombat staffCombat =
+            interactor.GetComponentInParent
+                <Player_StaffCombat>();
+
+        if (
+            playerHealth == null ||
+            weaponManager == null ||
+            staffCombat == null
+        )
+        {
+            Debug.LogError(
+                $"{name}: Could not find all required player " +
+                "checkpoint systems.",
+                this
+            );
+
+            return;
+        }
+
         CheckpointManager.Instance.SetCheckpoint(
-            checkpointTransform
+            checkpointTransform,
+            playerHealth,
+            weaponManager,
+            staffCombat
         );
 
         isActivated =

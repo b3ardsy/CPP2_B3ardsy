@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class StaffPickup : MonoBehaviour, IInteract
+public class StaffPickup : MonoBehaviour, IInteract, ICheckpointResettable
 {
     [Header("Notification")]
     [Tooltip(
@@ -17,6 +17,9 @@ public class StaffPickup : MonoBehaviour, IInteract
         "The ancient staff answers your call: Shield Unlocked";
 
     private bool hasBeenCollected;
+
+    public bool IsCheckpointAvailable =>
+        !hasBeenCollected;
 
     private void Awake()
     {
@@ -101,6 +104,24 @@ public class StaffPickup : MonoBehaviour, IInteract
             this
         );
 
-        Destroy(gameObject);
+        gameObject.SetActive(
+            false
+        );
     }
+    // =========================================================
+    // CHECKPOINT RESTORE
+    // =========================================================
+
+    public void RestoreCheckpointState(
+        bool wasAvailable
+    )
+    {
+        hasBeenCollected =
+            !wasAvailable;
+
+        gameObject.SetActive(
+            wasAvailable
+        );
+    }
+
 }

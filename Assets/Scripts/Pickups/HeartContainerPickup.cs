@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class HeartContainerPickup : MonoBehaviour
+public class HeartContainerPickup : MonoBehaviour, ICheckpointResettable
 {
     // =========================================================
     // HEART UPGRADE
@@ -114,12 +114,23 @@ public class HeartContainerPickup : MonoBehaviour
 
     private bool hasBeenCollected;
 
+    private Coroutine deactivateCoroutine;
+    private Collider[] pickupColliders;
+
+    public bool IsCheckpointAvailable =>
+        !hasBeenCollected;
+
     // =========================================================
     // INITIALIZATION
     // =========================================================
 
     private void Awake()
     {
+        pickupColliders =
+            GetComponentsInChildren<Collider>(
+                true
+            );
+
         if (playerHealthHUD == null)
         {
             playerHealthHUD =
@@ -224,10 +235,17 @@ public class HeartContainerPickup : MonoBehaviour
 
         DisablePickupColliders();
 
-        Destroy(
-            gameObject,
-            destroyDelay
-        );
+        if (deactivateCoroutine != null)
+        {
+            StopCoroutine(
+                deactivateCoroutine
+            );
+        }
+
+        deactivateCoroutine =
+            StartCoroutine(
+                DeactivateAfterDelay()
+            );
     }
 
     // =========================================================
@@ -401,23 +419,93 @@ public class HeartContainerPickup : MonoBehaviour
     }
 
     // =========================================================
+    // CHECKPOINT RESTORE
+    // =========================================================
+
+    public void RestoreCheckpointState(
+        bool wasAvailable
+    )
+    {
+        if (deactivateCoroutine != null)
+        {
+            StopCoroutine(
+                deactivateCoroutine
+            );
+
+            deactivateCoroutine =
+                null;
+        }
+
+        hasBeenCollected =
+            !wasAvailable;
+
+        gameObject.SetActive(
+            wasAvailable
+        );
+
+        if (wasAvailable)
+        {
+            RestorePickupColliders();
+        }
+    }
+
+    private System.Collections.IEnumerator DeactivateAfterDelay()
+    {
+        if (destroyDelay > 0f)
+        {
+            yield return new WaitForSeconds(
+                destroyDelay
+            );
+        }
+
+        deactivateCoroutine =
+            null;
+
+        gameObject.SetActive(
+            false
+        );
+    }
+
+    // =========================================================
     // COLLIDERS
     // =========================================================
 
     private void DisablePickupColliders()
     {
-        Collider[] colliders =
-            GetComponentsInChildren<Collider>();
+        if (pickupColliders == null)
+        {
+            return;
+        }
 
         foreach (
             Collider pickupCollider
-            in colliders
+            in pickupColliders
         )
         {
             if (pickupCollider != null)
             {
                 pickupCollider.enabled =
                     false;
+            }
+        }
+    }
+
+    private void RestorePickupColliders()
+    {
+        if (pickupColliders == null)
+        {
+            return;
+        }
+
+        foreach (
+            Collider pickupCollider
+            in pickupColliders
+        )
+        {
+            if (pickupCollider != null)
+            {
+                pickupCollider.enabled =
+                    true;
             }
         }
     }

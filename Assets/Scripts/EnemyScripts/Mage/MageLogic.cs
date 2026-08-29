@@ -141,6 +141,26 @@ public class MageLogic : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        if (enemyController == null)
+        {
+            enemyController =
+                GetComponent<EnemyController>();
+        }
+
+        if (enemyController == null)
+        {
+            return;
+        }
+
+        enemyController.OnRespawned -=
+            ResetForRespawn;
+
+        enemyController.OnRespawned +=
+            ResetForRespawn;
+    }
+
     private void Start()
     {
         /*
@@ -838,6 +858,40 @@ public class MageLogic : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    public void ResetForRespawn()
+    {
+        currentState =
+            MageState.Patrolling;
+
+        isPerformingAttack =
+            false;
+
+        wasEntangledLastFrame =
+            false;
+
+        ResetAttackCooldown();
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                AttackTrigger
+            );
+
+            animator.ResetTrigger(
+                EntangleTrigger
+            );
+
+            animator.SetBool(
+                IsMovingBool,
+                false
+            );
+        }
+    }
+
+    // =========================================================
     // UNITY
     // =========================================================
 
@@ -845,6 +899,9 @@ public class MageLogic : MonoBehaviour
     {
         if (enemyController != null)
         {
+            enemyController.OnRespawned -=
+                ResetForRespawn;
+
             enemyController.StopAgent();
         }
 

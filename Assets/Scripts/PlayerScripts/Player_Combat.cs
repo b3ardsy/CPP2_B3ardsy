@@ -211,6 +211,22 @@ public class Player_Combat : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Resets the transient combat state coordinated by this
+     * component.
+     *
+     * Player_Combat does not own weapon or spell progression,
+     * so those values are intentionally left untouched.
+     */
+    public void ResetForRespawn()
+    {
+        CancelCombat();
+    }
+
+    // =========================================================
     // SHIELD
     // =========================================================
 
