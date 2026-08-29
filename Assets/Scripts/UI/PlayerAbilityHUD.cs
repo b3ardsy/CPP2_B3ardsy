@@ -102,6 +102,9 @@ public class PlayerAbilityHUD : MonoBehaviour
         {
             staffCombat.OnSpellUnlocked +=
                 HandleSpellUnlocked;
+
+            staffCombat.OnProgressionRestored +=
+                HandleProgressionRestored;
         }
     }
 
@@ -117,7 +120,15 @@ public class PlayerAbilityHUD : MonoBehaviour
         {
             staffCombat.OnSpellUnlocked -=
                 HandleSpellUnlocked;
+
+            staffCombat.OnProgressionRestored -=
+                HandleProgressionRestored;
         }
+    }
+
+    private void HandleProgressionRestored()
+    {
+        RefreshFromProgression();
     }
 
     private void HandleStaffUnlocked()

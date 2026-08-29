@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,182 +10,257 @@ using UnityEngine.SceneManagement;
 public class SaveGameManager : MonoBehaviour
 {
     // =========================================================
-    // TEMPORARY REAL-GAME XML CAPTURE TEST
+    // SAVE SLOTS
     // =========================================================
 
-    private const string TestFileName =
-        "wildrune_xml_test.xml";
+    private const int MinimumSlot = 1;
+    private const int MaximumSlot = 3;
 
-    public string TestFilePath =>
-        Path.Combine(
-            Application.persistentDataPath,
-            TestFileName
+    private const string SaveFilePrefix =
+        "wildrune_slot_";
+
+    private const string SaveFileExtension =
+        ".sav";
+
+    // =========================================================
+    // ENCRYPTION
+    // =========================================================
+
+    /*
+     * XML is serialized in memory first, then encrypted before
+     * anything is written to disk.
+     *
+     * AES handles reversible encryption.
+     * SHA-256 derives separate encryption/integrity keys.
+     * HMAC-SHA256 detects corruption/tampering before decryption.
+     *
+     * This is appropriate for the assignment/save-obfuscation use
+     * case. A secret embedded in a shipped client is not equivalent
+     * to server-side key security.
+     */
+    private const string SaveSecret =
+        "Wildrune_CPP2_SaveData_2026";
+
+    private static readonly byte[] FileMagic =
+        Encoding.ASCII.GetBytes(
+            "WRN1"
         );
 
+    private const int IvLength = 16;
+    private const int HmacLength = 32;
+
     // =========================================================
-    // WRITE CURRENT GAME
+    // PUBLIC SLOT API
     // =========================================================
 
-    [ContextMenu("Write Current Game XML")]
-    public void WriteCurrentGameXml()
+    public bool SaveGame(
+        int slot
+    )
     {
+        if (!ValidateSlot(slot))
+        {
+            return false;
+        }
+
         if (!Application.isPlaying)
         {
             Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before capturing " +
-                "the current game state.",
+                "SaveGameManager: SaveGame must be called in Play Mode.",
                 this
             );
 
-            return;
+            return false;
         }
 
         if (!TryBuildCurrentSaveData(
                 out WildruneSaveData saveData
             ))
         {
-            return;
+            return false;
         }
 
         try
         {
-            XmlSerializer serializer =
-                new XmlSerializer(
-                    typeof(WildruneSaveData)
-                );
-
-            using (
-                StreamWriter writer =
-                    new StreamWriter(
-                        TestFilePath,
-                        false
-                    )
-            )
-            {
-                serializer.Serialize(
-                    writer,
+            byte[] xmlBytes =
+                SerializeToXmlBytes(
                     saveData
                 );
-            }
+
+            byte[] encryptedBytes =
+                EncryptSaveBytes(
+                    xmlBytes
+                );
+
+            string path =
+                GetSlotPath(
+                    slot
+                );
+
+            File.WriteAllBytes(
+                path,
+                encryptedBytes
+            );
 
             Debug.Log(
-                "SaveGameManager: Current game XML written successfully.\n" +
-                $"Path: {TestFilePath}\n" +
-                $"PlayerHealth={saveData.player.currentHealth}/" +
-                $"{saveData.player.maxHealth}\n" +
-                $"Enemies={saveData.world.enemies.Count}\n" +
-                $"WorldObjects={saveData.world.worldObjects.Count}\n" +
-                $"Checkpoint=" +
-                $"{(saveData.checkpoint.hasCheckpoint ? saveData.checkpoint.checkpointId : "None")}",
+                $"SaveGameManager: Saved Slot {slot}.\n" +
+                $"Path: {path}\n" +
+                $"Scene={saveData.sceneName}\n" +
+                $"Health={saveData.player.currentHealth}/" +
+                $"{saveData.player.maxHealth}",
                 this
             );
+
+            return true;
         }
         catch (Exception exception)
         {
             Debug.LogError(
-                "SaveGameManager: Failed to write current game XML.\n" +
+                $"SaveGameManager: Failed to save Slot {slot}.\n" +
                 exception,
                 this
             );
+
+            return false;
         }
     }
 
-    // =========================================================
-    // READ TEST FILE
-    // =========================================================
-
-    [ContextMenu("Read Current Game XML")]
-    public void ReadCurrentGameXml()
+    public bool HasSave(
+        int slot
+    )
     {
-        if (!File.Exists(TestFilePath))
+        if (!IsSlotNumberValid(slot))
         {
-            Debug.LogWarning(
-                "SaveGameManager: No XML test save exists yet.\n" +
-                $"Expected path: {TestFilePath}",
-                this
+            return false;
+        }
+
+        return File.Exists(
+            GetSlotPath(slot)
+        );
+    }
+
+    public bool DeleteSave(
+        int slot
+    )
+    {
+        if (!ValidateSlot(slot))
+        {
+            return false;
+        }
+
+        string path =
+            GetSlotPath(
+                slot
             );
 
-            return;
+        if (!File.Exists(path))
+        {
+            return true;
         }
 
         try
         {
-            XmlSerializer serializer =
-                new XmlSerializer(
-                    typeof(WildruneSaveData)
-                );
-
-            WildruneSaveData loadedData;
-
-            using (
-                StreamReader reader =
-                    new StreamReader(
-                        TestFilePath
-                    )
-            )
-            {
-                loadedData =
-                    serializer.Deserialize(
-                        reader
-                    ) as WildruneSaveData;
-            }
-
-            if (loadedData == null)
-            {
-                Debug.LogError(
-                    "SaveGameManager: XML was read, but no " +
-                    "WildruneSaveData object was created.",
-                    this
-                );
-
-                return;
-            }
+            File.Delete(
+                path
+            );
 
             Debug.Log(
-                "SaveGameManager: Current game XML loaded successfully.\n" +
-                $"Scene={loadedData.sceneName}\n" +
-                $"PlayerHealth={loadedData.player.currentHealth}/" +
-                $"{loadedData.player.maxHealth}\n" +
-                $"Enemies={loadedData.world.enemies.Count}\n" +
-                $"WorldObjects={loadedData.world.worldObjects.Count}\n" +
-                $"Checkpoint=" +
-                $"{(loadedData.checkpoint.hasCheckpoint ? loadedData.checkpoint.checkpointId : "None")}",
+                $"SaveGameManager: Deleted Slot {slot}.",
                 this
             );
+
+            return true;
         }
         catch (Exception exception)
         {
             Debug.LogError(
-                "SaveGameManager: Failed to read current game XML.\n" +
+                $"SaveGameManager: Failed to delete Slot {slot}.\n" +
                 exception,
                 this
             );
+
+            return false;
         }
     }
 
-    // =========================================================
-    // PLAYER RESTORE TEST
-    // =========================================================
-
-    [ContextMenu("Restore Player From Current Game XML")]
-    public void RestorePlayerFromCurrentGameXml()
+    /*
+     * Reads/decrypts/deserializes a slot without changing gameplay.
+     *
+     * GameSessionManager will use this later for Main Menu loading
+     * before it transitions to the saved scene.
+     */
+    public bool TryReadSaveSlot(
+        int slot,
+        out WildruneSaveData saveData
+    )
     {
-        if (!Application.isPlaying)
+        saveData =
+            null;
+
+        if (!ValidateSlot(slot))
         {
-            Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before restoring " +
-                "the player from XML.",
+            return false;
+        }
+
+        string path =
+            GetSlotPath(
+                slot
+            );
+
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            byte[] encryptedBytes =
+                File.ReadAllBytes(
+                    path
+                );
+
+            byte[] xmlBytes =
+                DecryptSaveBytes(
+                    encryptedBytes
+                );
+
+            saveData =
+                DeserializeXmlBytes(
+                    xmlBytes
+                );
+
+            return saveData != null;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError(
+                $"SaveGameManager: Failed to read Slot {slot}.\n" +
+                exception.Message,
                 this
             );
 
-            return;
-        }
+            saveData =
+                null;
 
-        if (!TryReadSaveData(
-                out WildruneSaveData saveData
-            ))
+            return false;
+        }
+    }
+
+    /*
+     * Restores a previously read save into the CURRENTLY LOADED
+     * gameplay scene.
+     *
+     * Scene transitions remain a GameSessionManager responsibility.
+     */
+    public bool RestoreSaveData(
+        WildruneSaveData saveData
+    )
+    {
+        if (
+            saveData == null ||
+            !Application.isPlaying
+        )
         {
-            return;
+            return false;
         }
 
         string activeSceneName =
@@ -199,831 +277,159 @@ public class SaveGameManager : MonoBehaviour
         )
         {
             Debug.LogError(
-                "SaveGameManager: Save belongs to scene " +
-                $"'{saveData.sceneName}', but the active scene is " +
-                $"'{activeSceneName}'. Player restore aborted.",
+                "SaveGameManager: Cannot restore save for scene " +
+                $"'{saveData.sceneName}' while '{activeSceneName}' " +
+                "is loaded.",
                 this
             );
 
-            return;
+            return false;
         }
 
-        Player_Controller playerController =
-            FindAnyObjectByType<Player_Controller>();
+        Dictionary<string, PersistentID> objectsById =
+            BuildPersistentIdLookup();
 
-        if (playerController == null)
+        bool playerRestored =
+            RestorePlayer(
+                saveData.player
+            );
+
+        bool worldRestored =
+            RestoreAuthoredWorld(
+                saveData.world,
+                objectsById
+            );
+
+        bool enemiesRestored =
+            RestoreEnemies(
+                saveData.world,
+                objectsById
+            );
+
+        bool checkpointRestored =
+            RestoreCheckpoint(
+                saveData.checkpoint
+            );
+
+        bool success =
+            playerRestored &&
+            worldRestored &&
+            enemiesRestored &&
+            checkpointRestored;
+
+        Debug.Log(
+            "SaveGameManager: Full save restore " +
+            $"{(success ? "PASSED" : "completed with errors")}.",
+            this
+        );
+
+        return success;
+    }
+
+    /*
+     * Convenience method for testing while already inside the saved
+     * gameplay scene. Main Menu will use GameSessionManager instead.
+     */
+    public bool LoadGameInCurrentScene(
+        int slot
+    )
+    {
+        if (
+            !TryReadSaveSlot(
+                slot,
+                out WildruneSaveData saveData
+            )
+        )
         {
-            Debug.LogError(
-                "SaveGameManager: Could not find Player_Controller.",
-                this
-            );
-
-            return;
+            return false;
         }
 
-        Health health =
-            playerController.GetComponent<Health>();
+        return RestoreSaveData(
+            saveData
+        );
+    }
 
-        Player_WeaponManager weaponManager =
-            playerController
-                .GetComponent<Player_WeaponManager>();
+    // =========================================================
+    // SLOT METADATA
+    // =========================================================
 
-        Player_StaffCombat staffCombat =
-            playerController
-                .GetComponent<Player_StaffCombat>();
+    public bool TryGetSlotSummary(
+        int slot,
+        out string sceneName,
+        out string savedUtc,
+        out int currentHealth,
+        out int maxHealth
+    )
+    {
+        sceneName =
+            string.Empty;
+
+        savedUtc =
+            string.Empty;
+
+        currentHealth =
+            0;
+
+        maxHealth =
+            0;
 
         if (
-            health == null ||
-            weaponManager == null ||
-            staffCombat == null
-        )
-        {
-            Debug.LogError(
-                "SaveGameManager: Player is missing Health, " +
-                "Player_WeaponManager, or Player_StaffCombat.",
-                playerController
-            );
-
-            return;
-        }
-
-        weaponManager.ResetForRespawn();
-        staffCombat.ResetForRespawn();
-        playerController.ResetForRespawn();
-
-        Player_WeaponManager.WeaponProgressionState
-            weaponState =
-                new Player_WeaponManager
-                    .WeaponProgressionState(
-                        saveData.player
-                            .progression
-                            .hasStaff
-                    );
-
-        Player_StaffCombat.SpellProgressionState
-            spellState =
-                new Player_StaffCombat
-                    .SpellProgressionState(
-                        saveData.player
-                            .progression
-                            .lightningUnlocked,
-
-                        saveData.player
-                            .progression
-                            .iceTornadoUnlocked,
-
-                        saveData.player
-                            .progression
-                            .entangleUnlocked
-                    );
-
-        weaponManager.RestoreProgressionState(
-            weaponState
-        );
-
-        staffCombat.RestoreProgressionState(
-            spellState
-        );
-
-        Vector3 savedPosition =
-            FromSerializableVector3(
-                saveData.player.position
-            );
-
-        Quaternion savedRotation =
-            FromSerializableQuaternion(
-                saveData.player.rotation
-            );
-
-        playerController.Teleport(
-            savedPosition,
-            savedRotation
-        );
-
-        health.RestoreHealthState(
-            saveData.player.currentHealth,
-            saveData.player.maxHealth
-        );
-
-        PlayerAbilityHUD abilityHUD =
-            FindAnyObjectByType<PlayerAbilityHUD>();
-
-        if (abilityHUD != null)
-        {
-            abilityHUD.RefreshFromProgression();
-        }
-
-        Debug.Log(
-            "SaveGameManager: Player restored from XML.\n" +
-            $"Position={savedPosition}\n" +
-            $"Health={health.CurrentHealth}/{health.MaxHealth}\n" +
-            $"Staff={weaponManager.HasStaff}\n" +
-            $"Lightning=" +
-            $"{staffCombat.IsSpellUnlocked(Player_StaffCombat.StaffSpell.LightningStrike)}\n" +
-            $"IceTornado=" +
-            $"{staffCombat.IsSpellUnlocked(Player_StaffCombat.StaffSpell.IceTornado)}\n" +
-            $"Entangle=" +
-            $"{staffCombat.IsSpellUnlocked(Player_StaffCombat.StaffSpell.Entangle)}",
-            this
-        );
-    }
-
-    // =========================================================
-    // CHECKPOINT RECONSTRUCTION TEST
-    // =========================================================
-
-    [ContextMenu("Restore Checkpoint From Current Game XML")]
-    public void RestoreCheckpointFromCurrentGameXml()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before restoring " +
-                "the checkpoint from XML.",
-                this
-            );
-
-            return;
-        }
-
-        if (!TryReadSaveData(
+            !TryReadSaveSlot(
+                slot,
                 out WildruneSaveData saveData
-            ))
-        {
-            return;
-        }
-
-        CheckpointManager checkpointManager =
-            CheckpointManager.Instance;
-
-        if (checkpointManager == null)
-        {
-            checkpointManager =
-                FindAnyObjectByType<CheckpointManager>();
-        }
-
-        if (checkpointManager == null)
-        {
-            Debug.LogError(
-                "SaveGameManager: No CheckpointManager exists in scene.",
-                this
-            );
-
-            return;
-        }
-
-        bool restored =
-            checkpointManager
-                .RestorePersistentCheckpointData(
-                    saveData.checkpoint
-                );
-
-        if (!restored)
-        {
-            Debug.LogWarning(
-                "SaveGameManager: Checkpoint reconstruction completed " +
-                "with one or more unresolved saved world states.",
-                this
-            );
-
-            return;
-        }
-
-        Debug.Log(
-            "SaveGameManager: Checkpoint reconstructed from XML.\n" +
-            $"Checkpoint=" +
-            $"{(saveData.checkpoint.hasCheckpoint ? saveData.checkpoint.checkpointId : "None")}",
-            this
-        );
-    }
-
-    // =========================================================
-    // ENEMY RESTORE TEST
-    // =========================================================
-
-    [ContextMenu("Restore Enemies From Current Game XML")]
-    public void RestoreEnemiesFromCurrentGameXml()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before restoring " +
-                "enemies from XML.",
-                this
-            );
-
-            return;
-        }
-
-        if (!TryReadSaveData(
-                out WildruneSaveData saveData
-            ))
-        {
-            return;
-        }
-
-        PersistentID[] persistentObjects =
-            FindObjectsByType<PersistentID>(
-                FindObjectsInactive.Include
-            );
-
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById =
-                new System.Collections.Generic.Dictionary<string, PersistentID>();
-
-        foreach (
-            PersistentID persistentObject
-            in persistentObjects
+            )
         )
-        {
-            if (
-                persistentObject == null ||
-                !persistentObject.HasValidID ||
-                sceneObjectsById.ContainsKey(
-                    persistentObject.ID
-                )
-            )
-            {
-                continue;
-            }
-
-            sceneObjectsById.Add(
-                persistentObject.ID,
-                persistentObject
-            );
-        }
-
-        int restored =
-            0;
-
-        int missing =
-            0;
-
-        foreach (
-            EnemySaveData enemyData
-            in saveData.world.enemies
-        )
-        {
-            if (
-                string.IsNullOrWhiteSpace(
-                    enemyData.persistentId
-                ) ||
-                !sceneObjectsById.TryGetValue(
-                    enemyData.persistentId,
-                    out PersistentID persistentObject
-                )
-            )
-            {
-                missing++;
-                continue;
-            }
-
-            EnemyController enemy =
-                persistentObject
-                    .GetComponent<EnemyController>();
-
-            if (enemy == null)
-            {
-                missing++;
-                continue;
-            }
-
-            enemy.RestoreManualSaveState(
-                FromSerializableVector3(
-                    enemyData.position
-                ),
-                FromSerializableQuaternion(
-                    enemyData.rotation
-                ),
-                enemyData.currentHealth,
-                enemyData.maxHealth,
-                enemyData.isDead
-            );
-
-            restored++;
-        }
-
-        Debug.Log(
-            "SaveGameManager: Enemy restore complete.\n" +
-            $"Restored={restored}\n" +
-            $"Missing={missing}",
-            this
-        );
-    }
-
-    // =========================================================
-    // AUTHORED WORLD RESTORE TEST
-    // =========================================================
-
-    [ContextMenu("Restore Authored World From Current Game XML")]
-    public void RestoreAuthoredWorldFromCurrentGameXml()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before restoring " +
-                "authored world objects from XML.",
-                this
-            );
-
-            return;
-        }
-
-        if (!TryReadSaveData(
-                out WildruneSaveData saveData
-            ))
-        {
-            return;
-        }
-
-        PersistentID[] persistentObjects =
-            FindObjectsByType<PersistentID>(
-                FindObjectsInactive.Include
-            );
-
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById =
-                new System.Collections.Generic.Dictionary<string, PersistentID>();
-
-        foreach (
-            PersistentID persistentObject
-            in persistentObjects
-        )
-        {
-            if (
-                persistentObject == null ||
-                !persistentObject.HasValidID ||
-                sceneObjectsById.ContainsKey(
-                    persistentObject.ID
-                )
-            )
-            {
-                continue;
-            }
-
-            sceneObjectsById.Add(
-                persistentObject.ID,
-                persistentObject
-            );
-        }
-
-        int restored =
-            0;
-
-        int missing =
-            0;
-
-        foreach (
-            WorldObjectSaveData worldData
-            in saveData.world.worldObjects
-        )
-        {
-            if (
-                string.IsNullOrWhiteSpace(
-                    worldData.persistentId
-                ) ||
-                !sceneObjectsById.TryGetValue(
-                    worldData.persistentId,
-                    out PersistentID persistentObject
-                )
-            )
-            {
-                missing++;
-                continue;
-            }
-
-            /*
-             * Enemy state is restored separately because manual
-             * enemy saves contain health and transform data.
-             */
-            if (
-                persistentObject.GetComponent<EnemyController>() != null
-            )
-            {
-                continue;
-            }
-
-            ICheckpointResettable resettable =
-                persistentObject
-                    .GetComponent<ICheckpointResettable>();
-
-            if (resettable == null)
-            {
-                missing++;
-                continue;
-            }
-
-            /*
-             * The existing checkpoint restore contract already
-             * expresses exactly what authored collectibles need:
-             * available=true restores them; false keeps them consumed.
-             */
-            resettable.RestoreCheckpointState(
-                worldData.available
-            );
-
-            restored++;
-        }
-
-        Debug.Log(
-            "SaveGameManager: Authored world restore complete.\n" +
-            $"Restored={restored}\n" +
-            $"Missing={missing}",
-            this
-        );
-    }
-
-    // =========================================================
-    // LOAD VALIDATION
-    // =========================================================
-
-    [ContextMenu("Validate Current Game XML")]
-    public void ValidateCurrentGameXml()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning(
-                "SaveGameManager: Enter Play Mode before validating " +
-                "the save against the current scene.",
-                this
-            );
-
-            return;
-        }
-
-        if (!TryReadSaveData(
-                out WildruneSaveData saveData
-            ))
-        {
-            return;
-        }
-
-        PersistentID[] persistentObjects =
-            FindObjectsByType<PersistentID>(
-                FindObjectsInactive.Include
-            );
-
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById =
-                new System.Collections.Generic.Dictionary<string, PersistentID>();
-
-        int duplicateSceneIds =
-            0;
-
-        foreach (
-            PersistentID persistentObject
-            in persistentObjects
-        )
-        {
-            if (
-                persistentObject == null ||
-                !persistentObject.HasValidID
-            )
-            {
-                continue;
-            }
-
-            if (
-                sceneObjectsById.ContainsKey(
-                    persistentObject.ID
-                )
-            )
-            {
-                duplicateSceneIds++;
-
-                Debug.LogError(
-                    "SaveGameManager: Duplicate PersistentID found in scene: " +
-                    $"{persistentObject.ID}",
-                    persistentObject
-                );
-
-                continue;
-            }
-
-            sceneObjectsById.Add(
-                persistentObject.ID,
-                persistentObject
-            );
-        }
-
-        int missingEnemies =
-            ValidateEnemyIds(
-                saveData,
-                sceneObjectsById
-            );
-
-        int missingWorldObjects =
-            ValidateWorldObjectIds(
-                saveData,
-                sceneObjectsById
-            );
-
-        int missingCheckpointObjects =
-            ValidateCheckpointWorldIds(
-                saveData,
-                sceneObjectsById
-            );
-
-        int missingCheckpointShrine =
-            ValidateCheckpointShrine(
-                saveData,
-                sceneObjectsById
-            );
-
-        bool playerFound =
-            FindAnyObjectByType<Player_Controller>() != null;
-
-        int totalMissing =
-            duplicateSceneIds +
-            missingEnemies +
-            missingWorldObjects +
-            missingCheckpointObjects +
-            missingCheckpointShrine +
-            (playerFound ? 0 : 1);
-
-        if (!playerFound)
-        {
-            Debug.LogError(
-                "SaveGameManager: Player_Controller was not found " +
-                "in the current scene.",
-                this
-            );
-        }
-
-        if (totalMissing == 0)
-        {
-            Debug.Log(
-                "SaveGameManager: Save validation PASSED.\n" +
-                $"Scene={saveData.sceneName}\n" +
-                $"Enemies matched={saveData.world.enemies.Count}\n" +
-                $"World objects matched={saveData.world.worldObjects.Count}\n" +
-                $"Checkpoint world states matched=" +
-                $"{saveData.checkpoint.worldStates.Count}\n" +
-                $"Checkpoint=" +
-                $"{(saveData.checkpoint.hasCheckpoint ? saveData.checkpoint.checkpointId : "None")}",
-                this
-            );
-
-            return;
-        }
-
-        Debug.LogWarning(
-            "SaveGameManager: Save validation FAILED.\n" +
-            $"Duplicate scene IDs={duplicateSceneIds}\n" +
-            $"Missing player={(playerFound ? 0 : 1)}\n" +
-            $"Missing enemies={missingEnemies}\n" +
-            $"Missing world objects={missingWorldObjects}\n" +
-            $"Missing checkpoint world objects={missingCheckpointObjects}\n" +
-            $"Missing checkpoint shrine={missingCheckpointShrine}",
-            this
-        );
-    }
-
-    private bool TryReadSaveData(
-        out WildruneSaveData saveData
-    )
-    {
-        saveData =
-            null;
-
-        if (!File.Exists(TestFilePath))
-        {
-            Debug.LogWarning(
-                "SaveGameManager: No XML test save exists yet.\n" +
-                $"Expected path: {TestFilePath}",
-                this
-            );
-
-            return false;
-        }
-
-        try
-        {
-            XmlSerializer serializer =
-                new XmlSerializer(
-                    typeof(WildruneSaveData)
-                );
-
-            using (
-                StreamReader reader =
-                    new StreamReader(
-                        TestFilePath
-                    )
-            )
-            {
-                saveData =
-                    serializer.Deserialize(
-                        reader
-                    ) as WildruneSaveData;
-            }
-
-            if (saveData == null)
-            {
-                Debug.LogError(
-                    "SaveGameManager: XML was read, but no " +
-                    "WildruneSaveData object was created.",
-                    this
-                );
-
-                return false;
-            }
-
-            return true;
-        }
-        catch (Exception exception)
-        {
-            Debug.LogError(
-                "SaveGameManager: Failed to read XML for validation.\n" +
-                exception,
-                this
-            );
-
-            return false;
-        }
-    }
-
-    private int ValidateEnemyIds(
-        WildruneSaveData saveData,
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById
-    )
-    {
-        int missing =
-            0;
-
-        foreach (
-            EnemySaveData enemyData
-            in saveData.world.enemies
-        )
-        {
-            if (
-                !TryResolvePersistentObject(
-                    enemyData.persistentId,
-                    sceneObjectsById,
-                    out PersistentID persistentObject
-                ) ||
-                persistentObject.GetComponent<EnemyController>() == null
-            )
-            {
-                missing++;
-
-                Debug.LogError(
-                    "SaveGameManager: Saved enemy could not be matched: " +
-                    $"{enemyData.persistentId}",
-                    this
-                );
-            }
-        }
-
-        return missing;
-    }
-
-    private int ValidateWorldObjectIds(
-        WildruneSaveData saveData,
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById
-    )
-    {
-        int missing =
-            0;
-
-        foreach (
-            WorldObjectSaveData worldData
-            in saveData.world.worldObjects
-        )
-        {
-            if (
-                !TryResolvePersistentObject(
-                    worldData.persistentId,
-                    sceneObjectsById,
-                    out PersistentID persistentObject
-                ) ||
-                persistentObject.GetComponent<ICheckpointResettable>() == null
-            )
-            {
-                missing++;
-
-                Debug.LogError(
-                    "SaveGameManager: Saved world object could not be matched: " +
-                    $"{worldData.persistentId}",
-                    this
-                );
-            }
-        }
-
-        return missing;
-    }
-
-    private int ValidateCheckpointWorldIds(
-        WildruneSaveData saveData,
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById
-    )
-    {
-        int missing =
-            0;
-
-        foreach (
-            CheckpointWorldStateSaveData checkpointState
-            in saveData.checkpoint.worldStates
-        )
-        {
-            if (
-                !TryResolvePersistentObject(
-                    checkpointState.persistentId,
-                    sceneObjectsById,
-                    out PersistentID persistentObject
-                ) ||
-                persistentObject.GetComponent<ICheckpointResettable>() == null
-            )
-            {
-                missing++;
-
-                Debug.LogError(
-                    "SaveGameManager: Checkpoint world object could not be matched: " +
-                    $"{checkpointState.persistentId}",
-                    this
-                );
-            }
-        }
-
-        return missing;
-    }
-
-    private int ValidateCheckpointShrine(
-        WildruneSaveData saveData,
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById
-    )
-    {
-        if (!saveData.checkpoint.hasCheckpoint)
-        {
-            return 0;
-        }
-
-        if (
-            !TryResolvePersistentObject(
-                saveData.checkpoint.checkpointId,
-                sceneObjectsById,
-                out PersistentID persistentObject
-            ) ||
-            persistentObject.GetComponent<CheckpointShrine>() == null
-        )
-        {
-            Debug.LogError(
-                "SaveGameManager: Active checkpoint shrine could not be matched: " +
-                $"{saveData.checkpoint.checkpointId}",
-                this
-            );
-
-            return 1;
-        }
-
-        return 0;
-    }
-
-    private bool TryResolvePersistentObject(
-        string persistentId,
-        System.Collections.Generic.Dictionary<string, PersistentID>
-            sceneObjectsById,
-        out PersistentID persistentObject
-    )
-    {
-        persistentObject =
-            null;
-
-        if (string.IsNullOrWhiteSpace(persistentId))
         {
             return false;
         }
 
-        return sceneObjectsById.TryGetValue(
-            persistentId,
-            out persistentObject
+        sceneName =
+            saveData.sceneName;
+
+        savedUtc =
+            saveData.savedUtc;
+
+        currentHealth =
+            saveData.player.currentHealth;
+
+        maxHealth =
+            saveData.player.maxHealth;
+
+        return true;
+    }
+
+    public string GetSlotPath(
+        int slot
+    )
+    {
+        return Path.Combine(
+            Application.persistentDataPath,
+            SaveFilePrefix +
+            slot +
+            SaveFileExtension
         );
     }
 
-    [ContextMenu("Delete XML Test Save")]
-    public void DeleteXmlTestSave()
+    // =========================================================
+    // TEMPORARY INSPECTOR TEST COMMANDS
+    // =========================================================
+
+    [ContextMenu("TEST - Save Slot 1")]
+    private void TestSaveSlot1()
     {
-        if (!File.Exists(TestFilePath))
-        {
-            Debug.Log(
-                "SaveGameManager: No XML test save exists to delete.",
-                this
-            );
+        SaveGame(1);
+    }
 
-            return;
-        }
+    [ContextMenu("TEST - Load Slot 1 In Current Scene")]
+    private void TestLoadSlot1()
+    {
+        LoadGameInCurrentScene(1);
+    }
 
-        File.Delete(
-            TestFilePath
-        );
-
-        Debug.Log(
-            "SaveGameManager: XML test save deleted.",
-            this
-        );
+    [ContextMenu("TEST - Delete Slot 1")]
+    private void TestDeleteSlot1()
+    {
+        DeleteSave(1);
     }
 
     // =========================================================
@@ -1066,8 +472,7 @@ public class SaveGameManager : MonoBehaviour
         )
         {
             Debug.LogError(
-                "SaveGameManager: Player is missing Health, " +
-                "Player_WeaponManager, or Player_StaffCombat.",
+                "SaveGameManager: Player is missing required systems.",
                 player
             );
 
@@ -1135,15 +540,13 @@ public class SaveGameManager : MonoBehaviour
         data.maxHealth =
             health.MaxHealth;
 
-        Player_WeaponManager.WeaponProgressionState
-            weaponState =
-                weaponManager
-                    .CaptureProgressionState();
+        Player_WeaponManager.WeaponProgressionState weaponState =
+            weaponManager
+                .CaptureProgressionState();
 
-        Player_StaffCombat.SpellProgressionState
-            spellState =
-                staffCombat
-                    .CaptureProgressionState();
+        Player_StaffCombat.SpellProgressionState spellState =
+            staffCombat
+                .CaptureProgressionState();
 
         data.progression.hasStaff =
             weaponState.hasStaff;
@@ -1185,12 +588,6 @@ public class SaveGameManager : MonoBehaviour
                 !persistentID.HasValidID
             )
             {
-                Debug.LogWarning(
-                    $"{enemy.name}: Enemy skipped during save capture " +
-                    "because it has no valid PersistentID.",
-                    enemy
-                );
-
                 continue;
             }
 
@@ -1272,8 +669,640 @@ public class SaveGameManager : MonoBehaviour
     }
 
     // =========================================================
-    // CONVERSION
+    // RESTORE - PLAYER
     // =========================================================
+
+    private bool RestorePlayer(
+        PlayerSaveData data
+    )
+    {
+        if (data == null)
+        {
+            return false;
+        }
+
+        Player_Controller playerController =
+            FindAnyObjectByType<Player_Controller>();
+
+        if (playerController == null)
+        {
+            return false;
+        }
+
+        Health health =
+            playerController.GetComponent<Health>();
+
+        Player_WeaponManager weaponManager =
+            playerController
+                .GetComponent<Player_WeaponManager>();
+
+        Player_StaffCombat staffCombat =
+            playerController
+                .GetComponent<Player_StaffCombat>();
+
+        if (
+            health == null ||
+            weaponManager == null ||
+            staffCombat == null
+        )
+        {
+            return false;
+        }
+
+        weaponManager.ResetForRespawn();
+        staffCombat.ResetForRespawn();
+        playerController.ResetForRespawn();
+
+        weaponManager.RestoreProgressionState(
+            new Player_WeaponManager
+                .WeaponProgressionState(
+                    data.progression.hasStaff
+                )
+        );
+
+        staffCombat.RestoreProgressionState(
+            new Player_StaffCombat
+                .SpellProgressionState(
+                    data.progression.lightningUnlocked,
+                    data.progression.iceTornadoUnlocked,
+                    data.progression.entangleUnlocked
+                )
+        );
+
+        playerController.Teleport(
+            FromSerializableVector3(
+                data.position
+            ),
+            FromSerializableQuaternion(
+                data.rotation
+            )
+        );
+
+        health.RestoreHealthState(
+            data.currentHealth,
+            data.maxHealth
+        );
+
+        PlayerAbilityHUD abilityHUD =
+            FindAnyObjectByType<PlayerAbilityHUD>();
+
+        if (abilityHUD != null)
+        {
+            abilityHUD.RefreshFromProgression();
+        }
+
+        return true;
+    }
+
+    // =========================================================
+    // RESTORE - AUTHORED WORLD
+    // =========================================================
+
+    private bool RestoreAuthoredWorld(
+        ManualWorldSaveData world,
+        Dictionary<string, PersistentID> objectsById
+    )
+    {
+        if (world == null)
+        {
+            return false;
+        }
+
+        bool success =
+            true;
+
+        foreach (
+            WorldObjectSaveData worldData
+            in world.worldObjects
+        )
+        {
+            if (
+                worldData == null ||
+                !objectsById.TryGetValue(
+                    worldData.persistentId,
+                    out PersistentID persistentObject
+                )
+            )
+            {
+                success =
+                    false;
+
+                continue;
+            }
+
+            if (
+                persistentObject
+                    .GetComponent<EnemyController>() != null
+            )
+            {
+                continue;
+            }
+
+            ICheckpointResettable resettable =
+                persistentObject
+                    .GetComponent<ICheckpointResettable>();
+
+            if (resettable == null)
+            {
+                success =
+                    false;
+
+                continue;
+            }
+
+            resettable.RestoreCheckpointState(
+                worldData.available
+            );
+        }
+
+        return success;
+    }
+
+    // =========================================================
+    // RESTORE - ENEMIES
+    // =========================================================
+
+    private bool RestoreEnemies(
+        ManualWorldSaveData world,
+        Dictionary<string, PersistentID> objectsById
+    )
+    {
+        if (world == null)
+        {
+            return false;
+        }
+
+        bool success =
+            true;
+
+        foreach (
+            EnemySaveData enemyData
+            in world.enemies
+        )
+        {
+            if (
+                enemyData == null ||
+                !objectsById.TryGetValue(
+                    enemyData.persistentId,
+                    out PersistentID persistentObject
+                )
+            )
+            {
+                success =
+                    false;
+
+                continue;
+            }
+
+            EnemyController enemy =
+                persistentObject
+                    .GetComponent<EnemyController>();
+
+            if (enemy == null)
+            {
+                success =
+                    false;
+
+                continue;
+            }
+
+            enemy.RestoreManualSaveState(
+                FromSerializableVector3(
+                    enemyData.position
+                ),
+                FromSerializableQuaternion(
+                    enemyData.rotation
+                ),
+                enemyData.currentHealth,
+                enemyData.maxHealth,
+                enemyData.isDead
+            );
+        }
+
+        return success;
+    }
+
+    // =========================================================
+    // RESTORE - CHECKPOINT
+    // =========================================================
+
+    private bool RestoreCheckpoint(
+        CheckpointSaveData checkpoint
+    )
+    {
+        CheckpointManager checkpointManager =
+            CheckpointManager.Instance;
+
+        if (checkpointManager == null)
+        {
+            checkpointManager =
+                FindAnyObjectByType<CheckpointManager>();
+        }
+
+        if (checkpointManager == null)
+        {
+            return checkpoint == null ||
+                !checkpoint.hasCheckpoint;
+        }
+
+        return checkpointManager
+            .RestorePersistentCheckpointData(
+                checkpoint
+            );
+    }
+
+    // =========================================================
+    // PERSISTENT ID LOOKUP
+    // =========================================================
+
+    private Dictionary<string, PersistentID>
+        BuildPersistentIdLookup()
+    {
+        Dictionary<string, PersistentID> lookup =
+            new Dictionary<string, PersistentID>();
+
+        PersistentID[] persistentObjects =
+            FindObjectsByType<PersistentID>(
+                FindObjectsInactive.Include
+            );
+
+        foreach (
+            PersistentID persistentObject
+            in persistentObjects
+        )
+        {
+            if (
+                persistentObject == null ||
+                !persistentObject.HasValidID
+            )
+            {
+                continue;
+            }
+
+            if (
+                lookup.ContainsKey(
+                    persistentObject.ID
+                )
+            )
+            {
+                Debug.LogError(
+                    "SaveGameManager: Duplicate PersistentID in scene: " +
+                    persistentObject.ID,
+                    persistentObject
+                );
+
+                continue;
+            }
+
+            lookup.Add(
+                persistentObject.ID,
+                persistentObject
+            );
+        }
+
+        return lookup;
+    }
+
+    // =========================================================
+    // XML SERIALIZATION
+    // =========================================================
+
+    private byte[] SerializeToXmlBytes(
+        WildruneSaveData saveData
+    )
+    {
+        XmlSerializer serializer =
+            new XmlSerializer(
+                typeof(WildruneSaveData)
+            );
+
+        using (
+            MemoryStream stream =
+                new MemoryStream()
+        )
+        {
+            serializer.Serialize(
+                stream,
+                saveData
+            );
+
+            return stream.ToArray();
+        }
+    }
+
+    private WildruneSaveData DeserializeXmlBytes(
+        byte[] xmlBytes
+    )
+    {
+        XmlSerializer serializer =
+            new XmlSerializer(
+                typeof(WildruneSaveData)
+            );
+
+        using (
+            MemoryStream stream =
+                new MemoryStream(
+                    xmlBytes
+                )
+        )
+        {
+            return serializer.Deserialize(
+                stream
+            ) as WildruneSaveData;
+        }
+    }
+
+    // =========================================================
+    // ENCRYPTION / INTEGRITY
+    // =========================================================
+
+    private byte[] EncryptSaveBytes(
+        byte[] plainBytes
+    )
+    {
+        byte[] encryptionKey =
+            DeriveKey(
+                "encryption"
+            );
+
+        byte[] hmacKey =
+            DeriveKey(
+                "integrity"
+            );
+
+        byte[] iv;
+        byte[] cipherBytes;
+
+        using (
+            Aes aes =
+                Aes.Create()
+        )
+        {
+            aes.KeySize =
+                256;
+
+            aes.BlockSize =
+                128;
+
+            aes.Mode =
+                CipherMode.CBC;
+
+            aes.Padding =
+                PaddingMode.PKCS7;
+
+            aes.Key =
+                encryptionKey;
+
+            aes.GenerateIV();
+
+            iv =
+                aes.IV;
+
+            using (
+                ICryptoTransform encryptor =
+                    aes.CreateEncryptor()
+            )
+            {
+                cipherBytes =
+                    encryptor.TransformFinalBlock(
+                        plainBytes,
+                        0,
+                        plainBytes.Length
+                    );
+            }
+        }
+
+        byte[] authenticatedBytes =
+            CombineBytes(
+                iv,
+                cipherBytes
+            );
+
+        byte[] hmac;
+
+        using (
+            HMACSHA256 hmacSha256 =
+                new HMACSHA256(
+                    hmacKey
+                )
+        )
+        {
+            hmac =
+                hmacSha256.ComputeHash(
+                    authenticatedBytes
+                );
+        }
+
+        return CombineBytes(
+            FileMagic,
+            iv,
+            hmac,
+            cipherBytes
+        );
+    }
+
+    private byte[] DecryptSaveBytes(
+        byte[] fileBytes
+    )
+    {
+        int minimumLength =
+            FileMagic.Length +
+            IvLength +
+            HmacLength +
+            1;
+
+        if (
+            fileBytes == null ||
+            fileBytes.Length <
+                minimumLength
+        )
+        {
+            throw new InvalidDataException(
+                "Save file is incomplete."
+            );
+        }
+
+        for (
+            int index = 0;
+            index < FileMagic.Length;
+            index++
+        )
+        {
+            if (
+                fileBytes[index] !=
+                    FileMagic[index]
+            )
+            {
+                throw new InvalidDataException(
+                    "Save file header is invalid."
+                );
+            }
+        }
+
+        int offset =
+            FileMagic.Length;
+
+        byte[] iv =
+            CopyBytes(
+                fileBytes,
+                offset,
+                IvLength
+            );
+
+        offset +=
+            IvLength;
+
+        byte[] storedHmac =
+            CopyBytes(
+                fileBytes,
+                offset,
+                HmacLength
+            );
+
+        offset +=
+            HmacLength;
+
+        byte[] cipherBytes =
+            CopyBytes(
+                fileBytes,
+                offset,
+                fileBytes.Length -
+                    offset
+            );
+
+        byte[] hmacKey =
+            DeriveKey(
+                "integrity"
+            );
+
+        byte[] authenticatedBytes =
+            CombineBytes(
+                iv,
+                cipherBytes
+            );
+
+        byte[] calculatedHmac;
+
+        using (
+            HMACSHA256 hmacSha256 =
+                new HMACSHA256(
+                    hmacKey
+                )
+        )
+        {
+            calculatedHmac =
+                hmacSha256.ComputeHash(
+                    authenticatedBytes
+                );
+        }
+
+        if (
+            !ByteArraysEqual(
+                storedHmac,
+                calculatedHmac
+            )
+        )
+        {
+            throw new InvalidDataException(
+                "Save integrity check failed."
+            );
+        }
+
+        byte[] encryptionKey =
+            DeriveKey(
+                "encryption"
+            );
+
+        using (
+            Aes aes =
+                Aes.Create()
+        )
+        {
+            aes.KeySize =
+                256;
+
+            aes.BlockSize =
+                128;
+
+            aes.Mode =
+                CipherMode.CBC;
+
+            aes.Padding =
+                PaddingMode.PKCS7;
+
+            aes.Key =
+                encryptionKey;
+
+            aes.IV =
+                iv;
+
+            using (
+                ICryptoTransform decryptor =
+                    aes.CreateDecryptor()
+            )
+            {
+                return decryptor
+                    .TransformFinalBlock(
+                        cipherBytes,
+                        0,
+                        cipherBytes.Length
+                    );
+            }
+        }
+    }
+
+    private byte[] DeriveKey(
+        string purpose
+    )
+    {
+        string material =
+            SaveSecret +
+            "|" +
+            purpose;
+
+        using (
+            SHA256 sha256 =
+                SHA256.Create()
+        )
+        {
+            return sha256.ComputeHash(
+                Encoding.UTF8.GetBytes(
+                    material
+                )
+            );
+        }
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+
+    private bool ValidateSlot(
+        int slot
+    )
+    {
+        if (IsSlotNumberValid(slot))
+        {
+            return true;
+        }
+
+        Debug.LogError(
+            $"SaveGameManager: Invalid save slot {slot}. " +
+            $"Valid slots are {MinimumSlot}-{MaximumSlot}.",
+            this
+        );
+
+        return false;
+    }
+
+    private bool IsSlotNumberValid(
+        int slot
+    )
+    {
+        return
+            slot >= MinimumSlot &&
+            slot <= MaximumSlot;
+    }
 
     private Vector3 FromSerializableVector3(
         SerializableVector3 value
@@ -1342,5 +1371,98 @@ public class SaveGameManager : MonoBehaviour
             value.z,
             value.w
         );
+    }
+
+    private byte[] CombineBytes(
+        params byte[][] arrays
+    )
+    {
+        int totalLength =
+            0;
+
+        foreach (
+            byte[] array
+            in arrays
+        )
+        {
+            totalLength +=
+                array.Length;
+        }
+
+        byte[] combined =
+            new byte[totalLength];
+
+        int offset =
+            0;
+
+        foreach (
+            byte[] array
+            in arrays
+        )
+        {
+            Buffer.BlockCopy(
+                array,
+                0,
+                combined,
+                offset,
+                array.Length
+            );
+
+            offset +=
+                array.Length;
+        }
+
+        return combined;
+    }
+
+    private byte[] CopyBytes(
+        byte[] source,
+        int offset,
+        int length
+    )
+    {
+        byte[] result =
+            new byte[length];
+
+        Buffer.BlockCopy(
+            source,
+            offset,
+            result,
+            0,
+            length
+        );
+
+        return result;
+    }
+
+    private bool ByteArraysEqual(
+        byte[] first,
+        byte[] second
+    )
+    {
+        if (
+            first == null ||
+            second == null ||
+            first.Length != second.Length
+        )
+        {
+            return false;
+        }
+
+        int difference =
+            0;
+
+        for (
+            int index = 0;
+            index < first.Length;
+            index++
+        )
+        {
+            difference |=
+                first[index] ^
+                second[index];
+        }
+
+        return difference == 0;
     }
 }

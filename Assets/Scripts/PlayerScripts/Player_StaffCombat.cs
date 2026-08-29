@@ -32,6 +32,14 @@ public class Player_StaffCombat : MonoBehaviour
 
     public event Action<StaffSpell> OnSpellUnlocked;
 
+    /*
+     * Raised when progression is restored from a checkpoint/save.
+     *
+     * Unlike OnSpellUnlocked, this may represent abilities becoming
+     * locked again, so listeners should re-read the full state.
+     */
+    public event Action OnProgressionRestored;
+
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private Player_Controller playerController;
@@ -334,6 +342,8 @@ public class Player_StaffCombat : MonoBehaviour
 
         entangleUnlocked =
             state.entangleUnlocked;
+
+        OnProgressionRestored?.Invoke();
     }
 
     // =========================================================
