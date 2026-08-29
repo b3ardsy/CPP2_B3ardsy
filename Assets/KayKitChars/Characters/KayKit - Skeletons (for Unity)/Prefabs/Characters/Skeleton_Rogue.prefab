@@ -1044,13 +1044,15 @@ GameObject:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 9058671232915413650}
   - component: {fileID: 346439432101117519}
-  - component: {fileID: 3826238084626665851}
+  - component: {fileID: 7999237170363902910}
+  - component: {fileID: 3357619153843254394}
   - component: {fileID: 4906132506217826178}
   - component: {fileID: 7608706286068099799}
   - component: {fileID: 7512961557025003098}
+  - component: {fileID: 4889634541357912747}
   m_Layer: 8
   m_Name: Skeleton_Rogue
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1116,7 +1118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 3
---- !u!114 &3826238084626665851
+--- !u!114 &7999237170363902910
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1125,9 +1127,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 919132149155446097}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edd6a30f31696f24595f561c0b91388c, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c9404505d38a2042a5f703c1bff41aa, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RogueEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   destroyDelay: 2
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
@@ -1142,11 +1144,24 @@ MonoBehaviour:
   destinationTolerance: 0.25
   navMeshSampleDistance: 3
   patrolSearchAttempts: 10
-  detectionRange: 12
-  loseTargetRange: 17
+  detectionRange: 20
+  loseTargetRange: 25
   patrolSpeed: 15
   returnSpeed: 10
   engagedRotationSpeed: 8
+  showRangeGizmos: 1
+--- !u!114 &3357619153843254394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1644d9074a8ee847ba9c763b0f979b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RogueLogic
   skullProjectilePrefab: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
   firePoint: {fileID: 4593332172826405816}
   skullDamage: 1
@@ -1155,7 +1170,6 @@ MonoBehaviour:
   deathEvilPrefab: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
   deathEvilDamage: 1
   deathEvilDamageRadius: 2
-  deathEvilMaximumCastRange: 10
   deathEvilGroundCheckHeight: 5
   deathEvilGroundOffset: 0.05
   groundLayer:
@@ -1164,7 +1178,8 @@ MonoBehaviour:
   minimumAttackCooldown: 2
   maximumAttackCooldown: 3
   attackRecoveryDuration: 0.6
-  startingAttack: 0
+  entangleRecoveryStateName: Idle
+  entangleRecoveryTransitionDuration: 0.05
 --- !u!195 &4906132506217826178
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1237,6 +1252,19 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 80
   m_CollisionDetection: 3
+--- !u!114 &4889634541357912747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PersistentID
+  persistentId: 7fcb4a987cb14d84a6b2d4ebbdb7327f
 --- !u!1 &1091152896866926189
 GameObject:
   m_ObjectHideFlags: 0

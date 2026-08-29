@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class CheckpointShrine :
     MonoBehaviour,
     IInteract
@@ -12,6 +13,18 @@ public class CheckpointShrine :
     [Tooltip("Position where the player will respawn.")]
     [SerializeField]
     private Transform respawnPoint;
+
+    private PersistentID persistentID;
+
+    public string CheckpointId =>
+        persistentID != null
+            ? persistentID.ID
+            : string.Empty;
+
+    public Transform RespawnPoint =>
+        respawnPoint != null
+            ? respawnPoint
+            : transform;
 
     // =========================================================
     // INTERACTION
@@ -51,6 +64,9 @@ public class CheckpointShrine :
 
     private void Awake()
     {
+        persistentID =
+            GetComponent<PersistentID>();
+
         SetCandleEffects(
             false
         );
@@ -86,9 +102,20 @@ public class CheckpointShrine :
         }
 
         Transform checkpointTransform =
-            respawnPoint != null
-                ? respawnPoint
-                : transform;
+            RespawnPoint;
+
+        if (
+            persistentID == null ||
+            !persistentID.HasValidID
+        )
+        {
+            Debug.LogError(
+                $"{name}: CheckpointShrine requires a valid PersistentID.",
+                this
+            );
+
+            return;
+        }
 
         if (interactor == null)
         {
@@ -128,6 +155,7 @@ public class CheckpointShrine :
         }
 
         CheckpointManager.Instance.SetCheckpoint(
+            persistentID.ID,
             checkpointTransform,
             playerHealth,
             weaponManager,
@@ -212,6 +240,12 @@ public class CheckpointShrine :
 
     private void OnValidate()
     {
+        if (persistentID == null)
+        {
+            persistentID =
+                GetComponent<PersistentID>();
+        }
+
         if (interactionTrigger == null)
         {
             interactionTrigger =

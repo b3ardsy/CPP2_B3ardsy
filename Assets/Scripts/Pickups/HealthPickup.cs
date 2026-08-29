@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class HealthPickup : MonoBehaviour, ICheckpointResettable
 {
     // =========================================================

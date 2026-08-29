@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class HeartContainerPickup : MonoBehaviour, ICheckpointResettable
 {
     // =========================================================

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class SpellRune : MonoBehaviour, IInteract, ICheckpointResettable
 {
     [Header("Rune Unlock")]

@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class StaffPickup : MonoBehaviour, IInteract, ICheckpointResettable
 {
     [Header("Notification")]

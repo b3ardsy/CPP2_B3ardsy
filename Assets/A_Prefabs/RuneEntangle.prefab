@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 4540391997174985563}
   - component: {fileID: 4728941598483674716}
   - component: {fileID: 7503543545263610894}
+  - component: {fileID: 52095449295038748}
   m_Layer: 9
   m_Name: RuneEntangle
   m_TagString: Untagged
@@ -407,11 +408,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpellRune
   spellToUnlock: 0
   destroyAfterUnlock: 1
-  shakeDuration: 2
+  shakeDuration: 2.5
   shakeStrength: 0.04
   shakeSpeed: 25
-  sinkDuration: 1.5
-  sinkDistance: 2
+  sinkDuration: 2
+  sinkDistance: 8
 --- !u!135 &7503543545263610894
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -433,6 +434,19 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 2
   m_Center: {x: 0, y: 1, z: 0.05}
+--- !u!114 &52095449295038748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8220047279270846096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PersistentID
+  persistentId: 1c9678fd85324d6d9b4724b60f0140ea
 --- !u!1001 &3724125606952898890
 PrefabInstance:
   m_ObjectHideFlags: 0

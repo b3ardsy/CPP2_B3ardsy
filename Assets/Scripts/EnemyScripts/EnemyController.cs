@@ -5,6 +5,7 @@ using UnityEngine.AI;
 
 [RequireComponent(typeof(Health))]
 [RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(PersistentID))]
 public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
 {
     // =========================================================

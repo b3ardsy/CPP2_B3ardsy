@@ -46,6 +46,7 @@ public class CheckpointManager : MonoBehaviour
     }
 
     private Transform currentCheckpoint;
+    private string currentCheckpointId;
     private PlayerCheckpointState playerCheckpointState;
 
     private readonly List<WorldCheckpointState>
@@ -54,6 +55,9 @@ public class CheckpointManager : MonoBehaviour
 
     public Transform CurrentCheckpoint =>
         currentCheckpoint;
+
+    public string CurrentCheckpointId =>
+        currentCheckpointId;
 
     public bool HasCheckpoint =>
         currentCheckpoint != null;
@@ -94,6 +98,7 @@ public class CheckpointManager : MonoBehaviour
     // =========================================================
 
     public void SetCheckpoint(
+        string checkpointId,
         Transform checkpoint,
         Health playerHealth,
         Player_WeaponManager weaponManager,
@@ -104,6 +109,17 @@ public class CheckpointManager : MonoBehaviour
         {
             Debug.LogWarning(
                 "CheckpointManager: Cannot set a null checkpoint.",
+                this
+            );
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(checkpointId))
+        {
+            Debug.LogError(
+                "CheckpointManager: Cannot capture a checkpoint " +
+                "without a persistent checkpoint ID.",
                 this
             );
 
@@ -127,6 +143,9 @@ public class CheckpointManager : MonoBehaviour
 
         currentCheckpoint =
             checkpoint;
+
+        currentCheckpointId =
+            checkpointId;
 
         playerCheckpointState =
             new PlayerCheckpointState
@@ -158,7 +177,8 @@ public class CheckpointManager : MonoBehaviour
 
         Debug.Log(
             $"CheckpointManager: Checkpoint updated to " +
-            $"{checkpoint.name}. " +
+            $"{checkpoint.name} " +
+            $"[{currentCheckpointId}]. " +
             $"Health={playerCheckpointState.currentHealth}, " +
             $"WorldObjectsTracked={worldCheckpointStates.Count}.",
             checkpoint
