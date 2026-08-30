@@ -432,6 +432,52 @@ public class SaveGameManager : MonoBehaviour
         DeleteSave(1);
     }
 
+    [ContextMenu("TEST - DELETE ALL SAVES")]
+    private void TestDeleteAllSaves()
+    {
+        int deletedCount =
+            0;
+
+        for (
+            int slot = MinimumSlot;
+            slot <= MaximumSlot;
+            slot++
+        )
+        {
+            string path =
+                GetSlotPath(
+                    slot
+                );
+
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            try
+            {
+                File.Delete(
+                    path
+                );
+
+                deletedCount++;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError(
+                    $"SaveGameManager: Failed to delete Slot {slot}.\n" +
+                    exception,
+                    this
+                );
+            }
+        }
+
+        Debug.Log(
+            $"SaveGameManager: TEST deleted {deletedCount} save file(s).",
+            this
+        );
+    }
+
     // =========================================================
     // CAPTURE
     // =========================================================
