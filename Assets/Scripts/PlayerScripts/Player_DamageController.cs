@@ -161,6 +161,18 @@ public class Player_DamageController :
      */
     public event Action<int, int> OnHealthChanged;
 
+    /*
+     * Raised after the player's death state and immediate
+     * death cleanup have been applied.
+     *
+     * A respawn/checkpoint coordinator can subscribe to this
+     * event and decide what happens next.
+     *
+     * While no listener exists, the legacy Game Over flow
+     * remains available as a safe fallback.
+     */
+    public event Action OnPlayerDied;
+
     // =========================================================
     // ANIMATOR PARAMETERS
     // =========================================================
@@ -776,10 +788,30 @@ public class Player_DamageController :
             this
         );
 
-        deathCoroutine =
-            StartCoroutine(
-                DeathCoroutine()
-            );
+        if (OnPlayerDied != null)
+        {
+            /*
+             * Death consequence is now delegated.
+             *
+             * Player_DamageController owns detecting and preparing
+             * the player for death, but another system decides what
+             * happens after death.
+             */
+            OnPlayerDied.Invoke();
+        }
+        else
+        {
+            /*
+             * Safe migration fallback.
+             *
+             * Until a respawn/checkpoint coordinator subscribes,
+             * preserve the existing Game Over behaviour.
+             */
+            deathCoroutine =
+                StartCoroutine(
+                    DeathCoroutine()
+                );
+        }
     }
 
     private void StopActiveGameplayCoroutines()
@@ -800,6 +832,50 @@ public class Player_DamageController :
             );
 
             hitReactionCoroutine = null;
+        }
+    }
+
+    // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Resets only the runtime state owned by this component.
+     *
+     * This method does NOT revive Health, teleport the player,
+     * restore progression, or re-enable other gameplay systems.
+     * Those responsibilities belong to the future respawn
+     * coordinator and the systems that own that state.
+     */
+    public void ResetForRespawn()
+    {
+        StopActiveGameplayCoroutines();
+
+        if (deathCoroutine != null)
+        {
+            StopCoroutine(
+                deathCoroutine
+            );
+
+            deathCoroutine = null;
+        }
+
+        shieldProtectionSources = 0;
+        isInvulnerable = false;
+        isInHitReaction = false;
+        deathHandled = false;
+
+        /*
+         * Player_DamageController may have added itself as a
+         * movement lock during death or a hit reaction.
+         * Remove only this component's lock; do not disturb
+         * locks owned by other systems.
+         */
+        if (playerController != null)
+        {
+            playerController.RemoveMovementLock(
+                this
+            );
         }
     }
 

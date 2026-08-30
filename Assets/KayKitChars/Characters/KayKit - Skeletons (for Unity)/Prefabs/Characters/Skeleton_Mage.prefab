@@ -1278,6 +1278,7 @@ GameObject:
   - component: {fileID: 9078815949463096416}
   - component: {fileID: 3655405520464804888}
   - component: {fileID: 301096215022004112}
+  - component: {fileID: 3502666785199956508}
   m_Layer: 8
   m_Name: Skeleton_Mage
   m_TagString: Enemy
@@ -1376,6 +1377,7 @@ MonoBehaviour:
   patrolSpeed: 2
   returnSpeed: 3
   engagedRotationSpeed: 8
+  showRangeGizmos: 1
 --- !u!114 &9078815949463096416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1390,7 +1392,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MageLogic
   blackHoleProjectilePrefab: {fileID: 7418663436262262798, guid: c94e3e8eccf25e2409dcd7a97dfaf8f1, type: 3}
   firePoint: {fileID: 7655535924878438980}
-  blackHoleDamage: 1
+  blackHoleDamage: 5
   blackHoleSpeed: 12
   aimHeightOffset: 1
   projectileCount: 3
@@ -1445,6 +1447,19 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &3502666785199956508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PersistentID
+  persistentId: 733b317536df4a0a97c5e3b6f3d37028
 --- !u!1 &1360172268146098638
 GameObject:
   m_ObjectHideFlags: 0

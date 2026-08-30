@@ -172,6 +172,12 @@ public class RogueLogic : MonoBehaviour
 
         enemyController.OnDamaged +=
             HandleDamaged;
+
+        enemyController.OnRespawned -=
+            ResetForRespawn;
+
+        enemyController.OnRespawned +=
+            ResetForRespawn;
     }
 
     private void Start()
@@ -1025,6 +1031,45 @@ public class RogueLogic : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    public void ResetForRespawn()
+    {
+        CancelCurrentAttack();
+
+        currentState =
+            RogueState.Patrolling;
+
+        activeAttack =
+            default;
+
+        attackRecoveryTimer =
+            0f;
+
+        wasEntangledLastFrame =
+            false;
+
+        ResetAttackCooldown();
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                AttackTrigger
+            );
+
+            animator.ResetTrigger(
+                EntangleTrigger
+            );
+
+            animator.SetFloat(
+                SpeedHash,
+                0f
+            );
+        }
+    }
+
+    // =========================================================
     // CLEANUP
     // =========================================================
 
@@ -1053,6 +1098,9 @@ public class RogueLogic : MonoBehaviour
         {
             enemyController.OnDamaged -=
                 HandleDamaged;
+
+            enemyController.OnRespawned -=
+                ResetForRespawn;
         }
 
         CancelCurrentAttack();

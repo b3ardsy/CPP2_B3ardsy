@@ -1,7 +1,8 @@
 using System.Collections;
 using UnityEngine;
 
-public class SpellRune : MonoBehaviour, IInteract
+[RequireComponent(typeof(PersistentID))]
+public class SpellRune : MonoBehaviour, IInteract, ICheckpointResettable
 {
     [Header("Rune Unlock")]
     [Tooltip("The Staff spell unlocked when this rune is activated.")]
@@ -36,10 +37,18 @@ public class SpellRune : MonoBehaviour, IInteract
 
     private Vector3 startingPosition;
 
+    private Quaternion startingRotation;
+
+    public bool IsCheckpointAvailable =>
+        !hasBeenActivated;
+
     private void Awake()
     {
         startingPosition =
             transform.position;
+
+        startingRotation =
+            transform.rotation;
     }
 
     public void Interact(PlayerInteraction interactor)
@@ -202,7 +211,9 @@ public class SpellRune : MonoBehaviour, IInteract
         transform.position =
             sinkEndPosition;
 
-        Destroy(gameObject);
+        gameObject.SetActive(
+            false
+        );
     }
 
     private void ApplyShake(
@@ -231,6 +242,29 @@ public class SpellRune : MonoBehaviour, IInteract
                 0f,
                 shakeZ
             );
+    }
+
+    // =========================================================
+    // CHECKPOINT RESTORE
+    // =========================================================
+
+    public void RestoreCheckpointState(
+        bool wasAvailable
+    )
+    {
+        StopAllCoroutines();
+
+        hasBeenActivated =
+            !wasAvailable;
+
+        transform.SetPositionAndRotation(
+            startingPosition,
+            startingRotation
+        );
+
+        gameObject.SetActive(
+            wasAvailable
+        );
     }
 
     private void OnValidate()

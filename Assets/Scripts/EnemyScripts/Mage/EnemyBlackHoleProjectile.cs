@@ -92,6 +92,14 @@ public class EnemyBlackHoleProjectile :
         rb.isKinematic =
             false;
 
+        /*
+         * These are fast-moving trigger projectiles. Continuous
+         * detection reduces the chance of crossing a thin collider
+         * between physics steps.
+         */
+        rb.collisionDetectionMode =
+            CollisionDetectionMode.ContinuousDynamic;
+
         projectileCollider.isTrigger =
             true;
 
@@ -402,12 +410,23 @@ public class EnemyBlackHoleProjectile :
          * it must be handled before searching the hierarchy for
          * an IDamageable target.
          */
-        PlayerShieldEffect shield =
+        Player_ShieldEffect shield =
             other.GetComponentInParent
-                <PlayerShieldEffect>();
+                <Player_ShieldEffect>();
 
         if (shield != null)
         {
+            Player_DamageController damageController =
+                shield.GetComponentInParent
+                    <Player_DamageController>();
+
+            if (damageController != null)
+            {
+                Reflect(
+                    damageController.gameObject
+                );
+            }
+
             return;
         }
 
@@ -433,6 +452,39 @@ public class EnemyBlackHoleProjectile :
         Collider other
     )
     {
+        /*
+         * A projectile can overlap the Shield collider and the
+         * Player collider during the same physics step. Trigger
+         * callback order is not guaranteed, so do not rely on the
+         * Shield callback winning that race.
+         *
+         * If the Player currently has an active Shield, reflect
+         * here before applying Player damage.
+         */
+        Player_DamageController playerDamageController =
+            other.GetComponentInParent
+                <Player_DamageController>();
+
+        if (playerDamageController != null)
+        {
+            Player_ShieldEffect activeShield =
+                playerDamageController
+                    .GetComponentInChildren
+                        <Player_ShieldEffect>();
+
+            if (
+                activeShield != null &&
+                activeShield.IsActive
+            )
+            {
+                Reflect(
+                    playerDamageController.gameObject
+                );
+
+                return;
+            }
+        }
+
         /*
          * Enemy-owned Black Holes may damage the Player.
          *

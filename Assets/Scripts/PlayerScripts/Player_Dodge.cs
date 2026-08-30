@@ -259,6 +259,24 @@ public class Player_Dodge : MonoBehaviour
         ResetDodgeTriggers();
     }
 
+    // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Returns Dodge to a neutral runtime state.
+     *
+     * Unlike CancelDodge(), respawning also clears the cooldown
+     * so the player does not inherit a pre-death dodge timer.
+     */
+    public void ResetForRespawn()
+    {
+        CancelDodge();
+
+        dodgeEndTime = 0f;
+        nextDodgeTime = 0f;
+    }
+
     private void OnDisable()
     {
         CancelDodge();

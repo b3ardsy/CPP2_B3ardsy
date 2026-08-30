@@ -390,6 +390,43 @@ public class Player_ShieldController : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Returns Shield to a neutral runtime state.
+     *
+     * Shield unlock progression is derived from Staff ownership
+     * and is intentionally not reset here.
+     */
+    public void ResetForRespawn()
+    {
+        if (activeShield != null)
+        {
+            /*
+             * EndShield() removes damage protection, notifies this
+             * controller through HandleShieldEnded(), and destroys
+             * the spawned Shield effect cleanly.
+             */
+            activeShield.EndShield();
+            activeShield = null;
+        }
+
+        nextShieldReadyTime = 0f;
+
+        /*
+         * Re-derive unlock state from its actual progression source
+         * instead of checkpointing a second copy of the same state.
+         */
+        isShieldUnlocked =
+            startShieldUnlocked ||
+            (
+                playerWeaponManager != null &&
+                playerWeaponManager.HasStaff
+            );
+    }
+
+    // =========================================================
     // VALIDATION
     // =========================================================
 

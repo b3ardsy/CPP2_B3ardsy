@@ -132,6 +132,98 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
+
+    // =========================================================
+    // REVIVAL
+    // =========================================================
+
+    /*
+     * Explicitly restores a dead Health component to an alive state.
+     *
+     * Normal Heal() and RestoreFullHealth() intentionally do not
+     * revive dead entities. Systems such as checkpoints, respawns,
+     * or enemy reset logic should use this method when resurrection
+     * is deliberate.
+     */
+    public void Revive(
+        int healthAmount
+    )
+    {
+        if (!IsDead)
+        {
+            return;
+        }
+
+        currentHealth =
+            Mathf.Clamp(
+                healthAmount,
+                1,
+                maxHealth
+            );
+
+        NotifyHealthChanged();
+    }
+
+    // =========================================================
+    // STATE RESTORATION
+    // =========================================================
+
+    /*
+     * Restores an exact health state.
+     *
+     * This is intentionally separate from Heal(), Revive(), and
+     * IncreaseMaxHealth() because state restoration may need to
+     * move maximum health either upward or downward.
+     */
+    public void RestoreHealthState(
+        int healthAmount,
+        int maxHealthAmount
+    )
+    {
+        maxHealth =
+            Mathf.Max(
+                1,
+                maxHealthAmount
+            );
+
+        currentHealth =
+            Mathf.Clamp(
+                healthAmount,
+                1,
+                maxHealth
+            );
+
+        NotifyHealthChanged();
+    }
+
+    /*
+     * Restores exact serialized health, including 0 HP.
+     *
+     * Unlike TakeDamage(), this deliberately does not invoke OnDied.
+     * The owning load/restoration system is responsible for putting
+     * a dead entity into its correct runtime presentation/state.
+     */
+    public void RestoreSavedHealthState(
+        int healthAmount,
+        int maxHealthAmount
+    )
+    {
+        maxHealth =
+            Mathf.Max(
+                1,
+                maxHealthAmount
+            );
+
+        currentHealth =
+            Mathf.Clamp(
+                healthAmount,
+                0,
+                maxHealth
+            );
+
+        NotifyHealthChanged();
+    }
+
     // =========================================================
     // MAXIMUM HEALTH
     // =========================================================

@@ -975,6 +975,116 @@ public class Player_Controller : MonoBehaviour
             isGrounded;
     }
 
+    // =========================================================
+    // RESPAWN / TELEPORT
+    // =========================================================
+
+    /*
+     * Places the player at an externally supplied position and
+     * rotation without asking another system to manipulate the
+     * CharacterController directly.
+     *
+     * CharacterController is temporarily disabled so the transform
+     * can be repositioned cleanly without collision resolution
+     * interfering with the checkpoint placement.
+     */
+    public void Teleport(
+        Vector3 position,
+        Quaternion rotation
+    )
+    {
+        if (characterController == null)
+        {
+            return;
+        }
+
+        bool controllerWasEnabled =
+            characterController.enabled;
+
+        characterController.enabled =
+            false;
+
+        transform.SetPositionAndRotation(
+            position,
+            rotation
+        );
+
+        characterController.enabled =
+            controllerWasEnabled;
+
+        StopMovementImmediately();
+
+        verticalVelocity =
+            groundedVerticalVelocity;
+
+        isGrounded = false;
+        wasGrounded = false;
+        isRunning = false;
+
+        ResetWaiting();
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(
+                JumpTrigger
+            );
+
+            animator.ResetTrigger(
+                LandTrigger
+            );
+
+            animator.SetFloat(
+                SpeedFloat,
+                0f
+            );
+
+            animator.SetBool(
+                IsRunningBool,
+                false
+            );
+
+            animator.SetBool(
+                IsGroundedBool,
+                false
+            );
+
+            animator.SetFloat(
+                VerticalVelocityFloat,
+                groundedVerticalVelocity
+            );
+
+            animator.SetFloat(
+                LockOnHorizontalFloat,
+                0f
+            );
+
+            animator.SetFloat(
+                LockOnVerticalFloat,
+                0f
+            );
+        }
+    }
+
+    /*
+     * Returns movement-owned transient state to neutral.
+     *
+     * Movement locks are intentionally NOT cleared here. Each
+     * system must remove only the lock that it owns.
+     */
+    public void ResetForRespawn()
+    {
+        StopMovementImmediately();
+
+        verticalVelocity =
+            groundedVerticalVelocity;
+
+        isGrounded = false;
+        wasGrounded = false;
+        isRunning = false;
+
+        ResetWaiting();
+    }
+
     public void StopMovementImmediately()
     {
         ResetWaiting();

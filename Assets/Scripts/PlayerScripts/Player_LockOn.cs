@@ -798,6 +798,19 @@ public class Player_LockOn : MonoBehaviour
     }
 
     // =========================================================
+    // RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Lock-on is transient runtime state and is never restored
+     * from a checkpoint. Respawning always begins without a target.
+     */
+    public void ResetForRespawn()
+    {
+        ClearTarget();
+    }
+
+    // =========================================================
     // GIZMOS
     // =========================================================
 

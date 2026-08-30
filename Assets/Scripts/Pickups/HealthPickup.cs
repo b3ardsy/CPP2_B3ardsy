@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class HealthPickup : MonoBehaviour
+public class HealthPickup : MonoBehaviour, ICheckpointResettable
 {
     // =========================================================
     // FLOATING
@@ -17,6 +17,11 @@ public class HealthPickup : MonoBehaviour
     private Vector3 startPosition;
     private bool collected;
 
+    private Collider[] pickupColliders;
+
+    public bool IsCheckpointAvailable =>
+        !collected;
+
     // =========================================================
     // INITIALIZATION
     // =========================================================
@@ -25,6 +30,11 @@ public class HealthPickup : MonoBehaviour
     {
         startPosition =
             transform.position;
+
+        pickupColliders =
+            GetComponentsInChildren<Collider>(
+                true
+            );
     }
 
     // =========================================================
@@ -104,9 +114,46 @@ public class HealthPickup : MonoBehaviour
             this
         );
 
-        Destroy(
-            gameObject
+        gameObject.SetActive(
+            false
         );
+    }
+
+    // =========================================================
+    // CHECKPOINT RESTORE
+    // =========================================================
+
+    public void RestoreCheckpointState(
+        bool wasAvailable
+    )
+    {
+        collected =
+            !wasAvailable;
+
+        transform.position =
+            startPosition;
+
+        gameObject.SetActive(
+            wasAvailable
+        );
+
+        if (
+            wasAvailable &&
+            pickupColliders != null
+        )
+        {
+            foreach (
+                Collider pickupCollider
+                in pickupColliders
+            )
+            {
+                if (pickupCollider != null)
+                {
+                    pickupCollider.enabled =
+                        true;
+                }
+            }
+        }
     }
 
     // =========================================================

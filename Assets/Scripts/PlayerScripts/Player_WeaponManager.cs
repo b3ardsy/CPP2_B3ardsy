@@ -44,6 +44,23 @@ public class Player_WeaponManager : MonoBehaviour
         new List<Material[]>();
 
     // =========================================================
+    // PROGRESSION STATE
+    // =========================================================
+
+    [Serializable]
+    public struct WeaponProgressionState
+    {
+        public bool hasStaff;
+
+        public WeaponProgressionState(
+            bool staffOwned
+        )
+        {
+            hasStaff = staffOwned;
+        }
+    }
+
+    // =========================================================
     // PUBLIC STATE
     // =========================================================
 
@@ -106,6 +123,55 @@ public class Player_WeaponManager : MonoBehaviour
             "Wand and Staff are now available.",
             this
         );
+    }
+
+    public WeaponProgressionState CaptureProgressionState()
+    {
+        return new WeaponProgressionState(
+            hasStaff
+        );
+    }
+
+    public void RestoreProgressionState(
+        WeaponProgressionState state
+    )
+    {
+        bool staffWasUnlocked =
+            hasStaff;
+
+        hasWand = true;
+        hasStaff = state.hasStaff;
+
+        ApplyWeaponVisibility();
+
+        /*
+         * Notify listeners only when restoration actually grants
+         * the Staff. Systems such as Shield can then derive their
+         * own availability from the restored progression.
+         */
+        if (
+            !staffWasUnlocked &&
+            hasStaff
+        )
+        {
+            OnStaffUnlocked?.Invoke();
+        }
+    }
+
+    public void ResetForRespawn()
+    {
+        if (weaponFadeCoroutine != null)
+        {
+            StopCoroutine(
+                weaponFadeCoroutine
+            );
+
+            weaponFadeCoroutine = null;
+        }
+
+        weaponsTemporarilyHidden = false;
+
+        ApplyWeaponVisibility();
     }
 
     // =========================================================

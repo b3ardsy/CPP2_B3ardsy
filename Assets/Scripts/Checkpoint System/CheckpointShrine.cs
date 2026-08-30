@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PersistentID))]
 public class CheckpointShrine :
     MonoBehaviour,
     IInteract
@@ -13,14 +14,26 @@ public class CheckpointShrine :
     [SerializeField]
     private Transform respawnPoint;
 
+    private PersistentID persistentID;
+
+    public string CheckpointId =>
+        persistentID != null
+            ? persistentID.ID
+            : string.Empty;
+
+    public Transform RespawnPoint =>
+        respawnPoint != null
+            ? respawnPoint
+            : transform;
+
     // =========================================================
     // INTERACTION
     // =========================================================
 
     [Header("Interaction")]
     [Tooltip(
-        "Trigger used to detect the player. Disabled once " +
-        "this checkpoint has been activated."
+        "Trigger used to detect the player. Shrines remain " +
+        "interactable after they have been attuned."
     )]
     [SerializeField]
     private Collider interactionTrigger;
@@ -51,6 +64,9 @@ public class CheckpointShrine :
 
     private void Awake()
     {
+        persistentID =
+            GetComponent<PersistentID>();
+
         SetCandleEffects(
             false
         );
@@ -70,8 +86,27 @@ public class CheckpointShrine :
         PlayerInteraction interactor
     )
     {
-        if (isActivated)
+        if (interactor == null)
         {
+            Debug.LogError(
+                $"{name}: Checkpoint interaction requires " +
+                "a valid PlayerInteraction.",
+                this
+            );
+
+            return;
+        }
+
+        if (
+            persistentID == null ||
+            !persistentID.HasValidID
+        )
+        {
+            Debug.LogError(
+                $"{name}: CheckpointShrine requires a valid PersistentID.",
+                this
+            );
+
             return;
         }
 
@@ -85,45 +120,120 @@ public class CheckpointShrine :
             return;
         }
 
-        Transform checkpointTransform =
-            respawnPoint != null
-                ? respawnPoint
-                : transform;
+        ShrineSaveUIController shrineSaveUI =
+            ShrineSaveUIController.Instance;
 
-        CheckpointManager.Instance.SetCheckpoint(
-            checkpointTransform
-        );
-
-        isActivated =
-            true;
-
-        SetCandleEffects(
-            true
-        );
-
-        /*
-         * Clear the player's current interaction before
-         * disabling this shrine's trigger.
-         */
-        if (interactor != null)
+        if (shrineSaveUI == null)
         {
-            interactor.ClearCurrentInteractable();
+            shrineSaveUI =
+                FindAnyObjectByType<ShrineSaveUIController>();
         }
 
-        /*
-         * Once activated, this shrine no longer needs to
-         * offer interaction.
-         */
+        if (shrineSaveUI == null)
+        {
+            Debug.LogError(
+                $"{name}: No ShrineSaveUIController exists in the scene.",
+                this
+            );
+
+            return;
+        }
+
+        shrineSaveUI.Open(
+            this,
+            interactor
+        );
+    }
+
+    /*
+     * Called only after the player has confirmed a save slot.
+     *
+     * The shrine captures the CURRENT player/world state and becomes
+     * the active runtime respawn checkpoint. Saving to disk is owned
+     * by ShrineSaveUIController + SaveGameManager.
+     */
+    public bool Attune(
+        PlayerInteraction interactor
+    )
+    {
+        if (
+            interactor == null ||
+            CheckpointManager.Instance == null ||
+            persistentID == null ||
+            !persistentID.HasValidID
+        )
+        {
+            return false;
+        }
+
+        Health playerHealth =
+            interactor.GetComponentInParent<Health>();
+
+        Player_WeaponManager weaponManager =
+            interactor.GetComponentInParent
+                <Player_WeaponManager>();
+
+        Player_StaffCombat staffCombat =
+            interactor.GetComponentInParent
+                <Player_StaffCombat>();
+
+        if (
+            playerHealth == null ||
+            weaponManager == null ||
+            staffCombat == null
+        )
+        {
+            Debug.LogError(
+                $"{name}: Could not find all required player " +
+                "checkpoint systems.",
+                this
+            );
+
+            return false;
+        }
+
+        CheckpointManager.Instance.SetCheckpoint(
+            persistentID.ID,
+            RespawnPoint,
+            playerHealth,
+            weaponManager,
+            staffCombat
+        );
+
+        Debug.Log(
+            $"{name}: Shrine attuned.",
+            this
+        );
+
+        return true;
+    }
+
+    // =========================================================
+    // SAVE / LOAD RESTORE
+    // =========================================================
+
+    /*
+     * Restores the shrine's activated presentation without
+     * capturing a new checkpoint snapshot.
+     *
+     * Used when a saved active checkpoint is reconstructed.
+     */
+    public void RestoreActivatedState(
+        bool activated
+    )
+    {
+        isActivated =
+            activated;
+
+        SetCandleEffects(
+            activated
+        );
+
         if (interactionTrigger != null)
         {
             interactionTrigger.enabled =
-                false;
+                true;
         }
-
-        Debug.Log(
-            $"{name}: Checkpoint activated.",
-            this
-        );
     }
 
     // =========================================================
@@ -172,6 +282,12 @@ public class CheckpointShrine :
 
     private void OnValidate()
     {
+        if (persistentID == null)
+        {
+            persistentID =
+                GetComponent<PersistentID>();
+        }
+
         if (interactionTrigger == null)
         {
             interactionTrigger =

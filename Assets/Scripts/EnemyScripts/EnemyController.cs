@@ -5,7 +5,8 @@ using UnityEngine.AI;
 
 [RequireComponent(typeof(Health))]
 [RequireComponent(typeof(NavMeshAgent))]
-public class EnemyController : MonoBehaviour, IDamageable
+[RequireComponent(typeof(PersistentID))]
+public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
 {
     // =========================================================
     // DEATH
@@ -126,6 +127,16 @@ public class EnemyController : MonoBehaviour, IDamageable
     private GameObject activeEntangleEffect;
 
     private Vector3 homePosition;
+    private Quaternion homeRotation;
+
+    private Collider[] cachedColliders;
+    private bool[] cachedColliderEnabledStates;
+
+    private Renderer[] cachedRenderers;
+    private bool[] cachedRendererEnabledStates;
+
+    private GameObject activeDroppedPickup;
+    private Coroutine deathRoutine;
 
     private float patrolWaitTimer;
 
@@ -138,6 +149,7 @@ public class EnemyController : MonoBehaviour, IDamageable
 
     public event Action OnDamaged;
     public event Action OnDied;
+    public event Action OnRespawned;
     public event Action OnEntangled;
     public event Action OnEntangleEnded;
 
@@ -201,6 +213,9 @@ public class EnemyController : MonoBehaviour, IDamageable
     public bool IsDead =>
         health != null &&
         health.IsDead;
+
+    public bool IsCheckpointAvailable =>
+        !IsDead;
 
     public bool IsEntangled =>
         isEntangled;
@@ -341,6 +356,11 @@ public class EnemyController : MonoBehaviour, IDamageable
     {
         homePosition =
             transform.position;
+
+        homeRotation =
+            transform.rotation;
+
+        CacheResettableComponentStates();
 
         if (!IsOnNavMesh)
         {
@@ -658,9 +678,10 @@ public class EnemyController : MonoBehaviour, IDamageable
 
         DropPickup();
 
-        StartCoroutine(
-            DestroyAfterDelay()
-        );
+        deathRoutine =
+            StartCoroutine(
+                EnterDormantDeathStateAfterDelay()
+            );
     }
 
     // =========================================================
@@ -739,20 +760,9 @@ public class EnemyController : MonoBehaviour, IDamageable
 
     private void DisableEnemyColliders()
     {
-        Collider[] enemyColliders =
-            GetComponentsInChildren<Collider>();
-
-        foreach (
-            Collider enemyCollider
-            in enemyColliders
-        )
-        {
-            if (enemyCollider != null)
-            {
-                enemyCollider.enabled =
-                    false;
-            }
-        }
+        SetEnemyCollidersActive(
+            false
+        );
     }
 
     private void SpawnDeathEffect(
@@ -792,7 +802,7 @@ public class EnemyController : MonoBehaviour, IDamageable
         );
     }
 
-    private IEnumerator DestroyAfterDelay()
+    private IEnumerator EnterDormantDeathStateAfterDelay()
     {
         yield return new WaitForSeconds(
             destroyDelay
@@ -802,15 +812,550 @@ public class EnemyController : MonoBehaviour, IDamageable
             GetVisualBodyCentre() +
             deathEffectSpawnOffset;
 
-        DisableEnemyColliders();
+        SetEnemyCollidersActive(
+            false
+        );
+
+        SetEnemyRenderersActive(
+            false
+        );
 
         SpawnDeathEffect(
             deathEffectPosition
         );
 
-        Destroy(
-            gameObject
+        deathRoutine =
+            null;
+    }
+
+    // =========================================================
+    // CHECKPOINT / RESPAWN RESET
+    // =========================================================
+
+    /*
+     * Restores an enemy that was alive when the active checkpoint
+     * was captured.
+     *
+     * Checkpoints preserve whether an enemy had already been
+     * defeated. They do not preserve partial combat state, so a
+     * restored enemy returns home at full health in its normal
+     * starting state.
+     */
+    public void RestoreCheckpointState(
+        bool wasAvailable
+    )
+    {
+        /*
+         * An enemy that was already dead when the checkpoint was
+         * captured remains defeated. An enemy that was alive is
+         * rebuilt from its authored starting state.
+         */
+        if (!wasAvailable)
+        {
+            return;
+        }
+
+        ResetForRespawn();
+    }
+
+    /*
+     * Restores meaningful enemy state from a manual save.
+     *
+     * Manual saves preserve exact position, rotation, health,
+     * and alive/dead state. Transient AI details such as current
+     * attack frame, target, NavMesh path, cooldowns, and entangle
+     * state are intentionally reset.
+     */
+    public void RestoreManualSaveState(
+        Vector3 savedPosition,
+        Quaternion savedRotation,
+        int savedHealth,
+        int savedMaxHealth,
+        bool savedIsDead
+    )
+    {
+        if (deathRoutine != null)
+        {
+            StopCoroutine(
+                deathRoutine
+            );
+
+            deathRoutine =
+                null;
+        }
+
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        isEntangled =
+            false;
+
+        DestroyEntangleEffect();
+
+        /*
+         * A drop created after the save belongs to the newer runtime
+         * timeline. Remove it before reconstructing the saved enemy.
+         *
+         * Persisting an uncollected drop that existed AT save time is
+         * a separate step handled later.
+         */
+        if (activeDroppedPickup != null)
+        {
+            Destroy(
+                activeDroppedPickup
+            );
+
+            activeDroppedPickup =
+                null;
+        }
+
+        StopAgent();
+
+        RestoreSavedTransform(
+            savedPosition,
+            savedRotation
         );
+
+        ClearPatrolState();
+
+        if (savedIsDead)
+        {
+            deathHandled =
+                true;
+
+            if (health != null)
+            {
+                health.RestoreSavedHealthState(
+                    0,
+                    savedMaxHealth
+                );
+            }
+
+            OnDied?.Invoke();
+
+            SetEnemyCollidersActive(
+                false
+            );
+
+            SetEnemyRenderersActive(
+                false
+            );
+
+            RefreshHealthBars();
+
+            return;
+        }
+
+        deathHandled =
+            false;
+
+        if (health != null)
+        {
+            health.RestoreSavedHealthState(
+                Mathf.Max(
+                    1,
+                    savedHealth
+                ),
+                savedMaxHealth
+            );
+        }
+
+        RestoreEnemyRenderers();
+        RestoreEnemyColliders();
+
+        ResetSharedAnimatorState();
+
+        OnRespawned?.Invoke();
+
+        RefreshHealthBars();
+
+        BeginPatrol();
+
+        Debug.Log(
+            $"{name}: Restored from manual save at " +
+            $"{savedHealth}/{savedMaxHealth} health.",
+            this
+        );
+    }
+
+    public void ResetForRespawn()
+    {
+        if (deathRoutine != null)
+        {
+            StopCoroutine(
+                deathRoutine
+            );
+
+            deathRoutine =
+                null;
+        }
+
+        if (entangleRoutine != null)
+        {
+            StopCoroutine(
+                entangleRoutine
+            );
+
+            entangleRoutine =
+                null;
+        }
+
+        isEntangled =
+            false;
+
+        DestroyEntangleEffect();
+
+        if (activeDroppedPickup != null)
+        {
+            Destroy(
+                activeDroppedPickup
+            );
+
+            activeDroppedPickup =
+                null;
+        }
+
+        StopAgent();
+
+        RestoreHomeTransform();
+
+        RestoreEnemyRenderers();
+        RestoreEnemyColliders();
+
+        ClearPatrolState();
+
+        deathHandled =
+            false;
+
+        if (
+            health != null &&
+            health.IsDead
+        )
+        {
+            health.Revive(
+                health.MaxHealth
+            );
+        }
+
+        ResetSharedAnimatorState();
+
+        OnRespawned?.Invoke();
+
+        RefreshHealthBars();
+
+        BeginPatrol();
+
+        Debug.Log(
+            $"{name}: Reset to checkpoint respawn state.",
+            this
+        );
+    }
+
+    private void CacheResettableComponentStates()
+    {
+        cachedColliders =
+            GetComponentsInChildren<Collider>(
+                true
+            );
+
+        cachedColliderEnabledStates =
+            new bool[cachedColliders.Length];
+
+        for (
+            int index = 0;
+            index < cachedColliders.Length;
+            index++
+        )
+        {
+            cachedColliderEnabledStates[index] =
+                cachedColliders[index] != null &&
+                cachedColliders[index].enabled;
+        }
+
+        cachedRenderers =
+            GetComponentsInChildren<Renderer>(
+                true
+            );
+
+        cachedRendererEnabledStates =
+            new bool[cachedRenderers.Length];
+
+        for (
+            int index = 0;
+            index < cachedRenderers.Length;
+            index++
+        )
+        {
+            cachedRendererEnabledStates[index] =
+                cachedRenderers[index] != null &&
+                cachedRenderers[index].enabled;
+        }
+    }
+
+    private void SetEnemyCollidersActive(
+        bool active
+    )
+    {
+        if (cachedColliders == null)
+        {
+            return;
+        }
+
+        foreach (
+            Collider enemyCollider
+            in cachedColliders
+        )
+        {
+            if (enemyCollider != null)
+            {
+                enemyCollider.enabled =
+                    active;
+            }
+        }
+    }
+
+    private void RestoreEnemyColliders()
+    {
+        if (
+            cachedColliders == null ||
+            cachedColliderEnabledStates == null
+        )
+        {
+            return;
+        }
+
+        int count =
+            Mathf.Min(
+                cachedColliders.Length,
+                cachedColliderEnabledStates.Length
+            );
+
+        for (
+            int index = 0;
+            index < count;
+            index++
+        )
+        {
+            if (cachedColliders[index] != null)
+            {
+                cachedColliders[index].enabled =
+                    cachedColliderEnabledStates[index];
+            }
+        }
+    }
+
+    private void SetEnemyRenderersActive(
+        bool active
+    )
+    {
+        if (cachedRenderers == null)
+        {
+            return;
+        }
+
+        foreach (
+            Renderer enemyRenderer
+            in cachedRenderers
+        )
+        {
+            if (enemyRenderer != null)
+            {
+                enemyRenderer.enabled =
+                    active;
+            }
+        }
+    }
+
+    private void RestoreEnemyRenderers()
+    {
+        if (
+            cachedRenderers == null ||
+            cachedRendererEnabledStates == null
+        )
+        {
+            return;
+        }
+
+        int count =
+            Mathf.Min(
+                cachedRenderers.Length,
+                cachedRendererEnabledStates.Length
+            );
+
+        for (
+            int index = 0;
+            index < count;
+            index++
+        )
+        {
+            if (cachedRenderers[index] != null)
+            {
+                cachedRenderers[index].enabled =
+                    cachedRendererEnabledStates[index];
+            }
+        }
+    }
+
+    private void RestoreSavedTransform(
+        Vector3 savedPosition,
+        Quaternion savedRotation
+    )
+    {
+        if (agent == null)
+        {
+            transform.SetPositionAndRotation(
+                savedPosition,
+                savedRotation
+            );
+
+            return;
+        }
+
+        bool agentWasEnabled =
+            agent.enabled;
+
+        if (!agentWasEnabled)
+        {
+            agent.enabled =
+                true;
+        }
+
+        if (
+            NavMesh.SamplePosition(
+                savedPosition,
+                out NavMeshHit hit,
+                navMeshSampleDistance,
+                agent.areaMask
+            )
+        )
+        {
+            agent.Warp(
+                hit.position
+            );
+        }
+        else
+        {
+            agent.enabled =
+                false;
+
+            transform.position =
+                savedPosition;
+
+            agent.enabled =
+                true;
+        }
+
+        transform.rotation =
+            savedRotation;
+
+        agent.isStopped =
+            true;
+
+        agent.ResetPath();
+    }
+
+    private void RestoreHomeTransform()
+    {
+        if (agent == null)
+        {
+            transform.SetPositionAndRotation(
+                homePosition,
+                homeRotation
+            );
+
+            return;
+        }
+
+        bool agentWasEnabled =
+            agent.enabled;
+
+        if (!agentWasEnabled)
+        {
+            agent.enabled =
+                true;
+        }
+
+        if (
+            NavMesh.SamplePosition(
+                homePosition,
+                out NavMeshHit hit,
+                navMeshSampleDistance,
+                agent.areaMask
+            )
+        )
+        {
+            agent.Warp(
+                hit.position
+            );
+        }
+        else
+        {
+            agent.enabled =
+                false;
+
+            transform.position =
+                homePosition;
+
+            agent.enabled =
+                true;
+        }
+
+        transform.rotation =
+            homeRotation;
+
+        agent.isStopped =
+            true;
+
+        agent.ResetPath();
+    }
+
+    private void ResetSharedAnimatorState()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.ResetTrigger(
+            HitTrigger
+        );
+
+        animator.ResetTrigger(
+            DeathTrigger
+        );
+
+        animator.ResetTrigger(
+            EntangleTrigger
+        );
+
+        animator.Rebind();
+        animator.Update(0f);
+    }
+
+    private void RefreshHealthBars()
+    {
+        EnemyHealthBar[] healthBars =
+            GetComponentsInChildren<EnemyHealthBar>(
+                true
+            );
+
+        foreach (
+            EnemyHealthBar healthBar
+            in healthBars
+        )
+        {
+            if (healthBar != null)
+            {
+                healthBar.RefreshFromHealth();
+            }
+        }
     }
 
     // =========================================================
@@ -832,11 +1377,12 @@ public class EnemyController : MonoBehaviour, IDamageable
             Vector3.up *
             pickupSpawnHeight;
 
-        Instantiate(
-            pickupPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
+        activeDroppedPickup =
+            Instantiate(
+                pickupPrefab,
+                spawnPosition,
+                Quaternion.identity
+            );
     }
 
     private GameObject GetPickupPrefab()
@@ -1333,6 +1879,16 @@ public class EnemyController : MonoBehaviour, IDamageable
         }
 
         DestroyEntangleEffect();
+
+        if (deathRoutine != null)
+        {
+            StopCoroutine(
+                deathRoutine
+            );
+
+            deathRoutine =
+                null;
+        }
     }
 
     // =========================================================
