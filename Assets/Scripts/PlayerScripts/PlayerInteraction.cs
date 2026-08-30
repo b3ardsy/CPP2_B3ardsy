@@ -13,6 +13,8 @@ public class PlayerInteraction : MonoBehaviour
     private IInteract currentInteractable;
     private Transform currentInteractableTransform;
 
+    private bool interactionBlocked;
+
     private Camera mainCamera;
 
     private void Awake()
@@ -34,6 +36,11 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
+        if (interactionBlocked)
+        {
+            return;
+        }
+
         if (Keyboard.current == null)
         {
             return;
@@ -47,6 +54,11 @@ public class PlayerInteraction : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (interactionBlocked)
+        {
+            return;
+        }
+
         if (
             currentInteractable == null ||
             currentInteractableTransform == null ||
@@ -242,6 +254,30 @@ public class PlayerInteraction : MonoBehaviour
             visible
         );
     }
+
+    public void SetInteractionBlocked(
+        bool blocked
+    )
+    {
+        interactionBlocked =
+            blocked;
+
+        if (blocked)
+        {
+            SetPromptVisible(
+                false
+            );
+
+            return;
+        }
+
+        SetPromptVisible(
+            currentInteractable != null
+        );
+    }
+
+    public bool IsInteractionBlocked =>
+        interactionBlocked;
 
     public Player_WeaponManager GetWeaponManager()
     {

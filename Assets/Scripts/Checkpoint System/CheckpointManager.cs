@@ -342,8 +342,8 @@ public class CheckpointManager : MonoBehaviour
          * Mark the saved active shrine as activated without
          * capturing a new snapshot.
          */
-        shrine.RestoreActivatedState(
-            true
+        UpdateShrineVisuals(
+            data.checkpointId
         );
 
         /*
@@ -408,6 +408,10 @@ public class CheckpointManager : MonoBehaviour
             default;
 
         worldCheckpointStates.Clear();
+
+        UpdateShrineVisuals(
+            string.Empty
+        );
     }
 
     /*
@@ -518,6 +522,10 @@ public class CheckpointManager : MonoBehaviour
 
         CaptureWorldStates();
 
+        UpdateShrineVisuals(
+            checkpointId
+        );
+
         OnCheckpointCaptured?.Invoke();
 
         Debug.Log(
@@ -557,6 +565,38 @@ public class CheckpointManager : MonoBehaviour
                     behaviour,
                     resettable.IsCheckpointAvailable
                 )
+            );
+        }
+    }
+
+    private void UpdateShrineVisuals(
+        string activeCheckpointId
+    )
+    {
+        CheckpointShrine[] shrines =
+            FindObjectsByType<CheckpointShrine>(
+                FindObjectsInactive.Include
+            );
+
+        foreach (
+            CheckpointShrine shrine
+            in shrines
+        )
+        {
+            if (shrine == null)
+            {
+                continue;
+            }
+
+            bool isActiveShrine =
+                !string.IsNullOrWhiteSpace(
+                    activeCheckpointId
+                ) &&
+                shrine.CheckpointId ==
+                    activeCheckpointId;
+
+            shrine.RestoreActivatedState(
+                isActiveShrine
             );
         }
     }

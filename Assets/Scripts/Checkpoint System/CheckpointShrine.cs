@@ -32,8 +32,8 @@ public class CheckpointShrine :
 
     [Header("Interaction")]
     [Tooltip(
-        "Trigger used to detect the player. Disabled once " +
-        "this checkpoint has been activated."
+        "Trigger used to detect the player. Shrines remain " +
+        "interactable after they have been attuned."
     )]
     [SerializeField]
     private Collider interactionTrigger;
@@ -86,23 +86,16 @@ public class CheckpointShrine :
         PlayerInteraction interactor
     )
     {
-        if (isActivated)
-        {
-            return;
-        }
-
-        if (CheckpointManager.Instance == null)
+        if (interactor == null)
         {
             Debug.LogError(
-                $"{name}: No CheckpointManager exists in the scene.",
+                $"{name}: Checkpoint interaction requires " +
+                "a valid PlayerInteraction.",
                 this
             );
 
             return;
         }
-
-        Transform checkpointTransform =
-            RespawnPoint;
 
         if (
             persistentID == null ||
@@ -117,15 +110,60 @@ public class CheckpointShrine :
             return;
         }
 
-        if (interactor == null)
+        if (CheckpointManager.Instance == null)
         {
             Debug.LogError(
-                $"{name}: Checkpoint interaction requires " +
-                "a valid PlayerInteraction.",
+                $"{name}: No CheckpointManager exists in the scene.",
                 this
             );
 
             return;
+        }
+
+        ShrineSaveUIController shrineSaveUI =
+            ShrineSaveUIController.Instance;
+
+        if (shrineSaveUI == null)
+        {
+            shrineSaveUI =
+                FindAnyObjectByType<ShrineSaveUIController>();
+        }
+
+        if (shrineSaveUI == null)
+        {
+            Debug.LogError(
+                $"{name}: No ShrineSaveUIController exists in the scene.",
+                this
+            );
+
+            return;
+        }
+
+        shrineSaveUI.Open(
+            this,
+            interactor
+        );
+    }
+
+    /*
+     * Called only after the player has confirmed a save slot.
+     *
+     * The shrine captures the CURRENT player/world state and becomes
+     * the active runtime respawn checkpoint. Saving to disk is owned
+     * by ShrineSaveUIController + SaveGameManager.
+     */
+    public bool Attune(
+        PlayerInteraction interactor
+    )
+    {
+        if (
+            interactor == null ||
+            CheckpointManager.Instance == null ||
+            persistentID == null ||
+            !persistentID.HasValidID
+        )
+        {
+            return false;
         }
 
         Health playerHealth =
@@ -151,47 +189,23 @@ public class CheckpointShrine :
                 this
             );
 
-            return;
+            return false;
         }
 
         CheckpointManager.Instance.SetCheckpoint(
             persistentID.ID,
-            checkpointTransform,
+            RespawnPoint,
             playerHealth,
             weaponManager,
             staffCombat
         );
 
-        isActivated =
-            true;
-
-        SetCandleEffects(
-            true
-        );
-
-        /*
-         * Clear the player's current interaction before
-         * disabling this shrine's trigger.
-         */
-        if (interactor != null)
-        {
-            interactor.ClearCurrentInteractable();
-        }
-
-        /*
-         * Once activated, this shrine no longer needs to
-         * offer interaction.
-         */
-        if (interactionTrigger != null)
-        {
-            interactionTrigger.enabled =
-                false;
-        }
-
         Debug.Log(
-            $"{name}: Checkpoint activated.",
+            $"{name}: Shrine attuned.",
             this
         );
+
+        return true;
     }
 
     // =========================================================
@@ -218,7 +232,7 @@ public class CheckpointShrine :
         if (interactionTrigger != null)
         {
             interactionTrigger.enabled =
-                !activated;
+                true;
         }
     }
 

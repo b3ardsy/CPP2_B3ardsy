@@ -511,6 +511,57 @@ public class SaveGameManager : MonoBehaviour
             saveData.checkpoint =
                 CheckpointManager.Instance
                     .CapturePersistentCheckpointData();
+
+            /*
+             * Persistent saves are shrine-anchored.
+             *
+             * The player may be standing slightly beside the shrine
+             * interaction trigger when saving, but loading the slot
+             * should begin at the shrine's RespawnPoint.
+             */
+            if (saveData.checkpoint.hasCheckpoint)
+            {
+                CheckpointManager.PlayerCheckpointState
+                    checkpointPlayerState =
+                        CheckpointManager.Instance
+                            .CurrentPlayerState;
+
+                saveData.player.position =
+                    ToSerializableVector3(
+                        checkpointPlayerState.position
+                    );
+
+                saveData.player.rotation =
+                    ToSerializableQuaternion(
+                        checkpointPlayerState.rotation
+                    );
+
+                saveData.player.currentHealth =
+                    checkpointPlayerState.currentHealth;
+
+                saveData.player.maxHealth =
+                    checkpointPlayerState.maxHealth;
+
+                saveData.player.progression.hasStaff =
+                    checkpointPlayerState
+                        .weaponProgression
+                        .hasStaff;
+
+                saveData.player.progression.lightningUnlocked =
+                    checkpointPlayerState
+                        .spellProgression
+                        .lightningUnlocked;
+
+                saveData.player.progression.iceTornadoUnlocked =
+                    checkpointPlayerState
+                        .spellProgression
+                        .iceTornadoUnlocked;
+
+                saveData.player.progression.entangleUnlocked =
+                    checkpointPlayerState
+                        .spellProgression
+                        .entangleUnlocked;
+            }
         }
 
         return true;
