@@ -49,6 +49,23 @@ public class CheckpointShrine :
     [SerializeField]
     private ParticleSystem[] candleParticles;
 
+    [Tooltip(
+        "Point lights enabled while this shrine is the active checkpoint."
+    )]
+    [SerializeField]
+    private Light[] candleLights;
+
+    // =========================================================
+    // ATTUNE VFX
+    // =========================================================
+
+    [Header("Attune VFX")]
+    [Tooltip(
+        "Particle effect played after this shrine is successfully saved."
+    )]
+    [SerializeField]
+    private ParticleSystem attuneVFX;
+
     // =========================================================
     // STATE
     // =========================================================
@@ -244,36 +261,72 @@ public class CheckpointShrine :
         bool active
     )
     {
-        if (candleParticles == null)
+        if (candleParticles != null)
+        {
+            foreach (
+                ParticleSystem candleParticle
+                in candleParticles
+            )
+            {
+                if (candleParticle == null)
+                {
+                    continue;
+                }
+
+                if (active)
+                {
+                    candleParticle.Play(
+                        true
+                    );
+                }
+                else
+                {
+                    candleParticle.Stop(
+                        true,
+                        ParticleSystemStopBehavior
+                            .StopEmittingAndClear
+                    );
+                }
+            }
+        }
+
+        if (candleLights != null)
+        {
+            foreach (
+                Light candleLight
+                in candleLights
+            )
+            {
+                if (candleLight == null)
+                {
+                    continue;
+                }
+
+                candleLight.enabled =
+                    active;
+            }
+        }
+    }
+
+    // =========================================================
+    // ATTUNE VFX
+    // =========================================================
+
+    public void PlayAttuneVFX()
+    {
+        if (attuneVFX == null)
         {
             return;
         }
 
-        foreach (
-            ParticleSystem candleParticle
-            in candleParticles
-        )
-        {
-            if (candleParticle == null)
-            {
-                continue;
-            }
+        attuneVFX.Stop(
+            true,
+            ParticleSystemStopBehavior.StopEmittingAndClear
+        );
 
-            if (active)
-            {
-                candleParticle.Play(
-                    true
-                );
-            }
-            else
-            {
-                candleParticle.Stop(
-                    true,
-                    ParticleSystemStopBehavior
-                        .StopEmittingAndClear
-                );
-            }
-        }
+        attuneVFX.Play(
+            true
+        );
     }
 
     // =========================================================

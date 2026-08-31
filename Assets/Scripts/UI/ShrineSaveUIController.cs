@@ -416,6 +416,8 @@ public class ShrineSaveUIController : MonoBehaviour
             return;
         }
 
+        currentShrine.PlayAttuneVFX();
+
         Debug.Log(
             $"ShrineSaveUIController: Shrine saved to Slot {pendingSlot}.",
             currentShrine
