@@ -111,8 +111,8 @@ public class MageLogic : MonoBehaviour
     // ANIMATOR PARAMETERS
     // =========================================================
 
-    private static readonly int IsMovingBool =
-        Animator.StringToHash("IsMoving");
+    private static readonly int SpeedFloat =
+        Animator.StringToHash("Speed");
 
     private static readonly int AttackTrigger =
         Animator.StringToHash("Attack");
@@ -366,9 +366,9 @@ public class MageLogic : MonoBehaviour
             AttackTrigger
         );
 
-        animator.SetBool(
-            IsMovingBool,
-            false
+        animator.SetFloat(
+            SpeedFloat,
+            0f
         );
 
         int recoveryStateHash =
@@ -844,16 +844,30 @@ public class MageLogic : MonoBehaviour
             return;
         }
 
-        bool isMoving =
+        float normalizedSpeed =
+            0f;
+
+        if (
             enemyController.Agent != null &&
             enemyController.IsOnNavMesh &&
-            !enemyController.Agent.isStopped &&
-            enemyController.Agent.velocity.sqrMagnitude >
-            0.01f;
+            !enemyController.Agent.isStopped
+        )
+        {
+            normalizedSpeed =
+                Mathf.Clamp01(
+                    enemyController.Agent.velocity.magnitude /
+                    Mathf.Max(
+                        enemyController.PatrolSpeed,
+                        0.01f
+                    )
+                );
+        }
 
-        animator.SetBool(
-            IsMovingBool,
-            isMoving
+        animator.SetFloat(
+            SpeedFloat,
+            normalizedSpeed,
+            0.1f,
+            Time.deltaTime
         );
     }
 
@@ -884,9 +898,9 @@ public class MageLogic : MonoBehaviour
                 EntangleTrigger
             );
 
-            animator.SetBool(
-                IsMovingBool,
-                false
+            animator.SetFloat(
+                SpeedFloat,
+                0f
             );
         }
     }
@@ -910,9 +924,9 @@ public class MageLogic : MonoBehaviour
 
         if (animator != null)
         {
-            animator.SetBool(
-                IsMovingBool,
-                false
+            animator.SetFloat(
+                SpeedFloat,
+                0f
             );
 
             animator.ResetTrigger(

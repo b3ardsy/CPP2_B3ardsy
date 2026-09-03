@@ -244,7 +244,7 @@ Transform:
   m_Children:
   - {fileID: 6256410046460404839}
   m_Father: {fileID: -8995212700073126884}
-  m_LocalEulerAnglesHint: {x: 30.530275, y: 46.988483, z: -0.7007012}
+  m_LocalEulerAnglesHint: {x: 0.0000002839462, y: 0.0000030611968, z: -90.00001}
 --- !u!1 &-6415790494268509736
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: -4361254235543792588}
-  m_LocalEulerAnglesHint: {x: 16.4214, y: -24.81061, z: 26.70924}
+  m_LocalEulerAnglesHint: {x: 0.00000028394942, y: -0.0000030611968, z: 90.00001}
 --- !u!1 &-638838958707032469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1146,8 +1146,8 @@ MonoBehaviour:
   patrolSearchAttempts: 10
   detectionRange: 20
   loseTargetRange: 25
-  patrolSpeed: 15
-  returnSpeed: 10
+  patrolSpeed: 4
+  returnSpeed: 3
   engagedRotationSpeed: 8
   showRangeGizmos: 1
 --- !u!114 &3357619153843254394
@@ -1178,7 +1178,7 @@ MonoBehaviour:
   minimumAttackCooldown: 2
   maximumAttackCooldown: 3
   attackRecoveryDuration: 0.6
-  entangleRecoveryStateName: Idle
+  entangleRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
 --- !u!195 &4906132506217826178
 NavMeshAgent:

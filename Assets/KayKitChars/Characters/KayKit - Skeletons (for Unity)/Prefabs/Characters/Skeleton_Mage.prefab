@@ -1400,7 +1400,7 @@ MonoBehaviour:
   homingChance: 0.5
   minimumAttackCooldown: 1.75
   maximumAttackCooldown: 2.75
-  entangleRecoveryStateName: Idle_B
+  entangleRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
 --- !u!136 &3655405520464804888
 CapsuleCollider:
