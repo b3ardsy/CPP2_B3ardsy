@@ -42,6 +42,26 @@ public class SpellRune : MonoBehaviour, IInteract, ICheckpointResettable
     public bool IsCheckpointAvailable =>
         !hasBeenActivated;
 
+    public bool CanInteract(
+        PlayerInteraction interactor
+    )
+    {
+        if (
+            hasBeenActivated ||
+            interactor == null
+        )
+        {
+            return false;
+        }
+
+        Player_WeaponManager weaponManager =
+            interactor.GetWeaponManager();
+
+        return
+            weaponManager != null &&
+            weaponManager.HasStaff;
+    }
+
     private void Awake()
     {
         startingPosition =

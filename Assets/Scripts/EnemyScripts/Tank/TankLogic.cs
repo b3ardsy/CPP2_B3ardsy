@@ -11,6 +11,12 @@ public class TankLogic : MonoBehaviour
         ReturningHome
     }
 
+    private enum TankAttack
+    {
+        Spin = 0,
+        Slash = 1
+    }
+
     // =========================================================
     // COMBAT
     // =========================================================
@@ -36,14 +42,17 @@ public class TankLogic : MonoBehaviour
     [SerializeField]
     private float attackExitRange = 4.75f;
 
-    [Tooltip(
-        "Damage dealt each time the axe connects."
-    )]
+    [Header("Spin Attack")]
     [SerializeField]
-    private int attackDamage = 1;
+    private int spinDamage = 1;
 
+    [Header("Slash Attack")]
+    [SerializeField]
+    private int slashDamage = 1;
+
+    [Header("Attack Timing")]
     [Tooltip(
-        "Time between complete axe attacks."
+        "Time between complete attacks."
     )]
     [SerializeField]
     private float attackCooldown = 3f;
@@ -55,10 +64,21 @@ public class TankLogic : MonoBehaviour
     private float attackRotationSpeed = 25f;
 
     [Tooltip(
-        "Trigger hitbox attached to the axe."
+        "Maximum planar NavMesh velocity allowed before a new attack begins. " +
+        "This gives the Tank time to plant its feet instead of sliding " +
+        "straight from the chase into an attack."
     )]
     [SerializeField]
-    private TankWeaponHitbox axeHitbox;
+    private float attackStartVelocityThreshold = 0.15f;
+
+    [Header("Melee Hit Detection")]
+    [Tooltip(
+        "SphereCollider on the axe used as the melee hit volume. " +
+        "The collider is disabled for normal physics and sampled " +
+        "when PerformMeleeHit is called by an Animation Event."
+    )]
+    [SerializeField]
+    private SphereCollider axeHitbox;
 
     // =========================================================
     // CHASE
@@ -107,10 +127,12 @@ public class TankLogic : MonoBehaviour
     // =========================================================
 
     private TankState currentState;
+    private TankAttack activeAttack;
 
     private float attackCooldownTimer;
 
     private bool isPerformingAttack;
+    private int hitsDuringCurrentAttack;
     private bool wasEntangledLastFrame;
 
     private int movementAnimationRecoveryFrames;
@@ -124,6 +146,9 @@ public class TankLogic : MonoBehaviour
 
     private static readonly int AttackHash =
         Animator.StringToHash("Attack");
+
+    private static readonly int AttackTypeHash =
+        Animator.StringToHash("AttackType");
 
     private static readonly int EntangleHash =
         Animator.StringToHash("Entangle");
@@ -151,7 +176,7 @@ public class TankLogic : MonoBehaviour
         if (axeHitbox == null)
         {
             axeHitbox =
-                GetComponentInChildren<TankWeaponHitbox>(
+                GetComponentInChildren<SphereCollider>(
                     true
                 );
         }
@@ -159,17 +184,19 @@ public class TankLogic : MonoBehaviour
         if (axeHitbox == null)
         {
             Debug.LogError(
-                $"{name}: TankLogic could not find TankWeaponHitbox.",
+                $"{name}: TankLogic could not find the axe SphereCollider.",
                 this
             );
         }
         else
         {
-            axeHitbox.SetOwner(
-                this
-            );
-
-            axeHitbox.DisableHitbox();
+            /*
+             * The axe collider is only used as a shape reference for
+             * Physics.OverlapBox. It should not participate in normal
+             * collision/trigger callbacks.
+             */
+            axeHitbox.enabled =
+                false;
         }
     }
 
@@ -268,7 +295,6 @@ public class TankLogic : MonoBehaviour
         {
             enemyController.StopAgent();
 
-            DisableAxeHitbox();
 
             UpdateMovementAnimation();
 
@@ -279,7 +305,6 @@ public class TankLogic : MonoBehaviour
         {
             enemyController.StopAgent();
 
-            DisableAxeHitbox();
 
             UpdateMovementAnimation();
 
@@ -612,6 +637,27 @@ public class TankLogic : MonoBehaviour
             return;
         }
 
+        /*
+         * Wait until the NavMeshAgent has actually settled before
+         * committing to the attack animation. This prevents the
+         * Tank from visibly sliding into the first attack pose.
+         */
+        Vector3 currentVelocity =
+            enemyController.Agent != null
+                ? enemyController.Agent.velocity
+                : Vector3.zero;
+
+        currentVelocity.y =
+            0f;
+
+        if (
+            currentVelocity.magnitude >
+            attackStartVelocityThreshold
+        )
+        {
+            return;
+        }
+
         BeginAttack();
     }
 
@@ -627,13 +673,19 @@ public class TankLogic : MonoBehaviour
             return;
         }
 
+        activeAttack =
+            UnityEngine.Random.value < 0.5f
+                ? TankAttack.Spin
+                : TankAttack.Slash;
+
         isPerformingAttack =
             true;
 
+        hitsDuringCurrentAttack =
+            0;
+
         attackCooldownTimer =
             attackCooldown;
-
-        DisableAxeHitbox();
 
         enemyController.StopAgent();
 
@@ -643,6 +695,11 @@ public class TankLogic : MonoBehaviour
 
         if (animator != null)
         {
+            animator.SetInteger(
+                AttackTypeHash,
+                (int)activeAttack
+            );
+
             animator.ResetTrigger(
                 AttackHash
             );
@@ -662,96 +719,157 @@ public class TankLogic : MonoBehaviour
     }
 
     // =========================================================
-    // AXE DAMAGE
+    // MELEE DAMAGE
     // =========================================================
 
-    public void TryDamagePlayer(
-        IAxeDamageable targetPlayer
-    )
+    /*
+     * Animation Event used by both attack clips.
+     *
+     * Place PerformMeleeHit on the impact frame of Spin and Slash.
+     * The axe SphereCollider defines the overlap volume, but remains
+     * disabled for normal physics.
+     */
+    public void PerformMeleeHit()
     {
         if (
             enemyController.IsDead ||
             enemyController.IsEntangled ||
             !isPerformingAttack ||
-            currentState !=
-            TankState.Attacking
-        )
-        {
-            return;
-        }
-
-        if (
-            targetPlayer == null ||
+            hitsDuringCurrentAttack >=
+                GetMaximumHitsForActiveAttack() ||
+            currentState != TankState.Attacking ||
+            axeHitbox == null ||
+            playerAxeDamageable == null ||
             enemyController.IsPlayerDead
         )
         {
             return;
         }
 
-        /*
-         * Only damage the player currently tracked by this Tank.
-         */
-        if (
-            playerAxeDamageable != null &&
-            !ReferenceEquals(
-                targetPlayer,
-                playerAxeDamageable
-            )
-        )
+        Vector3 worldCenter =
+            axeHitbox.transform.TransformPoint(
+                axeHitbox.center
+            );
+
+        Vector3 scale =
+            axeHitbox.transform.lossyScale;
+
+        float largestScale =
+            Mathf.Max(
+                Mathf.Abs(scale.x),
+                Mathf.Abs(scale.y),
+                Mathf.Abs(scale.z)
+            );
+
+        float worldRadius =
+            axeHitbox.radius *
+            largestScale;
+
+        Collider[] hits =
+            Physics.OverlapSphere(
+                worldCenter,
+                worldRadius,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Ignore
+            );
+
+        foreach (Collider hit in hits)
         {
+            if (!IsTrackedPlayerCollider(hit))
+            {
+                continue;
+            }
+
+            int damage =
+                GetDamageForActiveAttack();
+
+            bool isSpinFollowUpHit =
+                activeAttack == TankAttack.Spin &&
+                hitsDuringCurrentAttack > 0;
+
+            if (
+                isSpinFollowUpHit &&
+                playerAxeDamageable is
+                    Player_DamageController playerDamageController
+            )
+            {
+                playerDamageController.TakeAxeDamage(
+                    damage,
+                    true
+                );
+            }
+            else
+            {
+                playerAxeDamageable.TakeAxeDamage(
+                    damage
+                );
+            }
+
+            hitsDuringCurrentAttack++;
+
             return;
         }
+    }
 
-        targetPlayer.TakeAxeDamage(
-            attackDamage
-        );
+    private int GetDamageForActiveAttack()
+    {
+        switch (activeAttack)
+        {
+            case TankAttack.Slash:
+                return slashDamage;
+
+            case TankAttack.Spin:
+            default:
+                return spinDamage;
+        }
+    }
+
+    private int GetMaximumHitsForActiveAttack()
+    {
+        switch (activeAttack)
+        {
+            case TankAttack.Spin:
+                return 2;
+
+            case TankAttack.Slash:
+            default:
+                return 1;
+        }
+    }
+
+    private bool IsTrackedPlayerCollider(
+        Collider other
+    )
+    {
+        if (
+            other == null ||
+            enemyController.Player == null
+        )
+        {
+            return false;
+        }
+
+        Transform playerTransform =
+            enemyController.Player;
+
+        return
+            other.transform == playerTransform ||
+            other.transform.IsChildOf(
+                playerTransform
+            );
     }
 
     // =========================================================
     // ANIMATION EVENTS
     // =========================================================
 
-    /*
-     * These methods are intended to be called directly by
-     * Animation Events on the Tank's attack clip.
-     *
-     * If TankLogic and the Animator live on the same GameObject,
-     * TankAnimationEventRelay is no longer necessary.
-     */
-
-    public void EnableAxeHitbox()
-    {
-        if (
-            enemyController.IsDead ||
-            enemyController.IsEntangled ||
-            !isPerformingAttack ||
-            currentState !=
-            TankState.Attacking
-        )
-        {
-            return;
-        }
-
-        if (axeHitbox != null)
-        {
-            axeHitbox.EnableHitbox();
-        }
-    }
-
-    public void DisableAxeHitbox()
-    {
-        if (axeHitbox != null)
-        {
-            axeHitbox.DisableHitbox();
-        }
-    }
-
     public void EndAttack()
     {
-        DisableAxeHitbox();
-
         isPerformingAttack =
             false;
+
+        hitsDuringCurrentAttack =
+            0;
 
         if (
             enemyController.IsDead ||
@@ -781,8 +899,8 @@ public class TankLogic : MonoBehaviour
         /*
          * Otherwise remain in Attacking.
          *
-         * AttackPlayer will wait for the cooldown and only
-         * begin another swing when the player is in AttackRange.
+         * AttackPlayer waits for the cooldown and only starts
+         * another attack while the player remains in AttackRange.
          */
     }
 
@@ -865,7 +983,7 @@ public class TankLogic : MonoBehaviour
 
         animator.SetFloat(
             SpeedHash,
-            GetAnimationSpeedForCurrentState()
+            GetFallbackLocomotionBlendValue()
         );
 
         movementAnimationRecoveryFrames =
@@ -965,7 +1083,8 @@ public class TankLogic : MonoBehaviour
         isPerformingAttack =
             false;
 
-        DisableAxeHitbox();
+        hitsDuringCurrentAttack =
+            0;
 
         if (animator != null)
         {
@@ -989,6 +1108,12 @@ public class TankLogic : MonoBehaviour
         attackCooldownTimer =
             0f;
 
+        activeAttack =
+            TankAttack.Spin;
+
+        hitsDuringCurrentAttack =
+            0;
+
         wasEntangledLastFrame =
             false;
 
@@ -999,6 +1124,11 @@ public class TankLogic : MonoBehaviour
         {
             animator.ResetTrigger(
                 AttackHash
+            );
+
+            animator.SetInteger(
+                AttackTypeHash,
+                0
             );
 
             animator.ResetTrigger(
@@ -1082,6 +1212,22 @@ public class TankLogic : MonoBehaviour
             return;
         }
 
+        Vector3 movementVelocity =
+            enemyController.Agent.velocity;
+
+        movementVelocity.y =
+            0f;
+
+        float animationSpeed =
+            GetLocomotionBlendValue(
+                movementVelocity.magnitude
+            );
+
+        /*
+         * During the first few frames after Entangle, the NavMeshAgent
+         * can report zero velocity while its path wakes back up.
+         * Preserve a sensible locomotion value for that brief recovery.
+         */
         if (
             movementAnimationRecoveryFrames >
             0
@@ -1089,30 +1235,12 @@ public class TankLogic : MonoBehaviour
         {
             movementAnimationRecoveryFrames--;
 
-            animator.SetFloat(
-                SpeedHash,
-                GetAnimationSpeedForCurrentState()
-            );
-
-            return;
+            animationSpeed =
+                Mathf.Max(
+                    animationSpeed,
+                    GetFallbackLocomotionBlendValue()
+                );
         }
-
-        Vector3 movementVelocity =
-            enemyController.Agent.velocity;
-
-        movementVelocity.y =
-            0f;
-
-        bool isActuallyMoving =
-            enemyController.IsOnNavMesh &&
-            !enemyController.Agent.isStopped &&
-            movementVelocity.sqrMagnitude >
-            0.01f;
-
-        float animationSpeed =
-            isActuallyMoving
-                ? GetAnimationSpeedForCurrentState()
-                : 0f;
 
         animator.SetFloat(
             SpeedHash,
@@ -1122,22 +1250,63 @@ public class TankLogic : MonoBehaviour
         );
     }
 
-    private float GetAnimationSpeedForCurrentState()
+    private float GetLocomotionBlendValue(
+        float planarSpeed
+    )
+    {
+        if (planarSpeed <= 0.01f)
+        {
+            return 0f;
+        }
+
+        float walkSpeed =
+            Mathf.Max(
+                0.01f,
+                enemyController.PatrolSpeed
+            );
+
+        float runSpeed =
+            Mathf.Max(
+                walkSpeed + 0.01f,
+                chaseSpeed
+            );
+
+        if (planarSpeed <= walkSpeed)
+        {
+            return
+                Mathf.InverseLerp(
+                    0f,
+                    walkSpeed,
+                    planarSpeed
+                ) *
+                0.5f;
+        }
+
+        return
+            Mathf.Lerp(
+                0.5f,
+                1f,
+                Mathf.InverseLerp(
+                    walkSpeed,
+                    runSpeed,
+                    planarSpeed
+                )
+            );
+    }
+
+    private float GetFallbackLocomotionBlendValue()
     {
         switch (currentState)
         {
             case TankState.Patrolling:
             case TankState.ReturningHome:
-
                 return 0.5f;
 
             case TankState.Chasing:
-
                 return 1f;
 
             case TankState.Attacking:
             default:
-
                 return 0f;
         }
     }
@@ -1198,10 +1367,16 @@ public class TankLogic : MonoBehaviour
                 attackExitRange
             );
 
-        attackDamage =
+        spinDamage =
             Mathf.Max(
                 1,
-                attackDamage
+                spinDamage
+            );
+
+        slashDamage =
+            Mathf.Max(
+                1,
+                slashDamage
             );
 
         attackCooldown =
@@ -1214,6 +1389,12 @@ public class TankLogic : MonoBehaviour
             Mathf.Max(
                 0f,
                 attackRotationSpeed
+            );
+
+        attackStartVelocityThreshold =
+            Mathf.Max(
+                0f,
+                attackStartVelocityThreshold
             );
 
         chaseSpeed =

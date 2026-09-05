@@ -79,6 +79,17 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
+        if (
+            currentInteractable is SpellRune rune &&
+            !rune.CanInteract(
+                this
+            )
+        )
+        {
+            ClearCurrentInteractable();
+            return;
+        }
+
         currentInteractable.Interact(this);
     }
 
@@ -94,6 +105,20 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         if (interactable == null)
+        {
+            return;
+        }
+
+        /*
+         * Spell runes should not show the interaction prompt until
+         * the player has collected the Staff.
+         */
+        if (
+            interactable is SpellRune rune &&
+            !rune.CanInteract(
+                this
+            )
+        )
         {
             return;
         }
