@@ -872,7 +872,6 @@ GameObject:
   - component: {fileID: 453927553718303561}
   - component: {fileID: 7690415708235302229}
   - component: {fileID: 5198917100671412841}
-  - component: {fileID: 2427465129357510108}
   - component: {fileID: 4557537408726290429}
   m_Layer: 0
   m_Name: Druid 1
@@ -983,58 +982,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   interactionPrompt: {fileID: 0}
   promptHeightOffset: 0.35
---- !u!114 &2427465129357510108
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed83f462f17973847ac73c612c884a98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerStaffCombat
-  animator: {fileID: 0}
-  playerMovement: {fileID: 0}
-  playerLockOn: {fileID: 0}
-  staffFirePoint: {fileID: 5520820917836687221}
-  slot1Spell: 3
-  slot2Spell: 2
-  slot3Spell: 0
-  startWithLightningUnlocked: 0
-  startWithIceTornadoUnlocked: 0
-  startWithEntangleUnlocked: 0
-  entangleCooldown: 8
-  flamethrowerCooldown: 5
-  iceTornadoCooldown: 5
-  lightningStrikeCooldown: 5
-  entanglePrefab: {fileID: 0}
-  entangleDuration: 5
-  entangleLocalOffset: {x: 0, y: 0, z: 0}
-  entangleMissDistance: 6
-  entangleGroundCheckHeight: 5
-  entangleGroundOffset: 0.05
-  iceTornadoPrefab: {fileID: 0}
-  iceTornadoDamage: 1
-  iceTornadoSpeed: 10
-  iceTornadoSpawnDistance: 1.5
-  iceTornadoGroundCheckHeight: 3
-  iceTornadoGroundOffset: 0.05
-  iceTornadoRotationOffset: {x: -90, y: 0, z: 0}
-  lightningStrikePrefab: {fileID: 0}
-  lightningStrikeDamage: 2
-  lightningStrikeDamageRadius: 1.25
-  lightningStrikeRange: 6
-  lightningGroundCheckHeight: 5
-  lightningGroundOffset: 0.05
-  enemyLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  usePlayerForwardWhenUnlocked: 1
 --- !u!114 &4557537408726290429
 MonoBehaviour:
   m_ObjectHideFlags: 0
