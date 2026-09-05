@@ -8,9 +8,8 @@ NativeFormatImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 342982
-  packageName: KayKit - Mystery Series 5 (for Unity)
-  packageVersion: 1.0.1
-  assetPath: Assets/KayKitChars/Characters/Animations/Animations/Rig_Large/Movement
-    Advanced/Dodge_Forward.anim
-  uploadId: 831996
+  productId: 290680
+  packageName: KayKit - Skeletons Character Pack (for Unity)
+  packageVersion: 1.1.1
+  assetPath: Assets/KayKit/Characters/Animations/Animations/Rig_Large/Movement Advanced/Dodge_Forward.anim
+  uploadId: 832000
