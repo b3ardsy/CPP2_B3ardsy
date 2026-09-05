@@ -54,6 +54,14 @@ public class Player_Controller : MonoBehaviour
     [SerializeField] private float groundedRadius = 0.45f;
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Footsteps")]
+    [Tooltip(
+        "Surface used until automatic ground-surface detection is added."
+    )]
+    [SerializeField]
+    private FootstepSurface defaultFootstepSurface =
+        FootstepSurface.Grass;
+
     [Header("Idle Waiting")]
     [Tooltip(
         "How long the player must remain completely idle before " +
@@ -973,6 +981,54 @@ public class Player_Controller : MonoBehaviour
 
         wasGrounded =
             isGrounded;
+    }
+
+    // =========================================================
+    // FOOTSTEPS
+    // =========================================================
+
+    /*
+     * Animation Event entry point.
+     *
+     * Add PlayFootstep to the Walk and Run animation clips at the
+     * exact frames where either foot makes contact with the ground.
+     *
+     * The event may still fire while a Blend Tree is transitioning,
+     * so gameplay state is validated here before any sound is played.
+     */
+    public void PlayFootstep()
+    {
+        bool isDodging =
+            playerDodge != null &&
+            playerDodge.IsDodging;
+
+        bool isAttacking =
+            playerCombat != null &&
+            playerCombat.IsAttacking;
+
+        bool isActuallyMoving =
+            movementInput.sqrMagnitude >
+            0.01f &&
+            currentMoveSpeed >
+            0.1f;
+
+        if (
+            !isGrounded ||
+            IsMovementLocked ||
+            isDodging ||
+            isAttacking ||
+            !isActuallyMoving ||
+            AudioManager.Instance == null
+        )
+        {
+            return;
+        }
+
+        AudioManager.Instance.PlayFootstep(
+            defaultFootstepSurface,
+            isRunning,
+            transform.position
+        );
     }
 
     // =========================================================
