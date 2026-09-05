@@ -869,7 +869,6 @@ GameObject:
   m_Component:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 7937088398246958496}
-  - component: {fileID: 8985355908063834351}
   - component: {fileID: 453927553718303561}
   - component: {fileID: 3364010743847596850}
   - component: {fileID: 6658573693976217545}
@@ -934,25 +933,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8985355908063834351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9152fb5304ad2084e9cf31bf1f998e3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerLockOn
-  cameraTransform: {fileID: 7468378734651127450}
-  enemyLayer:
-    serializedVersion: 2
-    m_Bits: 256
-  detectionRadius: 15
-  maximumLockAngle: 60
-  breakLockDistance: 20
 --- !u!143 &453927553718303561
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1008,7 +988,7 @@ MonoBehaviour:
   waitingDelay: 8
   cameraTransform: {fileID: 7468378734651127450}
   playerCombat: {fileID: 1929804244283084515}
-  playerLockOn: {fileID: 8985355908063834351}
+  playerLockOn: {fileID: 0}
   playerDodge: {fileID: 6658573693976217545}
 --- !u!114 &6658573693976217545
 MonoBehaviour:
@@ -1022,7 +1002,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371dd9f1eebccba4db7f361b82f1b87f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDodgeNew
-  playerLockOn: {fileID: 8985355908063834351}
+  playerLockOn: {fileID: 0}
   playerCombat: {fileID: 1929804244283084515}
   dodgeSpeed: 15
   dodgeDuration: 0.3
@@ -1051,7 +1031,7 @@ MonoBehaviour:
   playerMovement: {fileID: 3364010743847596850}
   playerCombat: {fileID: 1929804244283084515}
   playerDodge: {fileID: 6658573693976217545}
-  playerLockOn: {fileID: 8985355908063834351}
+  playerLockOn: {fileID: 0}
   notificationBanner: {fileID: 0}
 --- !u!114 &1929804244283084515
 MonoBehaviour:
@@ -1217,7 +1197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonCamera
   player: {fileID: -8679921383154817045}
   cameraTransform: {fileID: 7468378734651127450}
-  playerLockOn: {fileID: 8985355908063834351}
+  playerLockOn: {fileID: 0}
   mouseSensitivityX: 0.35
   mouseSensitivityY: 0.35
   minPitch: -25
