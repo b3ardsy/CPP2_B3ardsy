@@ -870,7 +870,6 @@ GameObject:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 7937088398246958496}
   - component: {fileID: 453927553718303561}
-  - component: {fileID: 2891897481618495717}
   - component: {fileID: 1929804244283084515}
   - component: {fileID: 7690415708235302229}
   - component: {fileID: 5198917100671412841}
@@ -956,32 +955,6 @@ CharacterController:
   m_SkinWidth: 0.05
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 1.1, z: 0}
---- !u!114 &2891897481618495717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b5269ef22bdd5047aca11551afc75c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsNew
-  invulnerabilityDuration: 0
-  hitReactionDuration: 0.4
-  axeHitReactionDuration: 0.65
-  deathAnimationDelay: 2
-  gameOverDelay: 3
-  mainMenuSceneName: Game_Start
-  gameOverMessage: GAME OVER
-  health: {fileID: 0}
-  animator: {fileID: 7937088398246958496}
-  playerMovement: {fileID: 0}
-  playerCombat: {fileID: 1929804244283084515}
-  playerDodge: {fileID: 0}
-  playerLockOn: {fileID: 0}
-  notificationBanner: {fileID: 0}
 --- !u!114 &1929804244283084515
 MonoBehaviour:
   m_ObjectHideFlags: 0
