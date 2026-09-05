@@ -988,7 +988,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 304975819009390847}
-  - component: {fileID: 6209135657088217799}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -1012,44 +1011,6 @@ Transform:
   - {fileID: 7468378734651127450}
   m_Father: {fileID: -8679921383154817045}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6209135657088217799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1115911922453957853}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e10d623e9e6f9984ab8309822548ac2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonCamera
-  player: {fileID: -8679921383154817045}
-  cameraTransform: {fileID: 7468378734651127450}
-  playerLockOn: {fileID: 0}
-  mouseSensitivityX: 0.35
-  mouseSensitivityY: 0.35
-  minPitch: -25
-  maxPitch: 60
-  startingPitch: 10
-  startingYawOffset: 0
-  heightOffset: 1.5
-  startingZoomDistance: 6
-  lockOnHeightOffset: 2.5
-  lockOnRotationSmoothTime: 0.12
-  shoulderOffset: 1
-  shoulderSwitchSpeed: 8
-  startOnRightShoulder: 1
-  zoomSpeed: 2
-  zoomSmoothSpeed: 10
-  minZoomDistance: 3
-  maxZoomDistance: 10
-  collisionLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  collisionRadius: 0.25
-  collisionBuffer: 0.1
-  minimumCameraDistance: 0.5
 --- !u!1 &2659240567417638441
 GameObject:
   m_ObjectHideFlags: 0
