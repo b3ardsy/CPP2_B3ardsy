@@ -870,7 +870,6 @@ GameObject:
   - component: {fileID: -8679921383154817045}
   - component: {fileID: 7937088398246958496}
   - component: {fileID: 453927553718303561}
-  - component: {fileID: 1929804244283084515}
   - component: {fileID: 7690415708235302229}
   - component: {fileID: 5198917100671412841}
   - component: {fileID: 2427465129357510108}
@@ -955,29 +954,6 @@ CharacterController:
   m_SkinWidth: 0.05
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 1.1, z: 0}
---- !u!114 &1929804244283084515
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132149155446097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9029ede211b73864eb2084e7233f031a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatNew
-  animator: {fileID: 7937088398246958496}
-  playerMovement: {fileID: 0}
-  playerLockOn: {fileID: 0}
-  playerWeaponManager: {fileID: 0}
-  playerStaffCombat: {fileID: 0}
-  playerShieldController: {fileID: 0}
-  wandProjectilePrefab: {fileID: 652429852690551798, guid: cbee370379a30094a936e7155b2be5eb, type: 3}
-  wandFirePoint: {fileID: 4050644116854047295}
-  wandDamage: 1
-  wandProjectileSpeed: 12
-  usePlayerForwardWhenUnlocked: 1
 --- !u!114 &7690415708235302229
 MonoBehaviour:
   m_ObjectHideFlags: 0
