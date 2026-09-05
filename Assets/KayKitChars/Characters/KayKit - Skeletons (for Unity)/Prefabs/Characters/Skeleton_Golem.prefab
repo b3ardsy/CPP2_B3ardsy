@@ -943,6 +943,7 @@ GameObject:
   - component: {fileID: 7167398855894057203}
   - component: {fileID: 1118839868438648128}
   - component: {fileID: 6299778963109504847}
+  - component: {fileID: 3502666785199956508}
   m_Layer: 8
   m_Name: Skeleton_Golem
   m_TagString: Enemy
@@ -1054,15 +1055,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 854dbebcc2c8db840aa8aed1d2852b72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TankLogic
-  attackRange: 4
-  chaseStoppingDistance: 3.25
-  attackExitRange: 4.75
-  attackDamage: 1
+  attackRange: 7
+  chaseStoppingDistance: 7
+  attackExitRange: 8
+  spinDamage: 1
+  slashDamage: 1
   attackCooldown: 3
   attackRotationSpeed: 25
-  axeHitbox: {fileID: 8722070175505448502}
+  attackStartVelocityThreshold: 0.15
+  axeHitbox: {fileID: 8059944098022843813}
   chaseSpeed: 10
-  locomotionRecoveryStateName: Melee_2H_Idle
+  locomotionRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
   entangleRecoveryAnimationFrames: 3
 --- !u!195 &7167398855894057203
@@ -1137,6 +1140,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &3502666785199956508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PersistentID
+  persistentId: c944dd6f58364744bc3697b14ff35627
 --- !u!1 &2906422263482941188
 GameObject:
   m_ObjectHideFlags: 0
@@ -1231,7 +1247,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5080925616099295006}
-  m_LocalEulerAnglesHint: {x: -0.18128775, y: -16.439108, z: 81.38342}
+  m_LocalEulerAnglesHint: {x: -55.40456, y: 16.389256, z: 85.399666}
 --- !u!1 &4808181679986045189
 GameObject:
   m_ObjectHideFlags: 0
@@ -1506,7 +1522,7 @@ Transform:
   m_Children:
   - {fileID: 3297537984312938162}
   m_Father: {fileID: -2537327925218238627}
-  m_LocalEulerAnglesHint: {x: -22.62545, y: 12.802248, z: -80.64488}
+  m_LocalEulerAnglesHint: {x: -2.1549165, y: -1.2940747, z: -59.682632}
 --- !u!1 &6888945794498111063
 GameObject:
   m_ObjectHideFlags: 0
@@ -2016,6 +2032,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Golem_Axe_Large
       objectReference: {fileID: 0}
+    - target: {fileID: 2126522710423290173, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
+      propertyPath: m_Name
+      value: TankWeaponHitBox
+      objectReference: {fileID: 0}
     - target: {fileID: 4324532351107475298, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.46
@@ -2030,7 +2050,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5013386381293096188, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
       propertyPath: m_Radius
-      value: 1.2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5013386381293096188, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
       propertyPath: m_Center.x
@@ -2058,14 +2078,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
   m_PrefabInstance: {fileID: 3047120752674990425}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8722070175505448502 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5999507955319183215, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
+--- !u!135 &8059944098022843813 stripped
+SphereCollider:
+  m_CorrespondingSourceObject: {fileID: 5013386381293096188, guid: fd539915930001f45b3e7d22abc22f84, type: 3}
   m_PrefabInstance: {fileID: 3047120752674990425}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ffd4e52fb0d3304492d5d32947dc6a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TankWeaponHitbox

@@ -35,9 +35,6 @@ public class Player_DamageController :
     [SerializeField]
     private float hitReactionDuration = 0.4f;
 
-    [SerializeField]
-    private float axeHitReactionDuration = 0.65f;
-
     // =========================================================
     // DEATH
     // =========================================================
@@ -179,9 +176,6 @@ public class Player_DamageController :
 
     private static readonly int HitTrigger =
         Animator.StringToHash("Hit");
-
-    private static readonly int AxeHitTrigger =
-        Animator.StringToHash("AxeHit");
 
     private static readonly int DeathTrigger =
         Animator.StringToHash("Death");
@@ -373,8 +367,7 @@ public class Player_DamageController :
         }
 
         ApplyDamage(
-            damage,
-            false
+            damage
         );
     }
 
@@ -382,17 +375,44 @@ public class Player_DamageController :
         int damage
     )
     {
+        /*
+         * IAxeDamageable is kept for compatibility with the Tank,
+         * but axe hits now use the standard player hit reaction.
+         */
+        TakeDamage(
+            damage
+        );
+    }
+
+    public void TakeAxeDamage(
+        int damage,
+        bool bypassPostHitInvulnerability
+    )
+    {
         if (
-            IsDamageBlocked() ||
-            damage <= 0
+            damage <= 0 ||
+            IsDead ||
+            IsShieldProtected
+        )
+        {
+            return;
+        }
+
+        /*
+         * Normal Tank hits respect the player's short post-hit
+         * invulnerability. An intentional follow-up hit from the
+         * Spin attack may bypass only that temporary i-frame.
+         */
+        if (
+            isInvulnerable &&
+            !bypassPostHitInvulnerability
         )
         {
             return;
         }
 
         ApplyDamage(
-            damage,
-            true
+            damage
         );
     }
 
@@ -405,8 +425,7 @@ public class Player_DamageController :
     }
 
     private void ApplyDamage(
-        int damage,
-        bool useAxeHitReaction
+        int damage
     )
     {
         if (health == null)
@@ -433,14 +452,7 @@ public class Player_DamageController :
             return;
         }
 
-        if (useAxeHitReaction)
-        {
-            StartAxeHitReaction();
-        }
-        else
-        {
-            StartHitReaction();
-        }
+        StartHitReaction();
 
         StartInvulnerability();
     }
@@ -591,82 +603,11 @@ public class Player_DamageController :
         );
 
         animator.ResetTrigger(
-            AxeHitTrigger
-        );
-
-        animator.ResetTrigger(
             HitTrigger
         );
 
         animator.SetTrigger(
             HitTrigger
-        );
-    }
-
-    // =========================================================
-    // AXE HIT REACTION
-    // =========================================================
-
-    private void StartAxeHitReaction()
-    {
-        if (hitReactionCoroutine != null)
-        {
-            StopCoroutine(
-                hitReactionCoroutine
-            );
-
-            hitReactionCoroutine = null;
-        }
-
-        hitReactionCoroutine =
-            StartCoroutine(
-                AxeHitReactionCoroutine()
-            );
-    }
-
-    private IEnumerator AxeHitReactionCoroutine()
-    {
-        isInHitReaction = true;
-
-        DisableTemporaryPlayerActions();
-        PlayAxeHitAnimationImmediately();
-
-        yield return new WaitForSeconds(
-            axeHitReactionDuration
-        );
-
-        if (!IsDead)
-        {
-            EnableTemporaryPlayerActions();
-        }
-
-        isInHitReaction = false;
-        hitReactionCoroutine = null;
-    }
-
-    private void PlayAxeHitAnimationImmediately()
-    {
-        if (animator == null)
-        {
-            return;
-        }
-
-        ClearActionTriggers();
-
-        animator.ResetTrigger(
-            DeathTrigger
-        );
-
-        animator.ResetTrigger(
-            HitTrigger
-        );
-
-        animator.ResetTrigger(
-            AxeHitTrigger
-        );
-
-        animator.SetTrigger(
-            AxeHitTrigger
         );
     }
 
@@ -738,10 +679,6 @@ public class Player_DamageController :
 
             animator.ResetTrigger(
                 HitTrigger
-            );
-
-            animator.ResetTrigger(
-                AxeHitTrigger
             );
 
             animator.ResetTrigger(
@@ -1073,12 +1010,6 @@ public class Player_DamageController :
             Mathf.Max(
                 0f,
                 hitReactionDuration
-            );
-
-        axeHitReactionDuration =
-            Mathf.Max(
-                0f,
-                axeHitReactionDuration
             );
 
         deathAnimationDelay =

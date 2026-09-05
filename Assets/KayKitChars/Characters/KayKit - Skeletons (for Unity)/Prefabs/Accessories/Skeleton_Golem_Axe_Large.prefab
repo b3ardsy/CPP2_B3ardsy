@@ -101,7 +101,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4324532351107475298}
   - component: {fileID: 5013386381293096188}
-  - component: {fileID: 5999507955319183215}
   m_Layer: 0
   m_Name: AxeHitBox
   m_TagString: Untagged
@@ -145,15 +144,3 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5999507955319183215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2126522710423290173}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ffd4e52fb0d3304492d5d32947dc6a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TankWeaponHitbox

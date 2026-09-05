@@ -49,7 +49,15 @@ public class RogueLogic : MonoBehaviour
     private int deathEvilDamage = 1;
 
     [SerializeField]
-    private float deathEvilDamageRadius = 2f;
+    private float deathEvilDamageRadius = 5f;
+
+    [Tooltip(
+        "Seconds after the DeathEvil cast begins before the player's " +
+        "position is locked. Higher values track the player longer " +
+        "and make the attack harder to dodge."
+    )]
+    [SerializeField]
+    private float deathEvilTargetLockDelay = 0.35f;
 
     [SerializeField]
     private float deathEvilGroundCheckHeight = 5f;
@@ -106,6 +114,10 @@ public class RogueLogic : MonoBehaviour
     private bool isPerformingAttack;
     private bool attackReleased;
     private bool wasEntangledLastFrame;
+
+    private Vector3 lockedDeathEvilTargetPosition;
+    private float deathEvilTargetLockTimer;
+    private bool hasLockedDeathEvilTarget;
 
     // =========================================================
     // ANIMATOR PARAMETERS
@@ -282,6 +294,8 @@ public class RogueLogic : MonoBehaviour
 
             ResumeAfterEntangle();
         }
+
+        UpdateDeathEvilTargetLock();
 
         // =====================================================
         // ATTACK RECOVERY
@@ -483,6 +497,21 @@ public class RogueLogic : MonoBehaviour
         activeAttack =
             chosenAttack;
 
+        if (
+            activeAttack ==
+            RogueAttack.DeathEvil
+        )
+        {
+            deathEvilTargetLockTimer =
+                deathEvilTargetLockDelay;
+
+            hasLockedDeathEvilTarget =
+                false;
+
+            lockedDeathEvilTargetPosition =
+                Vector3.zero;
+        }
+
         currentState =
             RogueState.Attacking;
 
@@ -571,6 +600,38 @@ public class RogueLogic : MonoBehaviour
             default;
 
         return false;
+    }
+
+    // =========================================================
+    // DEATH EVIL TARGET LOCK
+    // =========================================================
+
+    private void UpdateDeathEvilTargetLock()
+    {
+        if (
+            !isPerformingAttack ||
+            activeAttack != RogueAttack.DeathEvil ||
+            hasLockedDeathEvilTarget ||
+            enemyController == null ||
+            enemyController.Player == null
+        )
+        {
+            return;
+        }
+
+        deathEvilTargetLockTimer -=
+            Time.deltaTime;
+
+        if (deathEvilTargetLockTimer > 0f)
+        {
+            return;
+        }
+
+        lockedDeathEvilTargetPosition =
+            enemyController.Player.position;
+
+        hasLockedDeathEvilTarget =
+            true;
     }
 
     // =========================================================
@@ -695,27 +756,37 @@ public class RogueLogic : MonoBehaviour
 
     private bool ReleaseDeathEvil()
     {
-        if (
-            deathEvilPrefab == null ||
-            enemyController.Player == null
-        )
+        if (deathEvilPrefab == null)
         {
             return false;
         }
 
         /*
-         * Unlike the old implementation, DeathEvil always
-         * targets the player's CURRENT horizontal position.
-         *
-         * We then raycast straight down from that point so
-         * the effect appears centered beneath the player.
+         * Normally the player's position is locked after the
+         * configurable target-lock delay. If the release Animation
+         * Event fires before that delay finishes, lock the current
+         * position now as a safety fallback.
          */
-        Vector3 playerPosition =
-            enemyController.Player.position;
+        if (!hasLockedDeathEvilTarget)
+        {
+            if (
+                enemyController == null ||
+                enemyController.Player == null
+            )
+            {
+                return false;
+            }
+
+            lockedDeathEvilTargetPosition =
+                enemyController.Player.position;
+
+            hasLockedDeathEvilTarget =
+                true;
+        }
 
         Vector3 groundPosition =
             GetGroundPositionUnderPlayer(
-                playerPosition
+                lockedDeathEvilTargetPosition
             );
 
         DeathEvilEffect effect =
@@ -997,34 +1068,40 @@ public class RogueLogic : MonoBehaviour
             return;
         }
 
-        float animationSpeed =
+        float normalizedSpeed =
             0f;
 
         if (
             !enemyController.IsDead &&
             !enemyController.IsEntangled &&
             enemyController.IsOnNavMesh &&
-            !enemyController.Agent.isStopped &&
-            enemyController.Agent.velocity.sqrMagnitude >
-            0.01f
+            !enemyController.Agent.isStopped
         )
         {
             /*
-             * Rogue's Animator already uses a Speed float.
+             * Locomotion Blend Tree:
              *
-             * Patrol = walk
-             * Return home = run
+             * 0 = Idle
+             * 1 = Walking
+             *
+             * Normalize the Rogue's current NavMesh velocity against
+             * its normal patrol speed so acceleration/deceleration
+             * blends smoothly between the two clips. Faster movement
+             * such as returning home simply clamps to the walk motion.
              */
-            animationSpeed =
-                currentState ==
-                RogueState.ReturningHome
-                    ? 1f
-                    : 0.5f;
+            normalizedSpeed =
+                Mathf.Clamp01(
+                    enemyController.Agent.velocity.magnitude /
+                    Mathf.Max(
+                        enemyController.PatrolSpeed,
+                        0.01f
+                    )
+                );
         }
 
         animator.SetFloat(
             SpeedHash,
-            animationSpeed,
+            normalizedSpeed,
             0.1f,
             Time.deltaTime
         );
@@ -1048,6 +1125,15 @@ public class RogueLogic : MonoBehaviour
             0f;
 
         wasEntangledLastFrame =
+            false;
+
+        lockedDeathEvilTargetPosition =
+            Vector3.zero;
+
+        deathEvilTargetLockTimer =
+            0f;
+
+        hasLockedDeathEvilTarget =
             false;
 
         ResetAttackCooldown();
@@ -1083,6 +1169,15 @@ public class RogueLogic : MonoBehaviour
 
         attackRecoveryTimer =
             0f;
+
+        lockedDeathEvilTargetPosition =
+            Vector3.zero;
+
+        deathEvilTargetLockTimer =
+            0f;
+
+        hasLockedDeathEvilTarget =
+            false;
 
         if (animator != null)
         {
@@ -1188,6 +1283,12 @@ public class RogueLogic : MonoBehaviour
             Mathf.Max(
                 0.1f,
                 deathEvilDamageRadius
+            );
+
+        deathEvilTargetLockDelay =
+            Mathf.Max(
+                0f,
+                deathEvilTargetLockDelay
             );
 
         deathEvilGroundCheckHeight =

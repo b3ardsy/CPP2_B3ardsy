@@ -10,47 +10,17 @@ public class DeathEvilEffect : MonoBehaviour
 
     [Header("Timing")]
     [Tooltip(
-        "Delay before DeathEvil actually deals damage. " +
-        "This gives the player a brief chance to escape."
-    )]
-    [SerializeField]
-    private float activationDelay = 0.5f;
-
-    [Tooltip(
         "How long the visual remains before being destroyed."
     )]
     [SerializeField]
     private float lifetime = 2.5f;
 
     // =========================================================
-    // DAMAGE
-    // =========================================================
-
-    [Header("Damage")]
-    [SerializeField]
-    private int damage = 1;
-
-    [Tooltip(
-        "Radius around the centre of DeathEvil that " +
-        "damages the player."
-    )]
-    [SerializeField]
-    private float damageRadius = 2f;
-
-    // =========================================================
-    // GROUND
-    // =========================================================
-
-    [Header("Ground")]
-    [Tooltip(
-        "Optional vertical offset above the ground."
-    )]
-    [SerializeField]
-    private float groundOffset = 0.05f;
-
-    // =========================================================
     // RUNTIME STATE
     // =========================================================
+
+    private int damage;
+    private float damageRadius;
 
     private bool initialized;
     private bool damageApplied;
@@ -58,17 +28,6 @@ public class DeathEvilEffect : MonoBehaviour
     // =========================================================
     // INITIALIZATION
     // =========================================================
-
-    private void Start()
-    {
-        if (!initialized)
-        {
-            Initialize(
-                damage,
-                damageRadius
-            );
-        }
-    }
 
     public void Initialize(
         int effectDamage,
@@ -95,14 +54,6 @@ public class DeathEvilEffect : MonoBehaviour
                 effectRadius
             );
 
-        /*
-         * Keep the gas slightly above the ground
-         * to avoid visual clipping.
-         */
-        transform.position +=
-            Vector3.up *
-            groundOffset;
-
         StartCoroutine(
             EffectRoutine()
         );
@@ -114,26 +65,17 @@ public class DeathEvilEffect : MonoBehaviour
 
     private IEnumerator EffectRoutine()
     {
-        if (activationDelay > 0f)
-        {
-            yield return new WaitForSeconds(
-                activationDelay
-            );
-        }
-
+        /*
+         * DeathEvil now activates immediately when spawned.
+         * The player's warning window comes from the Rogue's
+         * attack animation rather than an additional effect delay.
+         */
         ApplyDamage();
 
-        float remainingLifetime =
-            Mathf.Max(
-                0f,
-                lifetime -
-                activationDelay
-            );
-
-        if (remainingLifetime > 0f)
+        if (lifetime > 0f)
         {
             yield return new WaitForSeconds(
-                remainingLifetime
+                lifetime
             );
         }
 
@@ -342,46 +284,10 @@ public class DeathEvilEffect : MonoBehaviour
 
     private void OnValidate()
     {
-        activationDelay =
-            Mathf.Max(
-                0f,
-                activationDelay
-            );
-
         lifetime =
             Mathf.Max(
-                activationDelay + 0.1f,
+                0.1f,
                 lifetime
             );
-
-        damage =
-            Mathf.Max(
-                1,
-                damage
-            );
-
-        damageRadius =
-            Mathf.Max(
-                0.1f,
-                damageRadius
-            );
-
-        groundOffset =
-            Mathf.Max(
-                0f,
-                groundOffset
-            );
-    }
-
-    // =========================================================
-    // GIZMOS
-    // =========================================================
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.DrawWireSphere(
-            transform.position,
-            damageRadius
-        );
     }
 }

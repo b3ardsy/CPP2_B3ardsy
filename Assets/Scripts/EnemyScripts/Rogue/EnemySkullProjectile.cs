@@ -11,8 +11,6 @@ public class EnemySkullProjectile :
     // =========================================================
 
     [Header("Projectile")]
-    [SerializeField] private float defaultSpeed = 10f;
-    [SerializeField] private int defaultDamage = 1;
     [SerializeField] private float lifetime = 6f;
 
     // =========================================================
@@ -95,12 +93,6 @@ public class EnemySkullProjectile :
 
         projectileCollider.isTrigger =
             true;
-
-        speed =
-            defaultSpeed;
-
-        damage =
-            defaultDamage;
     }
 
     private void Start()
@@ -757,18 +749,6 @@ public class EnemySkullProjectile :
 
     private void OnValidate()
     {
-        defaultSpeed =
-            Mathf.Max(
-                0f,
-                defaultSpeed
-            );
-
-        defaultDamage =
-            Mathf.Max(
-                1,
-                defaultDamage
-            );
-
         lifetime =
             Mathf.Max(
                 0.1f,
