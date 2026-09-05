@@ -3048,8 +3048,8 @@ ModelImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 290680
-  packageName: KayKit - Skeletons Character Pack (for Unity)
-  packageVersion: 1.1.1
-  assetPath: Assets/KayKit/Characters/Animations/Source_FBX/Animations_Source_FBX/Rig_Medium/Rig_Medium_Tools.fbx
-  uploadId: 832000
+  productId: 342982
+  packageName: KayKit - Mystery Series 5 (for Unity)
+  packageVersion: 1.0.1
+  assetPath: Assets/KayKitChars/Characters/Animations/Source_FBX/Animations_Source_FBX/Rig_Medium/Rig_Medium_Tools.fbx
+  uploadId: 831996
