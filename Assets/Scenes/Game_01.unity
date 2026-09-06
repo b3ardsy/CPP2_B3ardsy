@@ -11782,6 +11782,10 @@ PrefabInstance:
       propertyPath: persistentId
       value: d156d08e685240899a8b607d66c294e5
       objectReference: {fileID: 0}
+    - target: {fileID: 9078815949463096416, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: blackHoleDamage
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -19525,7 +19529,8 @@ MonoBehaviour:
     maxDistance: 25
   abilitySounds:
   - id: 9
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: aea51e8e66a6fa747bca45629a759285, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19533,7 +19538,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 10
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 81dbc2b345d4a4d8aa98f60aa04e5145, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19541,7 +19547,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 11
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 90af38775c5bd43c084091ac77fe7257, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19663,7 +19670,8 @@ MonoBehaviour:
     maxDistance: 25
   interactionSounds:
   - id: 26
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 66374726d9b160c4ba0979c89ee2bb0d, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19671,7 +19679,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 27
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8558e6b559b10404897fab08b5a0b419, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19679,7 +19688,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 28
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 938dcba4fdd93bd4898e7b524ce1606a, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19687,7 +19697,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 29
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 97ac19b86ed85ee4ea3e589a5302f1ec, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19695,7 +19706,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 30
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 69b54ca71c1448e42b7b46a419818dcf, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95

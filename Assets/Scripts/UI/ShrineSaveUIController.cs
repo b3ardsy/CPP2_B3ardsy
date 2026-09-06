@@ -418,6 +418,11 @@ public class ShrineSaveUIController : MonoBehaviour
 
         currentShrine.PlayAttuneVFX();
 
+        AudioManager.Instance?.Play(
+            SoundId.ShrineActivation,
+            currentShrine.transform.position
+        );
+
         Debug.Log(
             $"ShrineSaveUIController: Shrine saved to Slot {pendingSlot}.",
             currentShrine

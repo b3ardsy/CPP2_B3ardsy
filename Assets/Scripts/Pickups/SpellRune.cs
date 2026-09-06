@@ -148,6 +148,8 @@ public class SpellRune : MonoBehaviour, IInteract, ICheckpointResettable
             spellToUnlock
         );
 
+        PlayRuneUnlockSound();
+
         interactor.ClearCurrentInteractable();
 
         Debug.Log(
@@ -162,6 +164,39 @@ public class SpellRune : MonoBehaviour, IInteract, ICheckpointResettable
                 PlayActivationSequence()
             );
         }
+    }
+
+    private void PlayRuneUnlockSound()
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        SoundId soundId;
+
+        switch (spellToUnlock)
+        {
+            case Player_StaffCombat.StaffSpell.Entangle:
+                soundId = SoundId.EntangleUnlock;
+                break;
+
+            case Player_StaffCombat.StaffSpell.LightningStrike:
+                soundId = SoundId.LightningUnlock;
+                break;
+
+            case Player_StaffCombat.StaffSpell.IceTornado:
+                soundId = SoundId.IceTornadoUnlock;
+                break;
+
+            default:
+                return;
+        }
+
+        AudioManager.Instance.Play(
+            soundId,
+            transform.position
+        );
     }
 
     private IEnumerator PlayActivationSequence()
