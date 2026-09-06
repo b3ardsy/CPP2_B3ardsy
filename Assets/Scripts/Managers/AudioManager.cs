@@ -102,6 +102,62 @@ public class AudioManager : MonoBehaviour
 
     public static AudioManager Instance { get; private set; }
 
+    private static readonly SoundId[] PlayerSoundIds =
+    {
+        SoundId.PlayerHurt,
+        SoundId.PlayerDeath,
+        SoundId.PlayerRespawn,
+        SoundId.PlayerJump,
+        SoundId.PlayerLand,
+        SoundId.PlayerInteractHmm,
+        SoundId.Wand,
+        SoundId.Shield,
+        SoundId.ShieldHit
+    };
+
+    private static readonly SoundId[] AbilitySoundIds =
+    {
+        SoundId.Entangle,
+        SoundId.Lightning,
+        SoundId.IceTornado
+    };
+
+    private static readonly SoundId[] EnemySoundIds =
+    {
+        SoundId.MageIdle,
+        SoundId.MageHurt,
+        SoundId.MageAttack,
+        SoundId.MageDeath,
+        SoundId.RogueIdle,
+        SoundId.RogueHurt,
+        SoundId.RogueSkullAttack,
+        SoundId.RogueDeathEvilAttack,
+        SoundId.RogueDeath,
+        SoundId.TankIdle,
+        SoundId.TankHurt,
+        SoundId.TankAttack1,
+        SoundId.TankAttack2,
+        SoundId.TankDeath
+    };
+
+    private static readonly SoundId[] InteractionSoundIds =
+    {
+        SoundId.ShrineActivation,
+        SoundId.StaffUnlock,
+        SoundId.EntangleUnlock,
+        SoundId.LightningUnlock,
+        SoundId.IceTornadoUnlock,
+        SoundId.HeartPickup,
+        SoundId.Healing
+    };
+
+    private static readonly SoundId[] UISoundIds =
+    {
+        SoundId.UIHover,
+        SoundId.UIClick,
+        SoundId.BannerAppear
+    };
+
     [Header("Audio Routing")]
     [SerializeField] private AudioMixerGroup musicMixerGroup;
     [SerializeField] private AudioMixerGroup sfxMixerGroup;
@@ -163,6 +219,98 @@ public class AudioManager : MonoBehaviour
     private bool musicEnabled;
     private float explorationGain;
     private float combatGain;
+
+    private void Reset()
+    {
+        SyncAllSoundBuckets();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        SyncAllSoundBuckets();
+
+        worldVoiceCount = Mathf.Clamp(worldVoiceCount, 4, 64);
+        sfxBalance = Mathf.Clamp01(sfxBalance);
+        ambienceVolume = Mathf.Clamp01(ambienceVolume);
+        rainVolume = Mathf.Clamp01(rainVolume);
+        windVolume = Mathf.Clamp01(windVolume);
+        treesVolume = Mathf.Clamp01(treesVolume);
+        playerBreathingVolume = Mathf.Clamp01(playerBreathingVolume);
+        musicBalance = Mathf.Clamp01(musicBalance);
+        crossfadeSeconds = Mathf.Max(0f, crossfadeSeconds);
+    }
+#endif
+
+    private void SyncAllSoundBuckets()
+    {
+        playerSounds = SyncBucket(playerSounds, PlayerSoundIds, false);
+        abilitySounds = SyncBucket(abilitySounds, AbilitySoundIds, false);
+        enemySounds = SyncBucket(enemySounds, EnemySoundIds, false);
+        interactionSounds = SyncBucket(interactionSounds, InteractionSoundIds, false);
+        uiSounds = SyncBucket(uiSounds, UISoundIds, true);
+    }
+
+    private static SoundEntry[] SyncBucket(
+        SoundEntry[] existingEntries,
+        SoundId[] ids,
+        bool forceUISettings
+    )
+    {
+        SoundEntry[] synced = new SoundEntry[ids.Length];
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            SoundEntry existing = null;
+
+            if (existingEntries != null)
+            {
+                for (int j = 0; j < existingEntries.Length; j++)
+                {
+                    SoundEntry candidate = existingEntries[j];
+
+                    if (
+                        candidate != null &&
+                        candidate.id == ids[i]
+                    )
+                    {
+                        existing = candidate;
+                        break;
+                    }
+                }
+            }
+
+            if (existing != null)
+            {
+                synced[i] = existing;
+
+                if (forceUISettings)
+                {
+                    synced[i].spatialBlend = 0f;
+                    synced[i].minPitch = 1f;
+                    synced[i].maxPitch = 1f;
+                }
+
+                continue;
+            }
+
+            SoundEntry created = new SoundEntry
+            {
+                id = ids[i],
+                clips = Array.Empty<AudioClip>(),
+                volume = 1f,
+                spatialBlend = forceUISettings ? 0f : 1f,
+                minPitch = forceUISettings ? 1f : 0.95f,
+                maxPitch = forceUISettings ? 1f : 1.05f,
+                minDistance = 2f,
+                maxDistance = 25f
+            };
+
+            synced[i] = created;
+        }
+
+        return synced;
+    }
 
     private void Awake()
     {
@@ -654,16 +802,4 @@ public class AudioManager : MonoBehaviour
             SetCombatMusic(false);
     }
 
-    private void OnValidate()
-    {
-        worldVoiceCount = Mathf.Clamp(worldVoiceCount, 4, 64);
-        sfxBalance = Mathf.Clamp01(sfxBalance);
-        ambienceVolume = Mathf.Clamp01(ambienceVolume);
-        rainVolume = Mathf.Clamp01(rainVolume);
-        windVolume = Mathf.Clamp01(windVolume);
-        treesVolume = Mathf.Clamp01(treesVolume);
-        playerBreathingVolume = Mathf.Clamp01(playerBreathingVolume);
-        musicBalance = Mathf.Clamp01(musicBalance);
-        crossfadeSeconds = Mathf.Max(0f, crossfadeSeconds);
-    }
 }
