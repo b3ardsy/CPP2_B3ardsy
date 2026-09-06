@@ -1,17 +1,61 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public enum SoundId
 {
-    Wand, Shield, Entangle, Lightning, IceTornado,
-    PlayerHurt, PlayerDeath, PlayerRespawn,
-    ShrineActivation, StaffUnlock, EntangleUnlock, LightningUnlock,
-    IceTornadoUnlock, HeartPickup, Healing, UIHover, UIClick,
-    MageIdle, RogueIdle, TankIdle, MageAttack,
-    RogueSkullAttack, RogueDeathEvilAttack, TankAttack1, TankAttack2,
-    ShieldHit, Walking, Running
+    // PLAYER
+    PlayerHurt,
+    PlayerDeath,
+    PlayerRespawn,
+    PlayerJump,
+    PlayerLand,
+    PlayerInteractHmm,
+
+    // PLAYER COMBAT
+    Wand,
+    Shield,
+    ShieldHit,
+
+    // ABILITIES / RUNES
+    Entangle,
+    Lightning,
+    IceTornado,
+
+    // ENEMIES - MAGE
+    MageIdle,
+    MageHurt,
+    MageAttack,
+    MageDeath,
+
+    // ENEMIES - ROGUE
+    RogueIdle,
+    RogueHurt,
+    RogueSkullAttack,
+    RogueDeathEvilAttack,
+    RogueDeath,
+
+    // ENEMIES - TANK
+    TankIdle,
+    TankHurt,
+    TankAttack1,
+    TankAttack2,
+    TankDeath,
+
+    // INTERACTIONS / PICKUPS / PROGRESSION
+    ShrineActivation,
+    StaffUnlock,
+    EntangleUnlock,
+    LightningUnlock,
+    IceTornadoUnlock,
+    HeartPickup,
+    Healing,
+
+    // UI / BANNERS
+    UIHover,
+    UIClick,
+    BannerAppear
 }
 
 public enum FootstepSurface
@@ -29,11 +73,15 @@ public class AudioManager : MonoBehaviour
     public class SoundEntry
     {
         public SoundId id;
-        public AudioClip clip;
+        [Tooltip("One or more variations. A random clip is selected each time.")]
+        public AudioClip[] clips = Array.Empty<AudioClip>();
         [Range(0f, 1f)] public float volume = 1f;
         [Range(0f, 1f)] public float spatialBlend = 1f;
+        [Range(0.5f, 1.5f)] public float minPitch = 1f;
+        [Range(0.5f, 1.5f)] public float maxPitch = 1f;
         [Min(0.1f)] public float minDistance = 5f;
         [Min(0.1f)] public float maxDistance = 35f;
+        [NonSerialized] public int lastClipIndex = -1;
     }
 
     [Serializable]
@@ -42,29 +90,48 @@ public class AudioManager : MonoBehaviour
         public FootstepSurface surface = FootstepSurface.Grass;
         public AudioClip[] walkClips = Array.Empty<AudioClip>();
         public AudioClip[] runClips = Array.Empty<AudioClip>();
-
         [Range(0f, 1f)] public float volume = 1f;
         [Range(0f, 1f)] public float spatialBlend = 1f;
-
         [Range(0.5f, 1.5f)] public float minPitch = 0.95f;
         [Range(0.5f, 1.5f)] public float maxPitch = 1.05f;
-
         [Min(0.1f)] public float minDistance = 2f;
         [Min(0.1f)] public float maxDistance = 20f;
-
         [NonSerialized] public int lastWalkIndex = -1;
         [NonSerialized] public int lastRunIndex = -1;
     }
 
     public static AudioManager Instance { get; private set; }
 
-    [Header("Sounds")]
-    [SerializeField] private SoundEntry[] sounds = Array.Empty<SoundEntry>();
-    [Range(0f, 1f)][SerializeField] private float sfxVolume = 1f;
+    [Header("Audio Routing")]
+    [SerializeField] private AudioMixerGroup musicMixerGroup;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+
+    [Header("Playback Pool")]
+    [Range(0f, 1f)][SerializeField] private float sfxBalance = 1f;
     [Range(4, 64)][SerializeField] private int worldVoiceCount = 24;
+
+    [Header("Player")]
+    [SerializeField] private SoundEntry[] playerSounds = Array.Empty<SoundEntry>();
+
+    [Header("Abilities / Runes")]
+    [SerializeField] private SoundEntry[] abilitySounds = Array.Empty<SoundEntry>();
+
+    [Header("Enemies")]
+    [SerializeField] private SoundEntry[] enemySounds = Array.Empty<SoundEntry>();
+
+    [Header("Interactions & Pickups")]
+    [SerializeField] private SoundEntry[] interactionSounds = Array.Empty<SoundEntry>();
+
+    [Header("UI & Banners")]
+    [SerializeField] private SoundEntry[] uiSounds = Array.Empty<SoundEntry>();
 
     [Header("Footsteps")]
     [SerializeField] private FootstepSet[] footstepSets = Array.Empty<FootstepSet>();
+
+    [Header("Player Breathing")]
+    [Tooltip("Loop used after sustained running. The movement system can start/stop this later.")]
+    [SerializeField] private AudioClip playerBreathingLoop;
+    [Range(0f, 1f)][SerializeField] private float playerBreathingVolume = 0.7f;
 
     [Header("Ambience")]
     [SerializeField] private AudioClip rainAmbience;
@@ -79,73 +146,23 @@ public class AudioManager : MonoBehaviour
     [Header("Music")]
     [SerializeField] private AudioClip explorationMusic;
     [SerializeField] private AudioClip combatMusic;
-    [Range(0f, 1f)][SerializeField] private float musicVolume = 0.4f;
+    [Range(0f, 1f)][SerializeField] private float musicBalance = 0.4f;
     [Min(0f)][SerializeField] private float crossfadeSeconds = 2f;
     [SerializeField] private bool playExplorationOnStart = true;
 
     private AudioSource[] worldVoices;
     private AudioSource uiSource;
+    private AudioSource breathingSource;
     private AudioSource rainSource;
     private AudioSource windSource;
     private AudioSource treesSource;
     private AudioSource explorationSource;
     private AudioSource combatSource;
+
     private bool inCombat;
     private bool musicEnabled;
     private float explorationGain;
     private float combatGain;
-
-    // Unity calls Reset when this component is first added.
-    private void Reset()
-    {
-        SyncSoundEntries();
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        SyncSoundEntries();
-    }
-#endif
-
-    private void SyncSoundEntries()
-    {
-        SoundId[] ids = (SoundId[])Enum.GetValues(typeof(SoundId));
-        Dictionary<SoundId, SoundEntry> existing = new Dictionary<SoundId, SoundEntry>();
-
-        if (sounds != null)
-        {
-            foreach (SoundEntry entry in sounds)
-            {
-                if (entry != null && !existing.ContainsKey(entry.id))
-                    existing.Add(entry.id, entry);
-            }
-        }
-
-        SoundEntry[] synced = new SoundEntry[ids.Length];
-        for (int i = 0; i < ids.Length; i++)
-        {
-            if (existing.TryGetValue(ids[i], out SoundEntry entry))
-            {
-                synced[i] = entry;
-            }
-            else
-            {
-                synced[i] = new SoundEntry
-                {
-                    id = ids[i],
-                    spatialBlend = IsUISound(ids[i]) ? 0f : 1f
-                };
-            }
-        }
-
-        sounds = synced;
-    }
-
-    private static bool IsUISound(SoundId id)
-    {
-        return id == SoundId.UIHover || id == SoundId.UIClick;
-    }
 
     private void Awake()
     {
@@ -159,25 +176,9 @@ public class AudioManager : MonoBehaviour
         transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
 
-        worldVoices = new AudioSource[Mathf.Clamp(worldVoiceCount, 4, 64)];
-        for (int i = 0; i < worldVoices.Length; i++)
-            worldVoices[i] = CreateSource("World Sound " + (i + 1));
-
-        uiSource = CreateSource("UI Sounds");
-        uiSource.ignoreListenerPause = true;
-
-        rainSource = CreateLoopSource("Rain Ambience", rainAmbience);
-        windSource = CreateLoopSource("Wind Ambience", windAmbience);
-        treesSource = CreateLoopSource("Trees Ambience", treesAmbience);
-
-        explorationSource = CreateSource("Exploration Music");
-        combatSource = CreateSource("Combat Music");
-        explorationSource.loop = combatSource.loop = true;
-        explorationSource.volume = combatSource.volume = 0f;
-        explorationSource.clip = explorationMusic;
-        combatSource.clip = combatMusic;
-
+        CreateRuntimeSources();
         ApplyAmbienceVolumes();
+
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
@@ -192,20 +193,70 @@ public class AudioManager : MonoBehaviour
             SetCombatMusic(false);
     }
 
-    private AudioSource CreateSource(string sourceName)
+    private void Update()
+    {
+        if (Instance != this) return;
+
+        ApplyAmbienceVolumes();
+
+        if (breathingSource != null)
+            breathingSource.volume = playerBreathingVolume * sfxBalance;
+
+        UpdateMusicCrossfade();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this) return;
+
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        Instance = null;
+    }
+
+    private void CreateRuntimeSources()
+    {
+        worldVoices = new AudioSource[Mathf.Clamp(worldVoiceCount, 4, 64)];
+
+        for (int i = 0; i < worldVoices.Length; i++)
+            worldVoices[i] = CreateSource("World Sound " + (i + 1), sfxMixerGroup);
+
+        uiSource = CreateSource("UI Sounds", sfxMixerGroup);
+        uiSource.ignoreListenerPause = true;
+
+        breathingSource = CreateLoopSource("Player Breathing", playerBreathingLoop, sfxMixerGroup);
+
+        rainSource = CreateLoopSource("Rain Ambience", rainAmbience, sfxMixerGroup);
+        windSource = CreateLoopSource("Wind Ambience", windAmbience, sfxMixerGroup);
+        treesSource = CreateLoopSource("Trees Ambience", treesAmbience, sfxMixerGroup);
+
+        explorationSource = CreateSource("Exploration Music", musicMixerGroup);
+        combatSource = CreateSource("Combat Music", musicMixerGroup);
+
+        explorationSource.loop = true;
+        combatSource.loop = true;
+        explorationSource.volume = 0f;
+        combatSource.volume = 0f;
+        explorationSource.clip = explorationMusic;
+        combatSource.clip = combatMusic;
+    }
+
+    private AudioSource CreateSource(string sourceName, AudioMixerGroup mixerGroup)
     {
         GameObject child = new GameObject(sourceName);
         child.transform.SetParent(transform, false);
+
         AudioSource source = child.AddComponent<AudioSource>();
         source.playOnAwake = false;
         source.spatialBlend = 0f;
         source.dopplerLevel = 0f;
+        source.outputAudioMixerGroup = mixerGroup;
+
         return source;
     }
 
-    private AudioSource CreateLoopSource(string sourceName, AudioClip clip)
+    private AudioSource CreateLoopSource(string sourceName, AudioClip clip, AudioMixerGroup mixerGroup)
     {
-        AudioSource source = CreateSource(sourceName);
+        AudioSource source = CreateSource(sourceName, mixerGroup);
         source.loop = true;
         source.clip = clip;
         return source;
@@ -214,274 +265,220 @@ public class AudioManager : MonoBehaviour
     public void Play(SoundId id, Vector3 position)
     {
         if (Instance != this) return;
+
         SoundEntry entry = FindSound(id);
-        if (entry == null || entry.clip == null) return;
+        if (entry == null) return;
+
+        AudioClip clip = ChooseClip(entry);
+        if (clip == null) return;
 
         if (IsUISound(id))
         {
-            uiSource.PlayOneShot(entry.clip, entry.volume * sfxVolume);
+            PlayEntryOnSource(uiSource, entry, clip, Vector3.zero);
             return;
         }
 
-        // Paused voices must not be mistaken for free voices.
         if (AudioListener.pause) return;
+
+        AudioSource source = FindFreeWorldVoice();
+        if (source == null) return;
+
+        PlayEntryOnSource(source, entry, clip, position);
+    }
+
+    private void PlayEntryOnSource(AudioSource source, SoundEntry entry, AudioClip clip, Vector3 position)
+    {
+        if (source == null || entry == null || clip == null) return;
+
+        source.transform.position = position;
+        source.clip = clip;
+        source.volume = entry.volume * sfxBalance;
+
+        float lowPitch = Mathf.Min(entry.minPitch, entry.maxPitch);
+        float highPitch = Mathf.Max(entry.minPitch, entry.maxPitch);
+
+        source.pitch = UnityEngine.Random.Range(lowPitch, highPitch);
+        source.spatialBlend = IsUISound(entry.id) ? 0f : entry.spatialBlend;
+        source.minDistance = Mathf.Max(0.1f, entry.minDistance);
+        source.maxDistance = Mathf.Max(source.minDistance, entry.maxDistance);
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.Play();
+    }
+
+    private AudioSource FindFreeWorldVoice()
+    {
+        if (worldVoices == null) return null;
+
         foreach (AudioSource source in worldVoices)
-        {
-            if (source.isPlaying) continue;
-            source.transform.position = position;
-            source.clip = entry.clip;
-            source.volume = entry.volume * sfxVolume;
-            source.pitch = 1f;
-            source.spatialBlend = entry.spatialBlend;
-            source.minDistance = Mathf.Max(0.1f, entry.minDistance);
-            source.maxDistance = Mathf.Max(source.minDistance, entry.maxDistance);
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
-            return;
-        }
-        // At capacity, skip this sound instead of cutting off an existing one.
-    }
-
-    public void PlayFootstep(
-        FootstepSurface surface,
-        bool running,
-        Vector3 position
-    )
-    {
-        if (
-            Instance != this ||
-            AudioListener.pause
-        )
-        {
-            return;
-        }
-
-        FootstepSet set =
-            FindFootstepSet(
-                surface
-            );
-
-        if (set == null)
-        {
-            return;
-        }
-
-        AudioClip[] clips =
-            running
-                ? set.runClips
-                : set.walkClips;
-
-        if (
-            clips == null ||
-            clips.Length == 0
-        )
-        {
-            return;
-        }
-
-        int clipIndex =
-            ChooseFootstepIndex(
-                clips,
-                running
-                    ? set.lastRunIndex
-                    : set.lastWalkIndex
-            );
-
-        if (clipIndex < 0)
-        {
-            return;
-        }
-
-        AudioClip clip =
-            clips[clipIndex];
-
-        if (clip == null)
-        {
-            return;
-        }
-
-        if (running)
-        {
-            set.lastRunIndex =
-                clipIndex;
-        }
-        else
-        {
-            set.lastWalkIndex =
-                clipIndex;
-        }
-
-        foreach (
-            AudioSource source
-            in worldVoices
-        )
-        {
-            if (source.isPlaying)
-            {
-                continue;
-            }
-
-            source.transform.position =
-                position;
-
-            source.clip =
-                clip;
-
-            source.volume =
-                set.volume *
-                sfxVolume;
-
-            float lowPitch =
-                Mathf.Min(
-                    set.minPitch,
-                    set.maxPitch
-                );
-
-            float highPitch =
-                Mathf.Max(
-                    set.minPitch,
-                    set.maxPitch
-                );
-
-            source.pitch =
-                UnityEngine.Random.Range(
-                    lowPitch,
-                    highPitch
-                );
-
-            source.spatialBlend =
-                set.spatialBlend;
-
-            source.minDistance =
-                Mathf.Max(
-                    0.1f,
-                    set.minDistance
-                );
-
-            source.maxDistance =
-                Mathf.Max(
-                    source.minDistance,
-                    set.maxDistance
-                );
-
-            source.rolloffMode =
-                AudioRolloffMode.Linear;
-
-            source.Play();
-
-            return;
-        }
-    }
-
-    private FootstepSet FindFootstepSet(
-        FootstepSurface surface
-    )
-    {
-        if (footstepSets == null)
-        {
-            return null;
-        }
-
-        foreach (
-            FootstepSet set
-            in footstepSets
-        )
-        {
-            if (
-                set != null &&
-                set.surface == surface
-            )
-            {
-                return set;
-            }
-        }
+            if (source != null && !source.isPlaying)
+                return source;
 
         return null;
     }
 
-    private static int ChooseFootstepIndex(
-        AudioClip[] clips,
-        int previousIndex
-    )
+    private SoundEntry FindSound(SoundId id)
     {
-        if (
-            clips == null ||
-            clips.Length == 0
-        )
-        {
+        SoundEntry entry = FindSoundInGroup(playerSounds, id);
+        if (entry != null) return entry;
+
+        entry = FindSoundInGroup(abilitySounds, id);
+        if (entry != null) return entry;
+
+        entry = FindSoundInGroup(enemySounds, id);
+        if (entry != null) return entry;
+
+        entry = FindSoundInGroup(interactionSounds, id);
+        if (entry != null) return entry;
+
+        return FindSoundInGroup(uiSounds, id);
+    }
+
+    private static SoundEntry FindSoundInGroup(SoundEntry[] group, SoundId id)
+    {
+        if (group == null) return null;
+
+        foreach (SoundEntry entry in group)
+            if (entry != null && entry.id == id)
+                return entry;
+
+        return null;
+    }
+
+    private static AudioClip ChooseClip(SoundEntry entry)
+    {
+        if (entry == null || entry.clips == null || entry.clips.Length == 0)
+            return null;
+
+        int index = ChooseClipIndex(entry.clips, entry.lastClipIndex);
+        if (index < 0) return null;
+
+        entry.lastClipIndex = index;
+        return entry.clips[index];
+    }
+
+    private static int ChooseClipIndex(AudioClip[] clips, int previousIndex)
+    {
+        if (clips == null || clips.Length == 0)
             return -1;
-        }
 
-        if (clips.Length == 1)
-        {
-            return
-                clips[0] != null
-                    ? 0
-                    : -1;
-        }
+        int validCount = 0;
 
-        int validClipCount = 0;
-
-        for (
-            int i = 0;
-            i < clips.Length;
-            i++
-        )
-        {
+        for (int i = 0; i < clips.Length; i++)
             if (clips[i] != null)
-            {
-                validClipCount++;
-            }
-        }
+                validCount++;
 
-        if (validClipCount == 0)
-        {
+        if (validCount == 0)
             return -1;
-        }
 
-        if (validClipCount == 1)
+        if (validCount == 1)
         {
-            for (
-                int i = 0;
-                i < clips.Length;
-                i++
-            )
-            {
+            for (int i = 0; i < clips.Length; i++)
                 if (clips[i] != null)
-                {
                     return i;
-                }
-            }
         }
 
         int selectedIndex;
 
         do
         {
-            selectedIndex =
-                UnityEngine.Random.Range(
-                    0,
-                    clips.Length
-                );
+            selectedIndex = UnityEngine.Random.Range(0, clips.Length);
         }
         while (
             clips[selectedIndex] == null ||
-            selectedIndex ==
-            previousIndex
+            selectedIndex == previousIndex
         );
 
         return selectedIndex;
     }
 
-    private SoundEntry FindSound(SoundId id)
+    private static bool IsUISound(SoundId id)
     {
-        foreach (SoundEntry entry in sounds)
-            if (entry != null && entry.id == id) return entry;
-        return null;
+        return
+            id == SoundId.UIHover ||
+            id == SoundId.UIClick ||
+            id == SoundId.BannerAppear;
     }
 
     public void PlayUIHover() => Play(SoundId.UIHover, Vector3.zero);
     public void PlayUIClick() => Play(SoundId.UIClick, Vector3.zero);
+    public void PlayBanner() => Play(SoundId.BannerAppear, Vector3.zero);
+
+    public void PlayFootstep(FootstepSurface surface, bool running, Vector3 position)
+    {
+        if (Instance != this || AudioListener.pause)
+            return;
+
+        FootstepSet set = FindFootstepSet(surface);
+        if (set == null) return;
+
+        AudioClip[] clips = running ? set.runClips : set.walkClips;
+        if (clips == null || clips.Length == 0)
+            return;
+
+        int previousIndex = running ? set.lastRunIndex : set.lastWalkIndex;
+        int clipIndex = ChooseClipIndex(clips, previousIndex);
+
+        if (clipIndex < 0)
+            return;
+
+        AudioClip clip = clips[clipIndex];
+
+        if (running)
+            set.lastRunIndex = clipIndex;
+        else
+            set.lastWalkIndex = clipIndex;
+
+        AudioSource source = FindFreeWorldVoice();
+        if (source == null) return;
+
+        source.transform.position = position;
+        source.clip = clip;
+        source.volume = set.volume * sfxBalance;
+
+        float lowPitch = Mathf.Min(set.minPitch, set.maxPitch);
+        float highPitch = Mathf.Max(set.minPitch, set.maxPitch);
+
+        source.pitch = UnityEngine.Random.Range(lowPitch, highPitch);
+        source.spatialBlend = set.spatialBlend;
+        source.minDistance = Mathf.Max(0.1f, set.minDistance);
+        source.maxDistance = Mathf.Max(source.minDistance, set.maxDistance);
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.Play();
+    }
+
+    private FootstepSet FindFootstepSet(FootstepSurface surface)
+    {
+        if (footstepSets == null) return null;
+
+        foreach (FootstepSet set in footstepSets)
+            if (set != null && set.surface == surface)
+                return set;
+
+        return null;
+    }
+
+    public void StartPlayerBreathing()
+    {
+        if (
+            Instance != this ||
+            breathingSource == null ||
+            breathingSource.clip == null
+        )
+        {
+            return;
+        }
+
+        if (!breathingSource.isPlaying)
+            breathingSource.Play();
+    }
+
+    public void StopPlayerBreathing()
+    {
+        if (Instance != this || breathingSource == null)
+            return;
+
+        breathingSource.Stop();
+    }
 
     public void SetAmbienceActive(bool active)
     {
@@ -512,7 +509,8 @@ public class AudioManager : MonoBehaviour
 
     private static void SetLoopSourceActive(AudioSource source, bool active)
     {
-        if (source == null || source.clip == null) return;
+        if (source == null || source.clip == null)
+            return;
 
         if (active)
         {
@@ -528,52 +526,97 @@ public class AudioManager : MonoBehaviour
     private void ApplyAmbienceVolumes()
     {
         if (rainSource != null)
-            rainSource.volume = ambienceVolume * rainVolume;
+            rainSource.volume = ambienceVolume * rainVolume * sfxBalance;
+
         if (windSource != null)
-            windSource.volume = ambienceVolume * windVolume;
+            windSource.volume = ambienceVolume * windVolume * sfxBalance;
+
         if (treesSource != null)
-            treesSource.volume = ambienceVolume * treesVolume;
+            treesSource.volume = ambienceVolume * treesVolume * sfxBalance;
     }
 
     public void SetCombatMusic(bool active)
     {
         if (Instance != this) return;
+
         AudioSource target = active ? combatSource : explorationSource;
-        // Keep the current music if the requested track is not assigned yet.
-        if (target.clip == null) return;
+
+        if (target == null || target.clip == null)
+            return;
+
         inCombat = active;
         musicEnabled = true;
-        if (!target.isPlaying) target.Play();
+
+        if (!target.isPlaying)
+            target.Play();
     }
 
-    private void Update()
+    private void UpdateMusicCrossfade()
     {
-        if (Instance != this) return;
+        if (
+            !musicEnabled ||
+            explorationSource == null ||
+            combatSource == null
+        )
+        {
+            return;
+        }
 
-        ApplyAmbienceVolumes();
+        float step =
+            crossfadeSeconds <= 0f
+                ? 1f
+                : Time.unscaledDeltaTime / crossfadeSeconds;
 
-        if (!musicEnabled) return;
-        float step = crossfadeSeconds <= 0f
-            ? 1f : Time.unscaledDeltaTime / crossfadeSeconds;
-        explorationGain = Mathf.MoveTowards(explorationGain, inCombat ? 0f : 1f, step);
-        combatGain = Mathf.MoveTowards(combatGain, inCombat ? 1f : 0f, step);
-        explorationSource.volume = explorationGain * musicVolume;
-        combatSource.volume = combatGain * musicVolume;
-        if (inCombat && explorationGain == 0f) explorationSource.Stop();
-        if (!inCombat && combatGain == 0f) combatSource.Stop();
+        explorationGain = Mathf.MoveTowards(
+            explorationGain,
+            inCombat ? 0f : 1f,
+            step
+        );
+
+        combatGain = Mathf.MoveTowards(
+            combatGain,
+            inCombat ? 1f : 0f,
+            step
+        );
+
+        explorationSource.volume = explorationGain * musicBalance;
+        combatSource.volume = combatGain * musicBalance;
+
+        if (inCombat && explorationGain == 0f)
+            explorationSource.Stop();
+
+        if (!inCombat && combatGain == 0f)
+            combatSource.Stop();
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (mode != LoadSceneMode.Single) return;
-        foreach (AudioSource source in worldVoices) source.Stop();
+        if (mode != LoadSceneMode.Single)
+            return;
+
+        if (worldVoices != null)
+        {
+            foreach (AudioSource source in worldVoices)
+                if (source != null)
+                    source.Stop();
+        }
+
+        StopPlayerBreathing();
         SetCombatMusic(false);
     }
 
     [ContextMenu("Test/UI Click (Play Mode)")]
     private void TestClick()
     {
-        if (Application.isPlaying && Instance == this) PlayUIClick();
+        if (Application.isPlaying && Instance == this)
+            PlayUIClick();
+    }
+
+    [ContextMenu("Test/Banner (Play Mode)")]
+    private void TestBanner()
+    {
+        if (Application.isPlaying && Instance == this)
+            PlayBanner();
     }
 
     [ContextMenu("Test/Shield Hit (Play Mode)")]
@@ -586,31 +629,41 @@ public class AudioManager : MonoBehaviour
     [ContextMenu("Test/Ambience On (Play Mode)")]
     private void TestAmbienceOn()
     {
-        if (Application.isPlaying && Instance == this) SetAmbienceActive(true);
+        if (Application.isPlaying && Instance == this)
+            SetAmbienceActive(true);
     }
 
     [ContextMenu("Test/Ambience Off (Play Mode)")]
     private void TestAmbienceOff()
     {
-        if (Application.isPlaying && Instance == this) SetAmbienceActive(false);
+        if (Application.isPlaying && Instance == this)
+            SetAmbienceActive(false);
     }
 
     [ContextMenu("Test/Combat Music (Play Mode)")]
     private void TestCombat()
     {
-        if (Application.isPlaying && Instance == this) SetCombatMusic(true);
+        if (Application.isPlaying && Instance == this)
+            SetCombatMusic(true);
     }
 
     [ContextMenu("Test/Exploration Music (Play Mode)")]
     private void TestExploration()
     {
-        if (Application.isPlaying && Instance == this) SetCombatMusic(false);
+        if (Application.isPlaying && Instance == this)
+            SetCombatMusic(false);
     }
 
-    private void OnDestroy()
+    private void OnValidate()
     {
-        if (Instance != this) return;
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-        Instance = null;
+        worldVoiceCount = Mathf.Clamp(worldVoiceCount, 4, 64);
+        sfxBalance = Mathf.Clamp01(sfxBalance);
+        ambienceVolume = Mathf.Clamp01(ambienceVolume);
+        rainVolume = Mathf.Clamp01(rainVolume);
+        windVolume = Mathf.Clamp01(windVolume);
+        treesVolume = Mathf.Clamp01(treesVolume);
+        playerBreathingVolume = Mathf.Clamp01(playerBreathingVolume);
+        musicBalance = Mathf.Clamp01(musicBalance);
+        crossfadeSeconds = Mathf.Max(0f, crossfadeSeconds);
     }
 }

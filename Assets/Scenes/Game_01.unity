@@ -4453,7 +4453,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &372983518
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19423,177 +19423,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b98a457eb32570b479fd2ce9450f2b00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
-  sounds:
-  - id: 0
-    clip: {fileID: 8300000, guid: 1f935767ee8e39f4e94c84aa667aa532, type: 3}
-    volume: 1
-    spatialBlend: 0
-    minDistance: 5
-    maxDistance: 35
-  - id: 1
-    clip: {fileID: 8300000, guid: 13dfdd2e744bfb240b4f8b6c6a51dd52, type: 3}
-    volume: 1
-    spatialBlend: 0
-    minDistance: 5
-    maxDistance: 35
-  - id: 2
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 3
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 4
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 5
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 6
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 7
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 8
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 9
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 10
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 11
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 12
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 13
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 14
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 15
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 0
-    minDistance: 5
-    maxDistance: 35
-  - id: 16
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 0
-    minDistance: 5
-    maxDistance: 35
-  - id: 17
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 18
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 19
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 20
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 21
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 22
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 23
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 24
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 25
-    clip: {fileID: 8300000, guid: 72c0cc70d3917f74e97c7c42941a5f05, type: 3}
-    volume: 0.477
-    spatialBlend: 0
-    minDistance: 5
-    maxDistance: 35
-  - id: 26
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  - id: 27
-    clip: {fileID: 0}
-    volume: 1
-    spatialBlend: 1
-    minDistance: 5
-    maxDistance: 35
-  sfxVolume: 1
+  musicMixerGroup: {fileID: -5440813534324435310, guid: 9b8a9ca888c4bc848ac8b308dce6a16c, type: 2}
+  sfxMixerGroup: {fileID: -2484799822452740701, guid: 9b8a9ca888c4bc848ac8b308dce6a16c, type: 2}
+  sfxBalance: 1
   worldVoiceCount: 24
+  playerSounds:
+  - id: 0
+    clips: []
+    volume: 0
+    spatialBlend: 0
+    minPitch: 0
+    maxPitch: 0
+    minDistance: 0
+    maxDistance: 0
+  abilitySounds: []
+  enemySounds: []
+  interactionSounds: []
+  uiSounds: []
   footstepSets:
   - surface: 0
     walkClips:
@@ -19620,6 +19466,8 @@ MonoBehaviour:
     maxPitch: 1.05
     minDistance: 2
     maxDistance: 20
+  playerBreathingLoop: {fileID: 0}
+  playerBreathingVolume: 0.7
   rainAmbience: {fileID: 8300000, guid: a613344c41c7d3048a9e0ec602465379, type: 3}
   windAmbience: {fileID: 0}
   treesAmbience: {fileID: 8300000, guid: 7fc6ec3cf1e918f4eb7cfe832fd0d91d, type: 3}
@@ -19630,7 +19478,7 @@ MonoBehaviour:
   playAmbienceOnStart: 1
   explorationMusic: {fileID: 8300000, guid: f4737995c6223a441acefd98c27c4467, type: 3}
   combatMusic: {fileID: 0}
-  musicVolume: 0.225
+  musicBalance: 0.4
   crossfadeSeconds: 2
   playExplorationOnStart: 1
 --- !u!1001 &1449540625
