@@ -474,6 +474,14 @@ public class Player_DamageController :
             return;
         }
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerHurt,
+                transform.position
+            );
+        }
+
         StartHitReaction();
 
         StartInvulnerability();
@@ -702,6 +710,14 @@ public class Player_DamageController :
         }
 
         deathHandled = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerDeath,
+                transform.position
+            );
+        }
 
         isInvulnerable = true;
         isInHitReaction = false;

@@ -19430,7 +19430,10 @@ MonoBehaviour:
   playerSounds:
   - id: 0
     clips:
+    - {fileID: 8300000, guid: cad57fcf83264a4489ae5c41b55e7a8b, type: 3}
     - {fileID: 8300000, guid: 0e1457ebf7dc95b4db34ba2fa89929fc, type: 3}
+    - {fileID: 8300000, guid: 5ed176f89f549d24a83fa420c256201e, type: 3}
+    - {fileID: 8300000, guid: 5d5f587ae155eb94f867257211a96f5e, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19438,7 +19441,9 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 1
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: ab311aab76ae384488143d38eaef60fb, type: 3}
+    - {fileID: 8300000, guid: 73a158e99ad07154280d61719abe8d6c, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19446,7 +19451,10 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 2
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f1405405e5d06c547a825830fdc5f47d, type: 3}
+    - {fileID: 8300000, guid: 7db5e00408340d44ab99e6783475c741, type: 3}
+    - {fileID: 8300000, guid: 3f94d515160e457498d1a84f3fcfccac, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19454,7 +19462,10 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 3
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 592fe506ec079e94d8f1df5b5bd83edf, type: 3}
+    - {fileID: 8300000, guid: 55520881781472649ac612614a24f148, type: 3}
+    - {fileID: 8300000, guid: 8fd5ff887d615154e8ba739faaf3999f, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19462,7 +19473,10 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 4
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8aa9aa890eb479c4e8fa3d7e3f897c31, type: 3}
+    - {fileID: 8300000, guid: e4ddee497a4ad394389ec982dfe9d2a5, type: 3}
+    - {fileID: 8300000, guid: 2dbc6219b3c1c4346b1f40dfd61da974, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19470,7 +19484,12 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 5
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: d8c2c9515b91b4b4785f35c07e6f2ed8, type: 3}
+    - {fileID: 8300000, guid: a106bf3bd97633c4490b5987a1133888, type: 3}
+    - {fileID: 8300000, guid: f45c87f50355e3a4e933dfae013f360b, type: 3}
+    - {fileID: 8300000, guid: 35106e2189bbe7c4d87faec4cbb62483, type: 3}
+    - {fileID: 8300000, guid: e491229a109c891459fba0606bc50149, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19498,7 +19517,7 @@ MonoBehaviour:
   - id: 8
     clips:
     - {fileID: 8300000, guid: 72c0cc70d3917f74e97c7c42941a5f05, type: 3}
-    volume: 1
+    volume: 0.5
     spatialBlend: 1
     minPitch: 0.95
     maxPitch: 1.05
@@ -19750,7 +19769,7 @@ MonoBehaviour:
     maxPitch: 1.05
     minDistance: 2
     maxDistance: 20
-  playerBreathingLoop: {fileID: 0}
+  playerBreathingLoop: {fileID: 8300000, guid: ea990ad4fac7d984b8a38eefe8c40f75, type: 3}
   playerBreathingVolume: 0.7
   rainAmbience: {fileID: 8300000, guid: a613344c41c7d3048a9e0ec602465379, type: 3}
   windAmbience: {fileID: 0}

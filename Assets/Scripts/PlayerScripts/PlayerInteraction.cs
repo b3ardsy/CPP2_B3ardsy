@@ -143,6 +143,14 @@ public class PlayerInteraction : MonoBehaviour
 
         SetPromptVisible(true);
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerInteractHmm,
+                transform.position
+            );
+        }
+
         Debug.Log(
             $"{name}: Interaction available with " +
             $"{currentInteractableTransform.name}.",
