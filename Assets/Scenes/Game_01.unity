@@ -18336,6 +18336,7 @@ Transform:
   - {fileID: 1137531095}
   - {fileID: 29950976}
   - {fileID: 1442429681}
+  - {fileID: 1541271188}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1382718218
@@ -19530,16 +19531,16 @@ MonoBehaviour:
   abilitySounds:
   - id: 9
     clips:
-    - {fileID: 8300000, guid: aea51e8e66a6fa747bca45629a759285, type: 3}
+    - {fileID: 8300000, guid: 9b6e0793ce0d24c588e7c2bc48bd28dd, type: 3}
     volume: 1
     spatialBlend: 1
-    minPitch: 0.95
-    maxPitch: 1.05
+    minPitch: 1.376
+    maxPitch: 1.5
     minDistance: 2
     maxDistance: 25
   - id: 10
     clips:
-    - {fileID: 8300000, guid: 81dbc2b345d4a4d8aa98f60aa04e5145, type: 3}
+    - {fileID: 8300000, guid: 49e37ffa282da4032bb47182a0e958f4, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19548,7 +19549,7 @@ MonoBehaviour:
     maxDistance: 25
   - id: 11
     clips:
-    - {fileID: 8300000, guid: 90af38775c5bd43c084091ac77fe7257, type: 3}
+    - {fileID: 8300000, guid: 5b6104ed748bc4ad7b278bf666f9cba3, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19671,7 +19672,7 @@ MonoBehaviour:
   interactionSounds:
   - id: 26
     clips:
-    - {fileID: 8300000, guid: 66374726d9b160c4ba0979c89ee2bb0d, type: 3}
+    - {fileID: 8300000, guid: 3ff570fc052eb40ae8945cb5550caf55, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19689,7 +19690,7 @@ MonoBehaviour:
     maxDistance: 25
   - id: 28
     clips:
-    - {fileID: 8300000, guid: 938dcba4fdd93bd4898e7b524ce1606a, type: 3}
+    - {fileID: 8300000, guid: 9b6e0793ce0d24c588e7c2bc48bd28dd, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19698,7 +19699,7 @@ MonoBehaviour:
     maxDistance: 25
   - id: 29
     clips:
-    - {fileID: 8300000, guid: 97ac19b86ed85ee4ea3e589a5302f1ec, type: 3}
+    - {fileID: 8300000, guid: c0dd5822532c94ff4aa22529f55eb3bd, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19707,7 +19708,7 @@ MonoBehaviour:
     maxDistance: 25
   - id: 30
     clips:
-    - {fileID: 8300000, guid: 69b54ca71c1448e42b7b46a419818dcf, type: 3}
+    - {fileID: 8300000, guid: 68d3a3cf1142e4b01b58c90aa45aa54b, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19715,7 +19716,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 31
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 9c7f61017bc0c47f6915b38e68be9ca2, type: 3}
     volume: 1
     spatialBlend: 1
     minPitch: 0.95
@@ -19732,7 +19734,8 @@ MonoBehaviour:
     maxDistance: 25
   uiSounds:
   - id: 33
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 78b73f69555c7f84fb0537e9ad354726, type: 3}
     volume: 1
     spatialBlend: 0
     minPitch: 1
@@ -19740,7 +19743,8 @@ MonoBehaviour:
     minDistance: 2
     maxDistance: 25
   - id: 34
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     spatialBlend: 0
     minPitch: 1
@@ -21194,6 +21198,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1530042673}
   m_CullTransparentMesh: 1
+--- !u!1 &1541271187
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1541271188}
+  - component: {fileID: 1541271189}
+  m_Layer: 0
+  m_Name: UIAudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1541271188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1541271187}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1381213205}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1541271189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1541271187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a870be0943e2fb419fd3e35b9ca7c0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIAudioManager
 --- !u!1 &1543046542
 GameObject:
   m_ObjectHideFlags: 0
