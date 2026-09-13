@@ -89,6 +89,19 @@ public class TankLogic : MonoBehaviour
     private float chaseSpeed = 10f;
 
     // =========================================================
+    // AUDIO
+    // =========================================================
+
+    [Header("Audio")]
+    [Tooltip("Minimum delay between pre-combat idle vocalizations.")]
+    [SerializeField]
+    private float minimumIdleSoundInterval = 4f;
+
+    [Tooltip("Maximum delay between pre-combat idle vocalizations.")]
+    [SerializeField]
+    private float maximumIdleSoundInterval = 9f;
+
+    // =========================================================
     // ENTANGLE RECOVERY
     // =========================================================
 
@@ -130,8 +143,10 @@ public class TankLogic : MonoBehaviour
     private TankAttack activeAttack;
 
     private float attackCooldownTimer;
+    private float idleSoundTimer;
 
     private bool isPerformingAttack;
+    private bool attackSoundPlayed;
     private int hitsDuringCurrentAttack;
     private bool wasEntangledLastFrame;
 
@@ -265,6 +280,8 @@ public class TankLogic : MonoBehaviour
         currentState =
             TankState.Patrolling;
 
+        ResetIdleSoundTimer();
+
         if (!enemyController.IsOnNavMesh)
         {
             Debug.LogError(
@@ -315,6 +332,8 @@ public class TankLogic : MonoBehaviour
         {
             FindPlayerAxeDamageable();
         }
+
+        UpdateIdleAudio();
 
         // =====================================================
         // ENTANGLE
@@ -681,6 +700,9 @@ public class TankLogic : MonoBehaviour
         isPerformingAttack =
             true;
 
+        attackSoundPlayed =
+            false;
+
         hitsDuringCurrentAttack =
             0;
 
@@ -691,6 +713,11 @@ public class TankLogic : MonoBehaviour
 
         enemyController.FacePlayer(
             attackRotationSpeed
+        );
+
+        PlaySound(
+            SoundId.TankAttack,
+            transform.position
         );
 
         if (animator != null)
@@ -744,6 +771,19 @@ public class TankLogic : MonoBehaviour
         )
         {
             return;
+        }
+
+        if (!attackSoundPlayed)
+        {
+            PlaySound(
+                activeAttack == TankAttack.Slash
+                    ? SoundId.TankSlash
+                    : SoundId.TankSpin,
+                axeHitbox.transform.position
+            );
+
+            attackSoundPlayed =
+                true;
         }
 
         Vector3 worldCenter =
@@ -866,6 +906,9 @@ public class TankLogic : MonoBehaviour
     public void EndAttack()
     {
         isPerformingAttack =
+            false;
+
+        attackSoundPlayed =
             false;
 
         hitsDuringCurrentAttack =
@@ -1083,6 +1126,9 @@ public class TankLogic : MonoBehaviour
         isPerformingAttack =
             false;
 
+        attackSoundPlayed =
+            false;
+
         hitsDuringCurrentAttack =
             0;
 
@@ -1108,8 +1154,13 @@ public class TankLogic : MonoBehaviour
         attackCooldownTimer =
             0f;
 
+        ResetIdleSoundTimer();
+
         activeAttack =
             TankAttack.Spin;
+
+        attackSoundPlayed =
+            false;
 
         hitsDuringCurrentAttack =
             0;
@@ -1159,6 +1210,8 @@ public class TankLogic : MonoBehaviour
         currentState =
             TankState.ReturningHome;
 
+        ResetIdleSoundTimer();
+
         CancelCurrentAttack();
 
         enemyController.ClearPatrolState();
@@ -1180,6 +1233,63 @@ public class TankLogic : MonoBehaviour
             TankState.Patrolling;
 
         enemyController.BeginWaitingAtPatrolPoint();
+    }
+
+    // =========================================================
+    // AUDIO
+    // =========================================================
+
+    private void UpdateIdleAudio()
+    {
+        if (
+            enemyController == null ||
+            enemyController.IsDead ||
+            enemyController.IsEntangled ||
+            enemyController.IsPlayerDetected()
+        )
+        {
+            return;
+        }
+
+        idleSoundTimer -=
+            Time.deltaTime;
+
+        if (idleSoundTimer > 0f)
+        {
+            return;
+        }
+
+        PlaySound(
+            SoundId.TankIdle,
+            transform.position
+        );
+
+        ResetIdleSoundTimer();
+    }
+
+    private void ResetIdleSoundTimer()
+    {
+        idleSoundTimer =
+            UnityEngine.Random.Range(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
+            );
+    }
+
+    private static void PlaySound(
+        SoundId soundId,
+        Vector3 position
+    )
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.Play(
+            soundId,
+            position
+        );
     }
 
     // =========================================================
@@ -1401,6 +1511,18 @@ public class TankLogic : MonoBehaviour
             Mathf.Max(
                 0f,
                 chaseSpeed
+            );
+
+        minimumIdleSoundInterval =
+            Mathf.Max(
+                0.1f,
+                minimumIdleSoundInterval
+            );
+
+        maximumIdleSoundInterval =
+            Mathf.Max(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
             );
 
         entangleRecoveryTransitionDuration =

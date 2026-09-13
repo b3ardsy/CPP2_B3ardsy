@@ -345,6 +345,11 @@ public class Player_RespawnController : MonoBehaviour
                 SoundId.PlayerRespawn,
                 transform.position
             );
+
+            AudioManager.Instance.Play(
+                SoundId.PlayerRespawnBeam,
+                transform.position
+            );
         }
 
         if (animator != null)

@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: 9510758072ab9d0459fe6c34970d23e4
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 6
+  defaultSettings:
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 1
+    quality: 1
+    conversionMode: 0
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 1
+  preloadAudioData: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 332994
+  packageName: Monster Sounds - Volume II
+  packageVersion: 1.0
+  assetPath: Assets/MonstersSFX/PackGhostsAndZombies/Zombie_Footstep_v4/Zombie_FootStep_v4_variation_02_Wav.wav
+  uploadId: 917234

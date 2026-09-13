@@ -27,6 +27,24 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
     private float deathEffectLifetime = 3f;
 
     // =========================================================
+    // AUDIO
+    // =========================================================
+
+    [Header("Audio")]
+    [Tooltip("Enemy-specific vocal played when this enemy takes non-lethal damage.")]
+    [SerializeField]
+    private SoundId hurtSound = SoundId.MageHurt;
+
+    [Tooltip("Enemy-specific vocal played when this enemy dies.")]
+    [SerializeField]
+    private SoundId deathSound = SoundId.MageDeath;
+
+    [Tooltip("Shared sound played when the corpse death effect appears.")]
+    [SerializeField]
+    private SoundId corpseExplosionSound =
+        SoundId.EnemyCorpseExplosion;
+
+    // =========================================================
     // PICKUP DROP
     // =========================================================
 
@@ -464,6 +482,11 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
             return;
         }
 
+        PlaySound(
+            hurtSound,
+            transform.position
+        );
+
         if (animator != null)
         {
             animator.SetTrigger(
@@ -665,6 +688,11 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
 
         OnDied?.Invoke();
 
+        PlaySound(
+            deathSound,
+            transform.position
+        );
+
         if (animator != null)
         {
             animator.ResetTrigger(
@@ -769,6 +797,11 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
         Vector3 spawnPosition
     )
     {
+        PlaySound(
+            corpseExplosionSound,
+            spawnPosition
+        );
+
         if (deathEffectPrefab == null)
         {
             return;
@@ -826,6 +859,26 @@ public class EnemyController : MonoBehaviour, IDamageable, ICheckpointResettable
 
         deathRoutine =
             null;
+    }
+
+    // =========================================================
+    // AUDIO
+    // =========================================================
+
+    private static void PlaySound(
+        SoundId soundId,
+        Vector3 position
+    )
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.Play(
+            soundId,
+            position
+        );
     }
 
     // =========================================================
