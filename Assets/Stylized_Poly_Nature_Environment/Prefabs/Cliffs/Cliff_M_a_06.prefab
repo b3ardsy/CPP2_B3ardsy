@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1545024940400469717}
   - component: {fileID: 4005954566699655536}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -65,7 +65,7 @@ GameObject:
   - component: {fileID: 2419993293297327432}
   - component: {fileID: 1696309308501295080}
   - component: {fileID: 8671947246397359150}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cliff_M_a_06_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -156,7 +156,7 @@ GameObject:
   - component: {fileID: 6106572696030198815}
   - component: {fileID: 1361485846883339118}
   - component: {fileID: -5555706141287471135}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cliff_M_a_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -243,7 +243,7 @@ GameObject:
   - component: {fileID: 4608897739484569288}
   - component: {fileID: 263925991021056858}
   - component: {fileID: 7023554411498183715}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cliff_M_a_06_LOD2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -334,7 +334,7 @@ GameObject:
   - component: {fileID: 592865631762439992}
   - component: {fileID: 2273555681112828310}
   - component: {fileID: 4962390454756707362}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cliff_M_a_06_LOD1
   m_TagString: Untagged
   m_Icon: {fileID: 0}

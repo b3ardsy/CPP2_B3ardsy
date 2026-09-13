@@ -83,6 +83,19 @@ public class RogueLogic : MonoBehaviour
     private float attackRecoveryDuration = 0.6f;
 
     // =========================================================
+    // AUDIO
+    // =========================================================
+
+    [Header("Audio")]
+    [Tooltip("Minimum delay between pre-combat idle vocalizations.")]
+    [SerializeField]
+    private float minimumIdleSoundInterval = 4f;
+
+    [Tooltip("Maximum delay between pre-combat idle vocalizations.")]
+    [SerializeField]
+    private float maximumIdleSoundInterval = 9f;
+
+    // =========================================================
     // ENTANGLE RECOVERY
     // =========================================================
 
@@ -110,6 +123,7 @@ public class RogueLogic : MonoBehaviour
 
     private float attackCooldownTimer;
     private float attackRecoveryTimer;
+    private float idleSoundTimer;
 
     private bool isPerformingAttack;
     private bool attackReleased;
@@ -226,6 +240,7 @@ public class RogueLogic : MonoBehaviour
             RogueState.Patrolling;
 
         ResetAttackCooldown();
+        ResetIdleSoundTimer();
 
         if (!enemyController.IsOnNavMesh)
         {
@@ -270,6 +285,8 @@ public class RogueLogic : MonoBehaviour
 
             return;
         }
+
+        UpdateIdleAudio();
 
         // =====================================================
         // ENTANGLE
@@ -528,6 +545,11 @@ public class RogueLogic : MonoBehaviour
 
         enemyController.FacePlayer();
 
+        PlaySound(
+            SoundId.RogueAttack,
+            transform.position
+        );
+
         if (animator != null)
         {
             animator.ResetTrigger(
@@ -739,6 +761,11 @@ public class RogueLogic : MonoBehaviour
                 spawnRotation
             );
 
+        PlaySound(
+            SoundId.RogueSkullAttack,
+            firePoint.position
+        );
+
         skull.Initialize(
             gameObject,
             direction,
@@ -795,6 +822,11 @@ public class RogueLogic : MonoBehaviour
                 groundPosition,
                 deathEvilPrefab.transform.rotation
             );
+
+        PlaySound(
+            SoundId.RogueDeathEvilAttack,
+            groundPosition
+        );
 
         effect.Initialize(
             deathEvilDamage,
@@ -1031,6 +1063,8 @@ public class RogueLogic : MonoBehaviour
         currentState =
             RogueState.ReturningHome;
 
+        ResetIdleSoundTimer();
+
         CancelCurrentAttack();
 
         enemyController.ClearPatrolState();
@@ -1052,6 +1086,63 @@ public class RogueLogic : MonoBehaviour
             RogueState.Patrolling;
 
         enemyController.BeginWaitingAtPatrolPoint();
+    }
+
+    // =========================================================
+    // AUDIO
+    // =========================================================
+
+    private void UpdateIdleAudio()
+    {
+        if (
+            enemyController == null ||
+            enemyController.IsDead ||
+            enemyController.IsEntangled ||
+            enemyController.IsPlayerDetected()
+        )
+        {
+            return;
+        }
+
+        idleSoundTimer -=
+            Time.deltaTime;
+
+        if (idleSoundTimer > 0f)
+        {
+            return;
+        }
+
+        PlaySound(
+            SoundId.RogueIdle,
+            transform.position
+        );
+
+        ResetIdleSoundTimer();
+    }
+
+    private void ResetIdleSoundTimer()
+    {
+        idleSoundTimer =
+            UnityEngine.Random.Range(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
+            );
+    }
+
+    private static void PlaySound(
+        SoundId soundId,
+        Vector3 position
+    )
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.Play(
+            soundId,
+            position
+        );
     }
 
     // =========================================================
@@ -1137,6 +1228,7 @@ public class RogueLogic : MonoBehaviour
             false;
 
         ResetAttackCooldown();
+        ResetIdleSoundTimer();
 
         if (animator != null)
         {
@@ -1319,6 +1411,18 @@ public class RogueLogic : MonoBehaviour
             Mathf.Max(
                 0.05f,
                 attackRecoveryDuration
+            );
+
+        minimumIdleSoundInterval =
+            Mathf.Max(
+                0.1f,
+                minimumIdleSoundInterval
+            );
+
+        maximumIdleSoundInterval =
+            Mathf.Max(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
             );
 
         entangleRecoveryTransitionDuration =

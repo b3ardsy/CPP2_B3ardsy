@@ -5,57 +5,69 @@ using UnityEngine.SceneManagement;
 
 public enum SoundId
 {
+    // IMPORTANT:
+    // Existing numeric values are explicitly preserved so previously assigned
+    // Inspector audio entries keep pointing at the same SoundId after updates.
+
     // PLAYER
-    PlayerHurt,
-    PlayerDeath,
-    PlayerRespawn,
-    PlayerJump,
-    PlayerLand,
-    PlayerInteractHmm,
+    PlayerHurt = 0,
+    PlayerDeath = 1,
+    PlayerRespawn = 2,
+    PlayerJump = 3,
+    PlayerLand = 4,
+    PlayerInteractHmm = 5,
 
     // PLAYER COMBAT
-    Wand,
-    Shield,
-    ShieldHit,
+    Wand = 6,
+    Shield = 7,
+    ShieldHit = 8,
 
     // ABILITIES / RUNES
-    Entangle,
-    Lightning,
-    IceTornado,
+    Entangle = 9,
+    Lightning = 10,
+    IceTornado = 11,
 
     // ENEMIES - MAGE
-    MageIdle,
-    MageHurt,
-    MageAttack,
-    MageDeath,
+    MageIdle = 12,
+    MageHurt = 13,
+    MageAttack = 14,
+    MageDeath = 15,
 
     // ENEMIES - ROGUE
-    RogueIdle,
-    RogueHurt,
-    RogueSkullAttack,
-    RogueDeathEvilAttack,
-    RogueDeath,
+    RogueIdle = 16,
+    RogueHurt = 17,
+    RogueSkullAttack = 18,
+    RogueDeathEvilAttack = 19,
+    RogueDeath = 20,
 
     // ENEMIES - TANK
-    TankIdle,
-    TankHurt,
-    TankAttack1,
-    TankAttack2,
-    TankDeath,
+    TankIdle = 21,
+    TankHurt = 22,
+    TankSlash = 23,
+    TankSpin = 24,
+    TankDeath = 25,
 
     // INTERACTIONS / PICKUPS / PROGRESSION
-    ShrineActivation,
-    StaffUnlock,
-    EntangleUnlock,
-    LightningUnlock,
-    IceTornadoUnlock,
-    HeartPickup,
-    Healing,
+    ShrineActivation = 26,
+    StaffUnlock = 27,
+    EntangleUnlock = 28,
+    LightningUnlock = 29,
+    IceTornadoUnlock = 30,
+    HeartPickup = 31,
+    Healing = 32,
 
     // UI / BANNERS
-    UIHover,
-    UIClick,
-    BannerAppear
+    UIHover = 33,
+    UIClick = 34,
+    BannerAppear = 35,
+
+    // NEW ENEMY AUDIO
+    // Appended after all existing IDs so no existing serialized values shift.
+    MageBlackHole = 36,
+    RogueAttack = 37,
+    TankAttack = 38,
+    EnemyCorpseExplosion = 39,
+    PlayerRespawnBeam = 40
 }
 
 public enum FootstepSurface
@@ -112,7 +124,8 @@ public class AudioManager : MonoBehaviour
         SoundId.PlayerInteractHmm,
         SoundId.Wand,
         SoundId.Shield,
-        SoundId.ShieldHit
+        SoundId.ShieldHit,
+        SoundId.PlayerRespawnBeam
     };
 
     private static readonly SoundId[] AbilitySoundIds =
@@ -124,20 +137,31 @@ public class AudioManager : MonoBehaviour
 
     private static readonly SoundId[] EnemySoundIds =
     {
+        // Mage
         SoundId.MageIdle,
         SoundId.MageHurt,
         SoundId.MageAttack,
         SoundId.MageDeath,
+        SoundId.MageBlackHole,
+
+        // Rogue
         SoundId.RogueIdle,
         SoundId.RogueHurt,
+        SoundId.RogueAttack,
         SoundId.RogueSkullAttack,
         SoundId.RogueDeathEvilAttack,
         SoundId.RogueDeath,
+
+        // Tank
         SoundId.TankIdle,
         SoundId.TankHurt,
-        SoundId.TankAttack1,
-        SoundId.TankAttack2,
-        SoundId.TankDeath
+        SoundId.TankAttack,
+        SoundId.TankSlash,
+        SoundId.TankSpin,
+        SoundId.TankDeath,
+
+        // Shared enemy effects
+        SoundId.EnemyCorpseExplosion
     };
 
     private static readonly SoundId[] InteractionSoundIds =

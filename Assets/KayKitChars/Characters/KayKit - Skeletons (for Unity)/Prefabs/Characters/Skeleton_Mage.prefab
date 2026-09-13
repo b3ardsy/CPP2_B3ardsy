@@ -1362,6 +1362,9 @@ MonoBehaviour:
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
   deathEffectLifetime: 3
+  hurtSound: 13
+  deathSound: 15
+  corpseExplosionSound: 39
   pickupToDrop: 1
   healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
   ammoPickupPrefab: {fileID: 0}
@@ -1392,7 +1395,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MageLogic
   blackHoleProjectilePrefab: {fileID: 7418663436262262798, guid: c94e3e8eccf25e2409dcd7a97dfaf8f1, type: 3}
   firePoint: {fileID: 7655535924878438980}
-  blackHoleDamage: 5
+  blackHoleDamage: 1
   blackHoleSpeed: 12
   aimHeightOffset: 1
   projectileCount: 3
@@ -1400,6 +1403,8 @@ MonoBehaviour:
   homingChance: 0.5
   minimumAttackCooldown: 1.75
   maximumAttackCooldown: 2.75
+  minimumIdleSoundInterval: 4
+  maximumIdleSoundInterval: 9
   entangleRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
 --- !u!136 &3655405520464804888
@@ -1459,7 +1464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PersistentID
-  persistentId: 733b317536df4a0a97c5e3b6f3d37028
+  persistentId: d156d08e685240899a8b607d66c294e5
 --- !u!1 &1360172268146098638
 GameObject:
   m_ObjectHideFlags: 0

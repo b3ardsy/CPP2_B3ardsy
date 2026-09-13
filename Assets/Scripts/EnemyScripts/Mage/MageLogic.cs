@@ -71,6 +71,19 @@ public class MageLogic : MonoBehaviour
     private float maximumAttackCooldown = 2.75f;
 
     // =========================================================
+    // AUDIO
+    // =========================================================
+
+    [Header("Audio")]
+    [Tooltip("Minimum delay between patrol idle vocalizations.")]
+    [SerializeField]
+    private float minimumIdleSoundInterval = 4f;
+
+    [Tooltip("Maximum delay between patrol idle vocalizations.")]
+    [SerializeField]
+    private float maximumIdleSoundInterval = 9f;
+
+    // =========================================================
     // ENTANGLE RECOVERY
     // =========================================================
 
@@ -103,6 +116,7 @@ public class MageLogic : MonoBehaviour
     private MageState currentState;
 
     private float attackCooldownTimer;
+    private float idleSoundTimer;
 
     private bool isPerformingAttack;
     private bool wasEntangledLastFrame;
@@ -195,6 +209,7 @@ public class MageLogic : MonoBehaviour
             MageState.Patrolling;
 
         ResetAttackCooldown();
+        ResetIdleSoundTimer();
 
         if (!enemyController.IsOnNavMesh)
         {
@@ -443,6 +458,7 @@ public class MageLogic : MonoBehaviour
             case MageState.Patrolling:
 
                 enemyController.UpdatePatrol();
+                UpdateIdleAudio();
 
                 break;
 
@@ -544,6 +560,11 @@ public class MageLogic : MonoBehaviour
 
         enemyController.FacePlayer();
 
+        PlaySound(
+            SoundId.MageAttack,
+            transform.position
+        );
+
         if (animator != null)
         {
             animator.ResetTrigger(
@@ -606,6 +627,11 @@ public class MageLogic : MonoBehaviour
 
             return;
         }
+
+        PlaySound(
+            SoundId.MageBlackHole,
+            firePoint.position
+        );
 
         Vector3 targetPosition =
             enemyController.Player.position +
@@ -797,6 +823,8 @@ public class MageLogic : MonoBehaviour
         currentState =
             MageState.ReturningHome;
 
+        ResetIdleSoundTimer();
+
         isPerformingAttack =
             false;
 
@@ -831,6 +859,63 @@ public class MageLogic : MonoBehaviour
          * rather than immediately choosing a new point.
          */
         enemyController.BeginWaitingAtPatrolPoint();
+    }
+
+    // =========================================================
+    // AUDIO
+    // =========================================================
+
+    private void UpdateIdleAudio()
+    {
+        if (
+            enemyController == null ||
+            enemyController.IsDead ||
+            enemyController.IsEntangled ||
+            currentState != MageState.Patrolling
+        )
+        {
+            return;
+        }
+
+        idleSoundTimer -=
+            Time.deltaTime;
+
+        if (idleSoundTimer > 0f)
+        {
+            return;
+        }
+
+        PlaySound(
+            SoundId.MageIdle,
+            transform.position
+        );
+
+        ResetIdleSoundTimer();
+    }
+
+    private void ResetIdleSoundTimer()
+    {
+        idleSoundTimer =
+            UnityEngine.Random.Range(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
+            );
+    }
+
+    private static void PlaySound(
+        SoundId soundId,
+        Vector3 position
+    )
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.Play(
+            soundId,
+            position
+        );
     }
 
     // =========================================================
@@ -887,6 +972,7 @@ public class MageLogic : MonoBehaviour
             false;
 
         ResetAttackCooldown();
+        ResetIdleSoundTimer();
 
         if (animator != null)
         {
@@ -982,6 +1068,18 @@ public class MageLogic : MonoBehaviour
             Mathf.Max(
                 minimumAttackCooldown,
                 maximumAttackCooldown
+            );
+
+        minimumIdleSoundInterval =
+            Mathf.Max(
+                0.1f,
+                minimumIdleSoundInterval
+            );
+
+        maximumIdleSoundInterval =
+            Mathf.Max(
+                minimumIdleSoundInterval,
+                maximumIdleSoundInterval
             );
 
         entangleRecoveryTransitionDuration =

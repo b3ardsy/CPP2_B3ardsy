@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: ce8d53adc4014664eae532040de927e0
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 6
+  defaultSettings:
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 1
+    quality: 1
+    conversionMode: 0
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 1
+  preloadAudioData: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 332994
+  packageName: Monster Sounds - Volume II
+  packageVersion: 1.0
+  assetPath: Assets/MonstersSFX/PackMonsterLowVoices/Howl_Generic_01/SFX-Monster-Howl-Generic-06_wav.wav
+  uploadId: 917234
