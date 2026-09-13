@@ -494,6 +494,11 @@ public class Player_StaffCombat : MonoBehaviour
 
                 if (ReleaseEntangle())
                 {
+                    AudioManager.Instance?.Play(
+                        SoundId.Entangle,
+                        transform.position
+                    );
+
                     StartCooldown(
                         StaffSpell.Entangle
                     );
@@ -508,6 +513,11 @@ public class Player_StaffCombat : MonoBehaviour
 
                 if (ReleaseIceTornado())
                 {
+                    AudioManager.Instance?.Play(
+                        SoundId.IceTornado,
+                        transform.position
+                    );
+
                     StartCooldown(
                         StaffSpell.IceTornado
                     );
@@ -519,6 +529,11 @@ public class Player_StaffCombat : MonoBehaviour
 
                 if (ReleaseLightningStrike())
                 {
+                    AudioManager.Instance?.Play(
+                        SoundId.Lightning,
+                        transform.position
+                    );
+
                     StartCooldown(
                         StaffSpell.LightningStrike
                     );

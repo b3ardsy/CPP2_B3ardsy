@@ -358,6 +358,14 @@ public class Player_Combat : MonoBehaviour
             wandDamage,
             wandProjectileSpeed
         );
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.Wand,
+                wandFirePoint.position
+            );
+        }
     }
 
     private Vector3 CalculateWandFireDirection()

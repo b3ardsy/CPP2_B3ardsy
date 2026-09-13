@@ -54,6 +54,21 @@ public class Player_Controller : MonoBehaviour
     [SerializeField] private float groundedRadius = 0.45f;
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Footsteps")]
+    [Tooltip(
+        "Surface used until automatic ground-surface detection is added."
+    )]
+    [SerializeField]
+    private FootstepSurface defaultFootstepSurface =
+        FootstepSurface.Grass;
+
+    [Header("Running Breathing")]
+    [Tooltip(
+        "How long the player must continuously run before " +
+        "the breathing loop begins."
+    )]
+    [SerializeField] private float runBreathingDelay = 4f;
+
     [Header("Idle Waiting")]
     [Tooltip(
         "How long the player must remain completely idle before " +
@@ -79,6 +94,9 @@ public class Player_Controller : MonoBehaviour
     private bool isGrounded;
     private bool wasGrounded;
     private bool isRunning;
+
+    private float runBreathingTimer;
+    private bool isBreathingFromRunning;
 
     private float waitingTimer;
     private bool isWaiting;
@@ -267,6 +285,10 @@ public class Player_Controller : MonoBehaviour
         }
 
         UpdateMovementSpeed(
+            isDodging
+        );
+
+        UpdateRunningBreathing(
             isDodging
         );
 
@@ -514,6 +536,14 @@ public class Player_Controller : MonoBehaviour
         animator.SetTrigger(
             JumpTrigger
         );
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerJump,
+                transform.position
+            );
+        }
     }
 
     private void CheckGrounded()
@@ -678,6 +708,58 @@ public class Player_Controller : MonoBehaviour
                 .isPressed &&
             movementInput.sqrMagnitude >
             0.01f;
+    }
+
+    private void UpdateRunningBreathing(
+        bool isDodging
+    )
+    {
+        bool isActuallyRunning =
+            isRunning &&
+            isGrounded &&
+            !IsMovementLocked &&
+            !isDodging &&
+            movementInput.sqrMagnitude > 0.01f &&
+            currentMoveSpeed > walkSpeed;
+
+        if (!isActuallyRunning)
+        {
+            ResetRunningBreathing();
+            return;
+        }
+
+        if (isBreathingFromRunning)
+        {
+            return;
+        }
+
+        runBreathingTimer += Time.deltaTime;
+
+        if (runBreathingTimer < runBreathingDelay)
+        {
+            return;
+        }
+
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.StartPlayerBreathing();
+        isBreathingFromRunning = true;
+    }
+
+    private void ResetRunningBreathing()
+    {
+        runBreathingTimer = 0f;
+
+        if (!isBreathingFromRunning)
+        {
+            return;
+        }
+
+        AudioManager.Instance?.StopPlayerBreathing();
+        isBreathingFromRunning = false;
     }
 
     private void UpdateMovementSpeed(
@@ -958,9 +1040,9 @@ public class Player_Controller : MonoBehaviour
         );
 
         if (
-            !wasGrounded &&
-            isGrounded
-        )
+                !wasGrounded &&
+                isGrounded
+            )
         {
             animator.ResetTrigger(
                 JumpTrigger
@@ -969,10 +1051,66 @@ public class Player_Controller : MonoBehaviour
             animator.SetTrigger(
                 LandTrigger
             );
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.Play(
+                    SoundId.PlayerLand,
+                    transform.position
+                );
+            }
         }
 
         wasGrounded =
             isGrounded;
+    }
+
+    // =========================================================
+    // FOOTSTEPS
+    // =========================================================
+
+    /*
+     * Animation Event entry point.
+     *
+     * Add PlayFootstep to the Walk and Run animation clips at the
+     * exact frames where either foot makes contact with the ground.
+     *
+     * The event may still fire while a Blend Tree is transitioning,
+     * so gameplay state is validated here before any sound is played.
+     */
+    public void PlayFootstep()
+    {
+        bool isDodging =
+            playerDodge != null &&
+            playerDodge.IsDodging;
+
+        bool isAttacking =
+            playerCombat != null &&
+            playerCombat.IsAttacking;
+
+        bool isActuallyMoving =
+            movementInput.sqrMagnitude >
+            0.01f &&
+            currentMoveSpeed >
+            0.1f;
+
+        if (
+            !isGrounded ||
+            IsMovementLocked ||
+            isDodging ||
+            isAttacking ||
+            !isActuallyMoving ||
+            AudioManager.Instance == null
+        )
+        {
+            return;
+        }
+
+        AudioManager.Instance.PlayFootstep(
+            defaultFootstepSurface,
+            isRunning,
+            transform.position
+        );
     }
 
     // =========================================================
@@ -1088,6 +1226,7 @@ public class Player_Controller : MonoBehaviour
     public void StopMovementImmediately()
     {
         ResetWaiting();
+        ResetRunningBreathing();
 
         currentMoveSpeed = 0f;
         moveDirection = Vector3.zero;
@@ -1105,6 +1244,7 @@ public class Player_Controller : MonoBehaviour
     private void OnDisable()
     {
         ResetWaiting();
+        ResetRunningBreathing();
 
         currentMoveSpeed = 0f;
         moveDirection = Vector3.zero;
@@ -1183,6 +1323,12 @@ public class Player_Controller : MonoBehaviour
             Mathf.Max(
                 0.1f,
                 waitingDelay
+            );
+
+        runBreathingDelay =
+            Mathf.Max(
+                0f,
+                runBreathingDelay
             );
     }
 

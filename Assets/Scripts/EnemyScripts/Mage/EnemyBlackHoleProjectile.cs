@@ -420,10 +420,17 @@ public class EnemyBlackHoleProjectile :
                 shield.GetComponentInParent
                     <Player_DamageController>();
 
-            if (damageController != null)
+            if (
+                damageController != null &&
+                !isPlayerOwned
+            )
             {
                 Reflect(
                     damageController.gameObject
+                );
+
+                damageController.NotifyShieldHit(
+                    transform.position
                 );
             }
 
@@ -479,6 +486,10 @@ public class EnemyBlackHoleProjectile :
             {
                 Reflect(
                     playerDamageController.gameObject
+                );
+
+                playerDamageController.NotifyShieldHit(
+                    transform.position
                 );
 
                 return;

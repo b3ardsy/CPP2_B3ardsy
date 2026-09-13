@@ -358,9 +358,23 @@ public class Player_DamageController :
         int damage
     )
     {
+        if (damage <= 0)
+        {
+            return;
+        }
+
+        if (IsShieldProtected)
+        {
+            NotifyShieldHit(
+                transform.position
+            );
+
+            return;
+        }
+
         if (
-            IsDamageBlocked() ||
-            damage <= 0
+            IsDead ||
+            isInvulnerable
         )
         {
             return;
@@ -391,10 +405,18 @@ public class Player_DamageController :
     {
         if (
             damage <= 0 ||
-            IsDead ||
-            IsShieldProtected
+            IsDead
         )
         {
+            return;
+        }
+
+        if (IsShieldProtected)
+        {
+            NotifyShieldHit(
+                transform.position
+            );
+
             return;
         }
 
@@ -452,6 +474,14 @@ public class Player_DamageController :
             return;
         }
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerHurt,
+                transform.position
+            );
+        }
+
         StartHitReaction();
 
         StartInvulnerability();
@@ -473,6 +503,26 @@ public class Player_DamageController :
         Debug.Log(
             $"{name}: Shield protection activated.",
             this
+        );
+    }
+
+    public void NotifyShieldHit(
+        Vector3 hitPosition
+    )
+    {
+        if (!IsShieldProtected)
+        {
+            return;
+        }
+
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        AudioManager.Instance.Play(
+            SoundId.ShieldHit,
+            hitPosition
         );
     }
 
@@ -660,6 +710,14 @@ public class Player_DamageController :
         }
 
         deathHandled = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerDeath,
+                transform.position
+            );
+        }
 
         isInvulnerable = true;
         isInHitReaction = false;

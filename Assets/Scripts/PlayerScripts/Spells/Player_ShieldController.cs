@@ -356,6 +356,14 @@ public class Player_ShieldController : MonoBehaviour
             HandleShieldEnded
         );
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.Shield,
+                activeShield.transform.position
+            );
+        }
+
         Debug.Log(
             $"{name}: Shield activated. " +
             $"Ready again in {CooldownDuration:0.0} seconds.",

@@ -339,6 +339,14 @@ public class Player_RespawnController : MonoBehaviour
 
     private void PlayRespawnPresentation()
     {
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.Play(
+                SoundId.PlayerRespawn,
+                transform.position
+            );
+        }
+
         if (animator != null)
         {
             animator.ResetTrigger(

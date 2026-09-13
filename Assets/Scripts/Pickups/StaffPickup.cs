@@ -75,6 +75,11 @@ public class StaffPickup : MonoBehaviour, IInteract, ICheckpointResettable
          */
         weaponManager.UnlockStaff();
 
+        AudioManager.Instance?.Play(
+            SoundId.StaffUnlock,
+            transform.position
+        );
+
         /*
          * Remove this pickup from the player's current
          * interaction target.

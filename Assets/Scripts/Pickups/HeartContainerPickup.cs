@@ -207,6 +207,11 @@ public class HeartContainerPickup : MonoBehaviour, ICheckpointResettable
             healthIncrease
         );
 
+        AudioManager.Instance?.Play(
+            SoundId.HeartPickup,
+            transform.position
+        );
+
         int targetHealth =
             health.CurrentHealth;
 
