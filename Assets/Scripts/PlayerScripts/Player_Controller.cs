@@ -230,7 +230,23 @@ public class Player_Controller : MonoBehaviour
         }
 
         verticalVelocity =
-            groundedVerticalVelocity;
+    groundedVerticalVelocity;
+
+        /*
+         * Establish the player's initial grounded state immediately.
+         *
+         * Without this, wasGrounded defaults to false and the first Update
+         * can incorrectly interpret spawning on the ground as a landing.
+         */
+        CheckGrounded();
+
+        wasGrounded =
+            isGrounded;
+
+        animator.SetBool(
+            IsGroundedBool,
+            isGrounded
+        );
     }
 
     private void Update()
