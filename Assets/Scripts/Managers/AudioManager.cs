@@ -723,6 +723,30 @@ public class AudioManager : MonoBehaviour
             target.Play();
     }
 
+    public void StopMusic()
+    {
+        if (Instance != this)
+            return;
+
+        musicEnabled = false;
+        inCombat = false;
+
+        explorationGain = 0f;
+        combatGain = 0f;
+
+        if (explorationSource != null)
+        {
+            explorationSource.Stop();
+            explorationSource.volume = 0f;
+        }
+
+        if (combatSource != null)
+        {
+            combatSource.Stop();
+            combatSource.volume = 0f;
+        }
+    }
+
     private void UpdateMusicCrossfade()
     {
         if (
@@ -769,11 +793,29 @@ public class AudioManager : MonoBehaviour
         if (worldVoices != null)
         {
             foreach (AudioSource source in worldVoices)
+            {
                 if (source != null)
                     source.Stop();
+            }
         }
 
         StopPlayerBreathing();
+
+        /*
+         * Gameplay music should not continue into the Main Menu.
+         */
+        if (scene.name == "Game_Start")
+        {
+            StopMusic();
+            SetAmbienceActive(false);
+            return;
+        }
+
+        /*
+         * Entering a gameplay scene restores ambience
+         * and exploration music.
+         */
+        SetAmbienceActive(true);
         SetCombatMusic(false);
     }
 

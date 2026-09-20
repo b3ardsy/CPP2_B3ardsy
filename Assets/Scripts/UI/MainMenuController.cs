@@ -45,7 +45,15 @@ public class MainMenuController : MonoBehaviour
          * the Main Menu.
          */
         Time.timeScale = 1f;
-
+        /*
+ * The gameplay AudioManager persists between scenes.
+ * Stop its exploration/combat music when returning
+ * to the Main Menu.
+ */
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopMusic();
+        }
         /*
          * Gameplay locks and hides the cursor.
          * The Main Menu should always restore normal mouse control.
