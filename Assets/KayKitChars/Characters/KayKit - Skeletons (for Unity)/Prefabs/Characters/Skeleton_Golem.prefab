@@ -1010,7 +1010,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
+  maxHealth: 15
 --- !u!114 &4995706864453659995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1027,6 +1027,9 @@ MonoBehaviour:
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
   deathEffectLifetime: 3
+  hurtSound: 22
+  deathSound: 25
+  corpseExplosionSound: 39
   pickupToDrop: 1
   healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
   ammoPickupPrefab: {fileID: 0}
@@ -1058,13 +1061,15 @@ MonoBehaviour:
   attackRange: 7
   chaseStoppingDistance: 7
   attackExitRange: 8
-  spinDamage: 1
-  slashDamage: 1
+  spinDamage: 3
+  slashDamage: 2
   attackCooldown: 3
   attackRotationSpeed: 25
   attackStartVelocityThreshold: 0.15
   axeHitbox: {fileID: 8059944098022843813}
   chaseSpeed: 10
+  minimumIdleSoundInterval: 4
+  maximumIdleSoundInterval: 9
   locomotionRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
   entangleRecoveryAnimationFrames: 3

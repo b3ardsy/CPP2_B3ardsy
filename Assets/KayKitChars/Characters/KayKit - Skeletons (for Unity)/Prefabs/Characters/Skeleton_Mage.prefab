@@ -1345,7 +1345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
+  maxHealth: 8
 --- !u!114 &9130452639414364253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1395,7 +1395,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MageLogic
   blackHoleProjectilePrefab: {fileID: 7418663436262262798, guid: c94e3e8eccf25e2409dcd7a97dfaf8f1, type: 3}
   firePoint: {fileID: 7655535924878438980}
-  blackHoleDamage: 1
+  blackHoleDamage: 2
   blackHoleSpeed: 12
   aimHeightOffset: 1
   projectileCount: 3
@@ -1464,7 +1464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1559932aba203004280ad41874d833f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PersistentID
-  persistentId: d156d08e685240899a8b607d66c294e5
+  persistentId: 194e93b6363b4bada91abcabc6dba960
 --- !u!1 &1360172268146098638
 GameObject:
   m_ObjectHideFlags: 0

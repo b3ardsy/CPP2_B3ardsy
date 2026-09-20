@@ -1117,7 +1117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a98c4452c5b7ec2498d01566caf844af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
+  maxHealth: 10
 --- !u!114 &7999237170363902910
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1134,6 +1134,9 @@ MonoBehaviour:
   deathEffectPrefab: {fileID: 3825455922101144633, guid: d41045928ffb47049910a6d4e3fdb02d, type: 3}
   deathEffectSpawnOffset: {x: 0, y: 0, z: 0}
   deathEffectLifetime: 3
+  hurtSound: 17
+  deathSound: 20
+  corpseExplosionSound: 39
   pickupToDrop: 1
   healthPickupPrefab: {fileID: 919132149155446097, guid: 3770b2f2c790ecb4eab4c6b9e8908140, type: 3}
   ammoPickupPrefab: {fileID: 0}
@@ -1164,12 +1167,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RogueLogic
   skullProjectilePrefab: {fileID: 2673606553075800348, guid: ddfabb442d40b2c4e9249a458bc26f9c, type: 3}
   firePoint: {fileID: 4593332172826405816}
-  skullDamage: 1
+  skullDamage: 3
   skullSpeed: 10
   aimHeightOffset: 1
   deathEvilPrefab: {fileID: 8617712822367739129, guid: 7ae1d86c2db118940a3a5a8f8e59a43d, type: 3}
-  deathEvilDamage: 1
+  deathEvilDamage: 5
   deathEvilDamageRadius: 2
+  deathEvilTargetLockDelay: 0.85
   deathEvilGroundCheckHeight: 5
   deathEvilGroundOffset: 0.05
   groundLayer:
@@ -1178,6 +1182,8 @@ MonoBehaviour:
   minimumAttackCooldown: 2
   maximumAttackCooldown: 3
   attackRecoveryDuration: 0.6
+  minimumIdleSoundInterval: 4
+  maximumIdleSoundInterval: 9
   entangleRecoveryStateName: Locomotion
   entangleRecoveryTransitionDuration: 0.05
 --- !u!195 &4906132506217826178

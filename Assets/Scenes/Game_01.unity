@@ -8299,14 +8299,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Golem
       objectReference: {fileID: 0}
-    - target: {fileID: 4995706864453659995, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: hurtSound
-      value: 22
-      objectReference: {fileID: 0}
-    - target: {fileID: 4995706864453659995, guid: 3c374faffdd2ba440a3b7faf931ba4e4, type: 3}
-      propertyPath: deathSound
-      value: 25
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9486,14 +9478,6 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
       propertyPath: m_Name
       value: Skeleton_Mage (2)
-      objectReference: {fileID: 0}
-    - target: {fileID: 3502666785199956508, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
-      propertyPath: persistentId
-      value: 072ab7a40a6f4c10987780bc94cb16cc
-      objectReference: {fileID: 0}
-    - target: {fileID: 9078815949463096416, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
-      propertyPath: blackHoleDamage
-      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19090,6 +19074,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Skeleton_Mage (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 3502666785199956508, guid: b5b151dfc1d81e34c8a2fd6e632c8ee6, type: 3}
+      propertyPath: persistentId
+      value: 8cbb0fe74a9647fb848b65cca98ea15d
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -28070,26 +28058,6 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
       propertyPath: m_Name
       value: Skeleton_Rogue
-      objectReference: {fileID: 0}
-    - target: {fileID: 3357619153843254394, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: skullDamage
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 3357619153843254394, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEvilDamage
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 3357619153843254394, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathEvilTargetLockDelay
-      value: 0.85
-      objectReference: {fileID: 0}
-    - target: {fileID: 7999237170363902910, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: hurtSound
-      value: 17
-      objectReference: {fileID: 0}
-    - target: {fileID: 7999237170363902910, guid: 99b5531d687729f47b2a7baf5b1ca48f, type: 3}
-      propertyPath: deathSound
-      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -37691,6 +37659,26 @@ PrefabInstance:
     - target: {fileID: 7646588823389208177, guid: 7385497e3ea5564408d35375051cd723, type: 3}
       propertyPath: respawnEffectOffset.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705279041001254673, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: entangleCooldown
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705279041001254673, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: iceTornadoDamage
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705279041001254673, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: iceTornadoCooldown
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705279041001254673, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: lightningStrikeDamage
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705279041001254673, guid: 7385497e3ea5564408d35375051cd723, type: 3}
+      propertyPath: lightningStrikeCooldown
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
